@@ -46,7 +46,7 @@ See below for detail on these Viam capabilities:
 
 [Deliver products to your customers](#deliver-products-to-your-customers)
 
-### Get hardware running in minutes {#get-hardware-running-in-minutes}
+### Get hardware running in minutes
 
 Add a camera, motor, arm, or sensor to your JSON config with a few parameters: model, connection type, any device-specific settings. viam-server handles the rest—pulls the driver, initializes the device, and exposes it through a consistent API. You don’t have to write device drivers or worry about dependencies.
 
@@ -54,7 +54,7 @@ Add a camera, motor, arm, or sensor to your JSON config with a few parameters: m
 * **Swap hardware without changing code.** Replace an Intel RealSense with an Orbbec Astra camera, or swap one motor controller for another—update the config and your application keeps working.  
 * **Drivers for hundreds of devices.** The Registry includes modules for most common hardware. If yours isn't supported, write a module once and reuse it everywhere.
 
-### Connect from anywhere {#connect-from-anywhere}
+### Connect from anywhere
 
 Connect to your machine from anywhere. No VPN, no port forwarding, no firewall configuration. Viam handles NAT traversal automatically. The web app, SDKs, and CLI all use the same connection infrastructure, so you can debug from your laptop and monitor from the Viam web app.
 
@@ -64,7 +64,7 @@ Connect to your machine from anywhere. No VPN, no port forwarding, no firewall c
 * **Teleoperate from the browser.** Drive a base with keyboard controls, move an arm to specific positions, or reposition a gantry, all from the web UI.  
 * **Visualize in 3D.** See a live 3D view of your machine showing component positions, camera feeds, and point clouds. Move components and watch the visualization update in real time.
 
-### Configure motion planning without manual calibration {#configure-motion-planning-without-manual-calibration}
+### Configure motion planning without manual calibration
 
 Viam includes a motion planning service that moves arms, gantries, and mobile bases while avoiding collisions to take action in the physical world. The motion planner needs to know where each component is in 3D space: their positions, orientations, and physical dimensions. Configuring these relationships manually means measuring offsets and rotations between components. This is tedious and error-prone, especially for camera-arm setups. However, the Viam Registry includes fragments with pre-computed spatial configurations for common hardware combinations. Add a fragment for your specific camera, mount, and arm instead of measuring and calculating yourself.
 
@@ -72,7 +72,7 @@ Viam includes a motion planning service that moves arms, gantries, and mobile ba
 * **Obstacle avoidance.** Define static obstacles in your work cell. The motion planner routes around them automatically.  
 * **Reusable configurations.** Create fragments for your custom setups and apply them across machines.
 
-### Capture data from edge to cloud {#capture-data-from-edge-to-cloud}
+### Capture data from edge to cloud
 
 Configure data capture in JSON: which components, how often, what to keep. Viam handles the pipeline. Data syncs to the cloud when connectivity allows, survives network interruptions and restarts, and queues locally on devices with constrained bandwidth. No custom sync logic, no managing local storage, no worrying about edge cases.
 
@@ -82,7 +82,7 @@ Configure data capture in JSON: which components, how often, what to keep. Viam 
 * **Query across your fleet.** Find data by machine, location, time range, component, or tags. Export for analysis or training.  
 * **Manage storage automatically.** Set retention policies to delete old data. Configure local storage limits for edge devices with constrained disk space.
 
-### Train and deploy models without the overhead {#train-and-deploy-models-without-the-overhead}
+### Train and deploy models without the overhead
 
 Train models on data you've captured, or bring models trained elsewhere. Deploy to your fleet with the same versioning and update mechanisms as code.
 
@@ -91,7 +91,7 @@ Train models on data you've captured, or bring models trained elsewhere. Deploy 
 * **Deploy to your fleet.** Push a model to the Registry and configure machines to pull it. Pin to specific versions or allow automatic updates—same as modules.  
 * **Run inference on device.** The ML model service runs on the machine. Inference happens locally without round-trips to the cloud.
 
-### Develop application code from anywhere {#develop-application-code-from-anywhere}
+### Develop application code from anywhere
 
 Traditional robotics development means standing next to the robot or SSH'ing into it. Viam lets you treat your robot like a machine in the cloud. Develop and test from your laptop. Your code connects to your robot machine over the network, through firewalls and NAT, without VPN.
 
@@ -100,7 +100,7 @@ Traditional robotics development means standing next to the robot or SSH'ing int
 * **Package as a module for production.** When you’re ready, package your code as a module that viam-server manages: starts on boot, restarts on failure, reconfigures when settings change.  
 * **Call built-in services from your code.** Motion planning, computer vision, navigation, and data capture are available as services you call from any SDK.
 
-### Let Viam deploy and manage your application code {#let-viam-deploy-and-manage-your-application-code}
+### Let Viam deploy and manage your application code
 
 Package your control logic as a module and deploy through the Viam Registry for version control, remote updates, and fleet-wide rollouts. No cross-compiling. Viam handles everything. 
 
@@ -109,7 +109,7 @@ Package your control logic as a module and deploy through the Viam Registry for 
 * **Version control.** Pin machines to exact versions for stability, or allow automatic updates at the patch, minor, or major level.  
 * **OTA updates.** Push new versions to the registry with the CLI; machines pull updates automatically per their update policies.
 
-### Scale from prototype to fleet without rewrites {#scale-from-prototype-to-fleet-without-rewrites}
+### Scale from prototype to fleet without rewrites
 
 Your prototype configuration becomes your production configuration. Turn a working machine setup into a fragment and apply it to several, dozens, or even hundreds of machines. No deployment scripts, no copying files, no per-machine setup.
 
@@ -118,7 +118,7 @@ Your prototype configuration becomes your production configuration. Turn a worki
 * **Override per-machine differences.** If some machines have a different camera model or site-specific parameter value, override for just those machines without forking the base fragment.  
 * **Same runtime guarantees everywhere.** viam-server on each machine starts components, services, and modules on boot, monitors them, and restarts on failure—all based on your shared fragment.
 
-### Maintain your fleet without toil {#maintain-your-fleet-without-toil}
+### Maintain your fleet without toil
 
 Production fleets need ongoing care. Viam handles the maintenance tasks that would otherwise require logging into individual machines.
 
@@ -127,7 +127,7 @@ Production fleets need ongoing care. Viam handles the maintenance tasks that wou
 * **Roll out changes incrementally.** Deploy configuration changes, module versions, or ML models to a subset of machines first. Validate before rolling out fleet-wide.  
 * **Roll back with one change.** Viam maintains configuration history. Revert to a previous version of a fragment, module, or model with a single update.
 
-### Monitor and operate your fleet remotely {#monitor-and-operate-your-fleet-remotely}
+### Monitor and operate your fleet remotely
 
 Once your fleet is deployed, Viam gives you visibility and control from a single dashboard.
 
@@ -135,7 +135,7 @@ Once your fleet is deployed, Viam gives you visibility and control from a single
 * **Alerting.** Get notified when machines go offline, encounter errors, or meet conditions you define.  
 * **Access control.** Role-based permissions for team members, API keys for programmatic access. Control who can view, operate, or configure each machine.
 
-### Deliver products to your customers {#deliver-products-to-your-customers}
+### Deliver products to your customers
 
 Building a robotics product means building customer infrastructure—auth systems, dashboards, billing. Viam provides these so you can focus on your product.
 
