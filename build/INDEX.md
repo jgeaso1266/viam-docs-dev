@@ -19,10 +19,12 @@ Start here. Every project needs these basics.
 - Connect to Cloud
 - Add a Camera
 - Capture and Sync Data
-- Run ML Inference
+- Basic Filtering
+- Start Writing Code
 
 ### [Perception](./perception/INDEX.md) 🔴
 Understanding what the robot sees.
+- Add Computer Vision
 - Detect Objects (2D)
 - Classify Objects
 - Track Objects Across Frames

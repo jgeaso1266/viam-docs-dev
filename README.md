@@ -33,12 +33,12 @@ This is the living navigation for the new Viam documentation structure. Click an
 ### [Foundation](./build/foundation/INDEX.md) 🔴
 - [Connect to Cloud](./build/foundation/connect-to-cloud.md) 🔴
 - [Add a Camera](./build/foundation/add-camera.md) 🔴
-- [Develop from Your IDE](./build/foundation/develop-from-ide.md) 🔴
 - [Capture and Sync Data](./build/foundation/capture-sync-data.md) 🔴
-- [Filter at the Edge](./build/foundation/filter-at-edge.md) 🔴
-- [Run ML Inference](./build/foundation/run-ml-inference.md) 🔴
+- [Basic Filtering](./build/foundation/basic-filtering.md) 🔴
+- [Start Writing Code](./build/foundation/start-writing-code.md) 🔴
 
 ### [Perception](./build/perception/INDEX.md) 🔴
+- [Add Computer Vision](./build/perception/add-computer-vision.md) 🔴
 - [Detect Objects (2D)](./build/perception/detect-objects-2d.md) 🔴
 - [Classify Objects](./build/perception/classify-objects.md) 🔴
 - [Track Objects Across Frames](./build/perception/track-objects.md) 🔴

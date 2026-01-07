@@ -18,12 +18,9 @@ Blocks are modular tutorials that can be composed into larger workflows. Each bl
 |-------|------------|----------------|-------------------|
 | Connect to Cloud | Compute board | Platform basics, remote access, WebRTC | 1.1, 1.6, 2.9 |
 | Add a Camera | Camera + compute | Component configuration, viewing feeds | 1.1, 1.2, 1.9 |
-| Capture and Sync Data | Camera + compute + cloud | Data pipeline, filtering, storage | 1.12, 2.13, 2.14 |
-| Filter at the Edge | Camera + compute + ML | Reduce bandwidth by filtering before sync | 2.13, 2.14 |
-| Run ML Inference | Camera + compute + model | Vision service, detections, classifications | 1.13 |
-| Develop from Your IDE | Laptop + robot | Run code remotely against hardware | 1.3, 1.21 |
-
-**Note on "Develop from Your IDE":** This block should be early in the Foundation sequence. It demonstrates immediate value—you can iterate on your laptop without SSH or file copying.
+| Capture and Sync Data | Camera + compute + cloud | Data pipeline, storage, sync | 1.12, 2.13, 2.14 |
+| Basic Filtering | Camera + compute | Time-based sampling, sensor thresholds | 2.13, 2.14 |
+| Start Writing Code | Laptop + robot | Run code remotely against hardware | 1.3, 1.21 |
 
 ---
 
@@ -33,6 +30,7 @@ Blocks are modular tutorials that can be composed into larger workflows. Each bl
 
 | Block | Components | What You Learn | Problems Addressed |
 |-------|------------|----------------|-------------------|
+| Add Computer Vision | Camera + compute + model | Vision service, ML models, inference basics | 1.13 |
 | Detect Objects (2D) | Camera + ML model | Bounding boxes, confidence scores | 1.13, 1.19 |
 | Classify Objects | Camera + ML model | Single-label vs. multi-label classification | 1.13, 1.19 |
 | Track Objects Across Frames | Camera + ML model | Persistence, IDs, trajectories | 1.19 |
@@ -120,9 +118,11 @@ Foundation
 ├── Connect to Cloud
 ├── Add a Camera
 ├── Capture and Sync Data
-└── Run ML Inference
+├── Basic Filtering
+└── Start Writing Code
         ↓
 Perception
+├── Add Computer Vision
 ├── Detect Objects (2D)
 └── Classify Objects
         ↓
@@ -143,9 +143,11 @@ Foundation
 ├── Connect to Cloud
 ├── Add a Camera
 ├── Capture and Sync Data
-└── Run ML Inference
+├── Basic Filtering
+└── Start Writing Code
         ↓
 Perception
+├── Add Computer Vision
 ├── Detect Objects (2D)
 └── Track Objects Across Frames
         ↓
@@ -174,9 +176,11 @@ Foundation
 ├── Connect to Cloud
 ├── Add a Camera
 ├── Capture and Sync Data
-└── Run ML Inference
+├── Basic Filtering
+└── Start Writing Code
         ↓
 Perception
+├── Add Computer Vision
 ├── Detect Objects (2D)
 ├── Measure Depth
 └── Localize Objects in 3D
