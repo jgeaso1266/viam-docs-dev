@@ -143,7 +143,7 @@ These are our working documents, not user-facing content:
 - [Block Definitions](./planning/block-definitions.md) 🟡
 - [Content Guidelines](./planning/content-guidelines.md) 🟡
 - [Hardware Recommendations](./planning/hardware-recommendations.md) 🔴
-- [Simulation Requirements](./planning/simulation-requirements.md) 🔴
+- [Simulation Requirements](./planning/simulation-requirements.md) 🟡
 
 ---
 
@@ -159,5 +159,5 @@ These are our working documents, not user-facing content:
 | Maintain | 6 | 6 | 0 | 0 |
 | Reference | 4 | 4 | 0 | 0 |
 | Work Cells | 4 | 4 | 0 | 0 |
-| Planning | 7 | 2 | 3 | 2 |
+| Planning | 7 | 1 | 4 | 2 |
 | **Total** | **67** | **61** | **4** | **2** |
