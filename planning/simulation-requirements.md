@@ -111,6 +111,64 @@ Host Gazebo Harmonic in cloud containers with GzWeb for browser access.
 
 ---
 
+## Robot-Specific Simulation Support
+
+### UFFactory xArm
+
+| Aspect | Details |
+|--------|---------|
+| Official Gazebo support | Yes — [xarm_ros2](https://github.com/xArm-Developer/xarm_ros2) includes Gazebo + MoveIt |
+| Models available | xArm 5, xArm 6, xArm 7, xArm 7 Mirror, Lite 6 |
+| Physics ready | Yes — complete URDFs with inertials |
+| ROS2 support | Yes — actively maintained (2024 updates) |
+| Additional tools | uf-gym (RL environments), WebSocket simulation API |
+
+**Assessment:** Easiest path for arm simulation. Official support, complete physics, actively maintained.
+
+### Yaskawa Motoman
+
+| Aspect | Details |
+|--------|---------|
+| Official Gazebo support | **No** — [ROS-Industrial Motoman](https://github.com/ros-industrial/motoman) URDFs missing inertials |
+| Models available | 40+ models (GP, MH, SIA, HC series) — geometry only |
+| Physics ready | **Partial** — requires adding inertial/dynamics/transmission tags |
+| ROS2 support | Yes — [MotoROS2](https://github.com/Yaskawa-Global/motoros2) for real hardware |
+| Dynamics data | Available under NDA from Yaskawa representatives |
+
+**Working Community Gazebo Simulations:**
+
+| Robot | Repository | Status |
+|-------|------------|--------|
+| MA1400 | [kleinma/ma1400_sim](https://github.com/kleinma/ma1400_sim) | Complete with simulated DX100 controller |
+| CSDA10F (dual arm) | [Danfoa/invite-robotics](https://github.com/Danfoa/invite-robotics) | Works, gripper physics in progress |
+| SIA10F | [smtbhd32/sia10f-urdf-moveit-motion-planning](https://github.com/smtbhd32/sia10f-urdf-moveit-motion-planning) | MoveIt + Gazebo |
+| SIA20 | [harumo11/sia20](https://github.com/harumo11/sia20) | Tutorial package |
+| GP8 | [batuakan/yaskawa_gp8_support](https://github.com/batuakan/yaskawa_gp8_support) | URDF available |
+| GP25 | [fizyr/yaskawa_gp25_support](https://github.com/fizyr/yaskawa_gp25_support) | URDF available |
+
+**Assessment:** Requires more work. Use community models (MA1400, CSDA10F) for POC, or add inertials to official URDFs. Consider Yaskawa partnership for proper dynamics data.
+
+### Comparison for Simulation POC
+
+| Factor | UFFactory xArm | Yaskawa Motoman |
+|--------|---------------|-----------------|
+| Time to working sim | Low (days) | Medium (weeks) |
+| Official support | Yes | No |
+| Community models | N/A | Yes (select models) |
+| Robot variety | 5 models | 40+ models |
+| Recommended for POC | Yes | Use MA1400 or CSDA10F |
+
+### Path Forward
+
+1. **POC Phase:** Use xArm (official Gazebo) or Motoman MA1400 (community Gazebo)
+2. **Production Phase:** The Viam-Gazebo bridge architecture works for ANY robot with Gazebo-compatible URDF
+3. **Yaskawa Priority:** If Yaskawa support is strategic, consider:
+   - Using community models initially
+   - Requesting dynamics data under NDA
+   - Exploring partnership with Yaskawa on simulation
+
+---
+
 ## Simulation Environments Needed
 
 | Work Cell | Environment | Key Elements |
