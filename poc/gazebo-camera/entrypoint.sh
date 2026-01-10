@@ -31,8 +31,8 @@ sleep 1
 # Set initial arm pose (ready to pick)
 echo ""
 echo "Setting arm to initial pose..."
-# Joint positions: J1=0, J2=-0.6, J3=-1.2, J4=0, J5=-1.0, J6=0
-gz topic -t "/model/xarm6/joint/joint1/0/cmd_pos" -m gz.msgs.Double -p "data: 0.0" 2>/dev/null || true
+# Joint positions: J1=π (face table), J2=-0.6, J3=-1.2, J4=0, J5=-1.0, J6=0
+gz topic -t "/model/xarm6/joint/joint1/0/cmd_pos" -m gz.msgs.Double -p "data: 3.14159" 2>/dev/null || true
 gz topic -t "/model/xarm6/joint/joint2/0/cmd_pos" -m gz.msgs.Double -p "data: -0.6" 2>/dev/null || true
 gz topic -t "/model/xarm6/joint/joint3/0/cmd_pos" -m gz.msgs.Double -p "data: -1.2" 2>/dev/null || true
 gz topic -t "/model/xarm6/joint/joint4/0/cmd_pos" -m gz.msgs.Double -p "data: 0.0" 2>/dev/null || true
