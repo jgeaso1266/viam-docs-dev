@@ -2,7 +2,7 @@
 
 **Status:** 🔴 Outline
 
-**Time:** ~1.25 hours
+**Time:** ~1.5 hours
 **Components:** Camera + Compute
 **Physics required:** None (rendered images only)
 
@@ -29,7 +29,7 @@ Viam works with any hardware:
 | Encoders | Rotary, absolute, incremental |
 | Gantries | Linear actuators, multi-axis systems |
 
-If your hardware isn't on the list, you can add support with a custom module.
+If your hardware isn't on the list, you can add support with a custom module by implementing the appropriate API.
 
 This tutorial uses the simplest work cell (camera + compute) to teach patterns that apply to *all* Viam applications.
 
@@ -43,7 +43,7 @@ By the end of this tutorial, you'll understand how to:
 | Add services | Attach capabilities like ML inference | Vision, navigation, motion planning |
 | Write control logic | Code that reads sensors and makes decisions | Any automation task |
 | Deploy code to machines | Run your logic on the machine itself | All production deployments |
-| Scale with fragments | Reuse configuration across machines | Any fleet, any size |
+| Scale with fragments | Reuse configurations across machines | Any fleet, any size |
 | Manage fleets | Monitor, update, and debug remotely | Production operations |
 | Build customer apps | Create products on top of Viam | Shipping to your customers |
 
@@ -76,35 +76,54 @@ A working inspection system with:
 
 ## Tutorial Flow
 
-### Part 1: Prototype (~20 min)
+### Part 1: Prototype (~25 min)
 
 **Goal:** Get a working detection pipeline on one simulated camera.
 
-**Skills:** Component configuration, viewing sensor data, adding services, writing SDK code.
+**Skills:** Installing viam-server, connecting a machine to Viam, component configuration, adding services, writing SDK code.
 
 #### 1.1 Launch the Simulation
 - Open the browser-based simulation
 - See the work cell: conveyor, camera, sample parts
-- Understand what you're working with
+- Understand what you're working with—this is a Linux machine with hardware attached
 
-> **Author note:** Provide clear visual of what the simulation looks like. Users need to orient themselves.
+> **Author note:** Provide clear visual of what the simulation looks like. Users need to orient themselves. Emphasize this is a real (simulated) machine, not a sandbox.
 
-#### 1.2 Connect to Viam
+#### 1.2 Create a Machine in Viam
 - Create a Viam account (if needed)
-- See your simulated machine appear in the Viam app
-- Understand: the simulation is running `viam-server`, just like real hardware would
+- Create a new machine in the Viam app
+- Copy the install command from the Setup tab
+- **Transferable skill:** This is the starting point for *any* Viam machine—real or simulated
 
-> **Author note:** This is where UI friction happens. Document exact clicks. Screenshots essential. Note any confusing UI elements and guide through them.
+> **Author note:** Walk through the app UI carefully. Screenshots essential. The Setup tab and install command are the key moments.
 
-#### 1.3 View the Camera Feed
-- Find the camera component in the Viam app
+#### 1.3 Install viam-server
+- Open the web terminal (or SSH into the simulation machine)
+- Paste and run the install command
+- Watch viam-server install and start
+- See the machine come online in the Viam app
+- **Transferable skill:** This is exactly how you'd set up a Raspberry Pi, Jetson, or any Linux machine
+
+> **Author note:** This is the "aha" moment—the machine they're looking at in the browser connects to the cloud. Make this connection explicit. Troubleshoot common issues (permissions, network).
+
+#### 1.4 Configure the Camera
+- Machine is online but has no components yet
+- Add a camera component in the Viam app
+- Select the appropriate model for the simulated camera
+- Save config—viam-server automatically applies it
+- **Transferable skill:** This is how you add *any* component—cameras, motors, arms, sensors
+
+> **Author note:** Emphasize the declarative config model: you declare what's connected, Viam handles the drivers.
+
+#### 1.5 View the Camera Feed
+- Find the camera component in the Control tab
 - Open the live stream
 - Take a snapshot
 - **Transferable skill:** This is how you view *any* camera in Viam—webcam, industrial camera, depth camera
 
-> **Author note:** The camera panel in the app can be non-obvious. Provide explicit guidance.
+> **Author note:** The Control tab may not be obvious. Provide explicit guidance.
 
-#### 1.4 Add a Vision Service
+#### 1.6 Add a Vision Service
 - Configure an ML model (pre-trained, provided for this tutorial)
 - Run detection on your camera feed
 - See bounding boxes and classifications
@@ -112,7 +131,7 @@ A working inspection system with:
 
 > **Author note:** Vision service configuration has multiple steps. Break down carefully. Note that users can train their own models later (link to ML docs), but we're using pre-trained here to stay focused.
 
-#### 1.5 Write Detection Logic
+#### 1.7 Write Detection Logic
 - Connect to your machine via Python or Go SDK
 - Get camera images programmatically
 - Run detections and print results
@@ -121,7 +140,7 @@ A working inspection system with:
 
 > **Author note:** Provide complete, working code. Both Python and Go. Users should be able to copy-paste and run. Explain what each section does.
 
-**Checkpoint:** You can detect defects in code. You've configured components, added a service, and written SDK code—the same pattern for any Viam project.
+**Checkpoint:** You've installed viam-server, connected a machine to Viam, configured a camera, added ML, and written SDK code. This is the complete prototype workflow for any Viam project.
 
 ---
 
