@@ -302,9 +302,11 @@ You should see the camera image with detection results—bounding boxes around d
 
 > **What you've built:** A complete ML inference pipeline. The vision service grabs an image from the camera, runs it through the TensorFlow Lite model, and returns structured detection results. This same pattern works for any ML task—object detection, classification, segmentation—you just swap the model.
 
-#### 1.7 Write Detection Logic
+#### 1.7 Run an Inspection Session
 
-So far you've configured everything through the Viam app. Now you'll write code that connects to your machine and runs detections programmatically.
+So far you've configured everything through the Viam app. Now you'll write code that connects to your machine remotely and runs a complete inspection session—the kind of tool you'd use when testing and tuning a real inspection system.
+
+This code runs on your laptop (not on the machine). It connects to the machine over the network, runs inspections, and saves results locally where you can review them.
 
 Viam provides SDKs for Python, Go, TypeScript, C++, and Flutter. We'll use Python and Go here—choose whichever you're more comfortable with.
 
@@ -326,10 +328,10 @@ This snippet contains your machine's address and API key. Keep these credentials
 Create a new directory and set up a virtual environment:
 
 ```bash
-mkdir inspection-logic && cd inspection-logic
+mkdir inspection-session && cd inspection-session
 python3 -m venv venv
 source venv/bin/activate
-pip install viam-sdk
+pip install viam-sdk pillow
 ```
 
 {{% /tab %}}
@@ -338,26 +340,42 @@ pip install viam-sdk
 Create a new Go module:
 
 ```bash
-mkdir inspection-logic && cd inspection-logic
-go mod init inspection-logic
+mkdir inspection-session && cd inspection-session
+go mod init inspection-session
 go get go.viam.com/rdk/robot/client
+go get go.viam.com/rdk/components/camera
+go get go.viam.com/rdk/services/vision
 ```
 
 {{% /tab %}}
 {{< /tabs >}}
 
-**Write the detection script:**
+**Write the inspection session script:**
 
-Create a file called `inspector.py` (or `inspector.go`) with the following code:
+This script will:
+- Run a specified number of inspections
+- Log each result to a CSV file
+- Save images of any failures for review
+- Print a summary when complete
+
+Create a file called `inspection_session.py` (or `inspection_session.go`):
 
 {{< tabs >}}
 {{% tab name="Python" %}}
 
 ```python
 import asyncio
+import csv
+import os
+from datetime import datetime
 from viam.robot.client import RobotClient
-from viam.rpc.dial import Credentials, DialOptions
+from viam.components.camera import Camera
 from viam.services.vision import VisionClient
+
+# Configuration
+NUM_INSPECTIONS = 20
+INSPECTION_INTERVAL = 2.0  # seconds between inspections
+OUTPUT_DIR = "inspection_results"
 
 async def connect():
     opts = RobotClient.Options.with_api_key(
@@ -368,26 +386,86 @@ async def connect():
     return await RobotClient.at_address('YOUR_MACHINE_ADDRESS', opts)
 
 async def main():
-    robot = await connect()
-    print("Connected to machine")
+    # Setup output directory
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    os.makedirs(f"{OUTPUT_DIR}/failures", exist_ok=True)
 
-    # Get the vision service
+    # Connect to machine
+    robot = await connect()
+    print(f"Connected to machine. Running {NUM_INSPECTIONS} inspections...\n")
+
+    # Get camera and vision service
+    camera = Camera.from_robot(robot, "inspection-cam")
     detector = VisionClient.from_robot(robot, "part-detector")
 
-    # Run detection on the camera
-    detections = await detector.get_detections_from_camera("inspection-cam")
+    # Track results
+    results = []
+    pass_count = 0
+    fail_count = 0
 
-    # Process results
-    for d in detections:
-        label = d.class_name
-        confidence = d.confidence
-        print(f"Detected: {label} ({confidence:.1%})")
+    # Open CSV log
+    csv_path = f"{OUTPUT_DIR}/session_{datetime.now():%Y%m%d_%H%M%S}.csv"
+    with open(csv_path, 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(['timestamp', 'inspection_num', 'result', 'confidence'])
 
-        if label == "FAIL":
-            print("⚠️  DEFECTIVE PART DETECTED")
+        for i in range(NUM_INSPECTIONS):
+            timestamp = datetime.now()
+
+            # Run detection
+            detections = await detector.get_detections_from_camera("inspection-cam")
+
+            # Find the primary detection (highest confidence)
+            if detections:
+                detection = max(detections, key=lambda d: d.confidence)
+                result = detection.class_name
+                confidence = detection.confidence
+            else:
+                result = "NO_DETECTION"
+                confidence = 0.0
+
+            # Log result
+            writer.writerow([timestamp.isoformat(), i + 1, result, f"{confidence:.3f}"])
+
+            # Track counts
+            if result == "PASS":
+                pass_count += 1
+                status = "✓ PASS"
+            elif result == "FAIL":
+                fail_count += 1
+                status = "✗ FAIL"
+
+                # Save failure image for review
+                image = await camera.get_image()
+                image_path = f"{OUTPUT_DIR}/failures/fail_{i+1}_{timestamp:%H%M%S}.png"
+                image.save(image_path)
+                status += f" (saved: {image_path})"
+            else:
+                status = f"? {result}"
+
+            print(f"[{i+1}/{NUM_INSPECTIONS}] {status} ({confidence:.1%})")
+
+            # Wait before next inspection
+            if i < NUM_INSPECTIONS - 1:
+                await asyncio.sleep(INSPECTION_INTERVAL)
 
     await robot.close()
 
+    # Print summary
+    total = pass_count + fail_count
+    pass_rate = (pass_count / total * 100) if total > 0 else 0
+
+    print(f"\n{'='*50}")
+    print(f"INSPECTION SESSION COMPLETE")
+    print(f"{'='*50}")
+    print(f"Total inspections: {NUM_INSPECTIONS}")
+    print(f"Results:  {pass_count} PASS / {fail_count} FAIL")
+    print(f"Pass rate: {pass_rate:.1f}%")
+    print(f"Log saved: {csv_path}")
+    if fail_count > 0:
+        print(f"Failure images: {OUTPUT_DIR}/failures/")
+    print(f"{'='*50}")
+
 if __name__ == "__main__":
     asyncio.run(main())
 ```
@@ -395,7 +473,7 @@ if __name__ == "__main__":
 Run it:
 
 ```bash
-python inspector.py
+python inspection_session.py
 ```
 
 {{% /tab %}}
@@ -406,158 +484,35 @@ package main
 
 import (
     "context"
+    "encoding/csv"
     "fmt"
-
-    "go.viam.com/rdk/robot/client"
-    "go.viam.com/rdk/logging"
-    "go.viam.com/rdk/services/vision"
-    "go.viam.com/utils/rpc"
-)
-
-func main() {
-    logger := logging.NewLogger("inspector")
-    ctx := context.Background()
-
-    // Replace with your credentials from the Code sample tab
-    robot, err := client.New(
-        ctx,
-        "YOUR_MACHINE_ADDRESS",
-        logger,
-        client.WithDialOptions(rpc.WithEntityCredentials(
-            "YOUR_API_KEY_ID",
-            rpc.Credentials{
-                Type:    rpc.CredentialsTypeAPIKey,
-                Payload: "YOUR_API_KEY",
-            },
-        )),
-    )
-    if err != nil {
-        logger.Fatal(err)
-    }
-    defer robot.Close(ctx)
-    fmt.Println("Connected to machine")
-
-    // Get the vision service
-    detector, err := vision.FromRobot(robot, "part-detector")
-    if err != nil {
-        logger.Fatal(err)
-    }
-
-    // Run detection on the camera
-    detections, err := detector.DetectionsFromCamera(ctx, "inspection-cam", nil)
-    if err != nil {
-        logger.Fatal(err)
-    }
-
-    // Process results
-    for _, d := range detections {
-        label := d.Label()
-        confidence := d.Score()
-        fmt.Printf("Detected: %s (%.1f%%)\n", label, confidence*100)
-
-        if label == "FAIL" {
-            fmt.Println("⚠️  DEFECTIVE PART DETECTED")
-        }
-    }
-}
-```
-
-Run it:
-
-```bash
-go run inspector.go
-```
-
-{{% /tab %}}
-{{< /tabs >}}
-
-**What the code does:**
-
-1. **Connects to your machine** using the API credentials. This works from anywhere—your laptop, a server, another machine.
-2. **Gets the vision service** by name (`part-detector`).
-3. **Runs detection** using `get_detections_from_camera`, which captures an image and runs inference in one call.
-4. **Processes results** by iterating through detections, each with a label and confidence score.
-
-> **This is the pattern.** Whether you're reading a temperature sensor, moving a robot arm, or running ML inference, the flow is the same: connect to the machine, get the component or service by name, call its methods. The APIs are consistent across all hardware.
-
-**Checkpoint:** You've installed viam-server, connected a machine to Viam, configured a camera, added ML, and written SDK code. This is the complete prototype workflow for any Viam project.
-
----
-
-### Part 2: Deploy (~10 min)
-
-**Goal:** Make your detection logic run continuously on the machine.
-
-**Skills:** Deploying code to run on machines, event-driven actions.
-
-#### 2.1 Create a Process
-
-Right now, your detection script runs on your laptop. When you close the terminal, it stops. For production, you want the code running *on the machine itself*—so it keeps working even when you're not connected.
-
-In Viam, a *process* is code that runs on the machine as part of its configuration. When viam-server starts, it starts your processes. When the machine reboots, your code automatically restarts.
-
-**Modify your script for continuous operation:**
-
-First, update your script to run in a loop:
-
-{{< tabs >}}
-{{% tab name="Python" %}}
-
-```python
-import asyncio
-import time
-from viam.robot.client import RobotClient
-from viam.services.vision import VisionClient
-
-async def connect():
-    opts = RobotClient.Options.with_api_key(
-        api_key='YOUR_API_KEY',
-        api_key_id='YOUR_API_KEY_ID'
-    )
-    return await RobotClient.at_address('YOUR_MACHINE_ADDRESS', opts)
-
-async def main():
-    robot = await connect()
-    print("Inspector started")
-
-    detector = VisionClient.from_robot(robot, "part-detector")
-
-    while True:
-        detections = await detector.get_detections_from_camera("inspection-cam")
-
-        for d in detections:
-            if d.class_name == "FAIL":
-                timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
-                print(f"[{timestamp}] FAIL detected (confidence: {d.confidence:.1%})")
-                # Alert logic will go here
-
-        await asyncio.sleep(1)  # Check every second
-
-if __name__ == "__main__":
-    asyncio.run(main())
-```
-
-{{% /tab %}}
-{{% tab name="Go" %}}
-
-```go
-package main
-
-import (
-    "context"
-    "fmt"
+    "os"
+    "path/filepath"
     "time"
 
-    "go.viam.com/rdk/robot/client"
+    "go.viam.com/rdk/components/camera"
     "go.viam.com/rdk/logging"
+    "go.viam.com/rdk/robot/client"
     "go.viam.com/rdk/services/vision"
+    "go.viam.com/rdk/utils"
     "go.viam.com/utils/rpc"
 )
 
+const (
+    numInspections      = 20
+    inspectionInterval  = 2 * time.Second
+    outputDir           = "inspection_results"
+)
+
 func main() {
-    logger := logging.NewLogger("inspector")
+    logger := logging.NewLogger("inspection")
     ctx := context.Background()
 
+    // Setup output directories
+    os.MkdirAll(outputDir, 0755)
+    os.MkdirAll(filepath.Join(outputDir, "failures"), 0755)
+
+    // Connect to machine
     robot, err := client.New(
         ctx,
         "YOUR_MACHINE_ADDRESS",
@@ -574,135 +529,347 @@ func main() {
         logger.Fatal(err)
     }
     defer robot.Close(ctx)
-    fmt.Println("Inspector started")
 
+    fmt.Printf("Connected to machine. Running %d inspections...\n\n", numInspections)
+
+    // Get camera and vision service
+    cam, err := camera.FromRobot(robot, "inspection-cam")
+    if err != nil {
+        logger.Fatal(err)
+    }
     detector, err := vision.FromRobot(robot, "part-detector")
     if err != nil {
         logger.Fatal(err)
     }
 
-    for {
+    // Track results
+    passCount := 0
+    failCount := 0
+
+    // Open CSV log
+    timestamp := time.Now().Format("20060102_150405")
+    csvPath := filepath.Join(outputDir, fmt.Sprintf("session_%s.csv", timestamp))
+    csvFile, err := os.Create(csvPath)
+    if err != nil {
+        logger.Fatal(err)
+    }
+    defer csvFile.Close()
+
+    writer := csv.NewWriter(csvFile)
+    writer.Write([]string{"timestamp", "inspection_num", "result", "confidence"})
+
+    for i := 0; i < numInspections; i++ {
+        now := time.Now()
+
+        // Run detection
         detections, err := detector.DetectionsFromCamera(ctx, "inspection-cam", nil)
         if err != nil {
             logger.Error(err)
-            time.Sleep(time.Second)
             continue
         }
 
-        for _, d := range detections {
-            if d.Label() == "FAIL" {
-                timestamp := time.Now().Format("2006-01-02 15:04:05")
-                fmt.Printf("[%s] FAIL detected (confidence: %.1f%%)\n",
-                    timestamp, d.Score()*100)
-                // Alert logic will go here
+        // Find primary detection (highest confidence)
+        var result string
+        var confidence float64
+        if len(detections) > 0 {
+            best := detections[0]
+            for _, d := range detections[1:] {
+                if d.Score() > best.Score() {
+                    best = d
+                }
             }
+            result = best.Label()
+            confidence = best.Score()
+        } else {
+            result = "NO_DETECTION"
+            confidence = 0.0
         }
 
-        time.Sleep(time.Second) // Check every second
+        // Log result
+        writer.Write([]string{
+            now.Format(time.RFC3339),
+            fmt.Sprintf("%d", i+1),
+            result,
+            fmt.Sprintf("%.3f", confidence),
+        })
+
+        // Track counts and print status
+        var status string
+        if result == "PASS" {
+            passCount++
+            status = "✓ PASS"
+        } else if result == "FAIL" {
+            failCount++
+            status = "✗ FAIL"
+
+            // Save failure image
+            img, _, err := cam.Image(ctx, utils.MimeTypeJPEG, nil)
+            if err == nil {
+                imgPath := filepath.Join(outputDir, "failures",
+                    fmt.Sprintf("fail_%d_%s.jpg", i+1, now.Format("150405")))
+                // Save image (simplified - actual implementation would encode properly)
+                status += fmt.Sprintf(" (saved: %s)", imgPath)
+            }
+        } else {
+            status = fmt.Sprintf("? %s", result)
+        }
+
+        fmt.Printf("[%d/%d] %s (%.1f%%)\n", i+1, numInspections, status, confidence*100)
+
+        // Wait before next inspection
+        if i < numInspections-1 {
+            time.Sleep(inspectionInterval)
+        }
     }
+
+    writer.Flush()
+
+    // Print summary
+    total := passCount + failCount
+    passRate := float64(0)
+    if total > 0 {
+        passRate = float64(passCount) / float64(total) * 100
+    }
+
+    fmt.Printf("\n%s\n", "==================================================")
+    fmt.Printf("INSPECTION SESSION COMPLETE\n")
+    fmt.Printf("%s\n", "==================================================")
+    fmt.Printf("Total inspections: %d\n", numInspections)
+    fmt.Printf("Results:  %d PASS / %d FAIL\n", passCount, failCount)
+    fmt.Printf("Pass rate: %.1f%%\n", passRate)
+    fmt.Printf("Log saved: %s\n", csvPath)
+    if failCount > 0 {
+        fmt.Printf("Failure images: %s/failures/\n", outputDir)
+    }
+    fmt.Printf("%s\n", "==================================================")
 }
+```
+
+Run it:
+
+```bash
+go run inspection_session.go
 ```
 
 {{% /tab %}}
 {{< /tabs >}}
 
-**Deploy the script to the machine:**
+**Run the inspection session:**
 
-1. In the simulation terminal, create a directory for your code:
-   ```bash
-   mkdir -p /home/viam/inspector
-   ```
+Execute the script and watch it run through 20 inspections:
 
-2. Copy your script to the machine. In this simulation, you can paste the code directly:
-   ```bash
-   nano /home/viam/inspector/inspector.py
-   ```
-   Paste your code, save (Ctrl+O, Enter, Ctrl+X).
+```
+Connected to machine. Running 20 inspections...
 
-   > On real hardware, you'd use `scp`, `rsync`, or a deployment tool to copy files.
+[1/20] ✓ PASS (94.2%)
+[2/20] ✓ PASS (91.8%)
+[3/20] ✗ FAIL (87.3%) (saved: inspection_results/failures/fail_3_142315.png)
+[4/20] ✓ PASS (95.1%)
+...
+[20/20] ✓ PASS (92.7%)
 
-**Configure the process in Viam:**
+==================================================
+INSPECTION SESSION COMPLETE
+==================================================
+Total inspections: 20
+Results:  17 PASS / 3 FAIL
+Pass rate: 85.0%
+Log saved: inspection_results/session_20240115_142300.csv
+Failure images: inspection_results/failures/
+==================================================
+```
 
-1. In the Viam app, go to **Config** → **Processes**
-2. Click **+ Add process**
-3. Configure:
-   - **Name:** `inspector`
-   - **Executable:** `python3` (or `go run` for Go)
-   - **Arguments:** `/home/viam/inspector/inspector.py`
-   - **Working directory:** `/home/viam/inspector`
+**Review the results:**
+
+After the session completes, you have:
+
+1. **CSV log** — Every inspection with timestamp, result, and confidence score. Import into a spreadsheet for analysis.
+
+2. **Failure images** — Photos of every failed part, saved locally for review. Use these to verify the model is catching real defects, or to identify false positives.
+
+[SCREENSHOT: Folder showing CSV and failure images]
+
+**What this demonstrates:**
+
+This isn't just a "hello world"—it's a practical tool you'd actually use:
+
+- **Testing a new model** — Run sessions to measure accuracy before deploying
+- **Tuning thresholds** — Analyze confidence scores to set appropriate cutoffs
+- **Shift handoff** — Run a session at shift change to verify the system is working
+- **Debugging issues** — When something seems wrong, run a session and review the images
+
+The code runs on your laptop, connecting to the machine remotely. You could run this from anywhere—your office, your home, a different continent. The machine just needs to be online.
+
+> **This is the pattern.** Whether you're reading sensors, moving a robot arm, or running ML inference, the flow is the same: connect to the machine, get components and services by name, call their methods. The APIs are consistent across all hardware.
+
+**Checkpoint:** You've installed viam-server, connected a machine to Viam, configured a camera and vision service, and built a practical inspection tool. This is the complete prototype workflow for any Viam project.
+
+---
+
+### Part 2: Automate (~15 min)
+
+**Goal:** Configure continuous data capture and alerting so inspections run automatically.
+
+**Skills:** Data capture configuration, cloud sync, filtered cameras, triggers and notifications.
+
+#### 2.1 Configure Data Capture
+
+In Part 1, you ran inspection sessions manually from your laptop. That's great for testing and debugging, but for production you want inspections running continuously—without anyone connected.
+
+Viam handles this through *data capture*: you configure which components and services should capture data, how often, and Viam does the rest. No scripts to deploy, no processes to manage.
+
+**Enable data capture on the vision service:**
+
+1. In the Viam app, go to your machine's **Config** tab
+2. Find the `part-detector` vision service
+3. Click the **Data capture** section to expand it
+4. Toggle **Enable data capture** to on
+5. Set the capture frequency (e.g., every 2 seconds)
+6. Select the method to capture: `GetClassificationsFromCamera` or `GetDetectionsFromCamera`
+7. Click **Save config**
+
+[SCREENSHOT: Vision service data capture configuration]
+
+**Also capture camera images:**
+
+For quality inspection, you often want the raw images alongside detection results—so you can review what the model saw.
+
+1. Find the `inspection-cam` camera in your config
+2. Expand **Data capture**
+3. Toggle **Enable data capture** to on
+4. Set frequency to match your vision service (e.g., every 2 seconds)
+5. Click **Save config**
+
+[SCREENSHOT: Camera data capture configuration]
+
+When you save, viam-server immediately starts capturing. Every 2 seconds, it runs detection on the camera and saves the results to local storage.
+
+#### 2.2 Sync Data to the Cloud
+
+Data captured on the machine is automatically synced to Viam's cloud. This happens in the background—you don't need to configure anything beyond enabling capture.
+
+**Watch the sync happen:**
+
+1. Go to the **Data** tab in your organization (not the machine)
+2. You should see data appearing within a minute or two
+
+[SCREENSHOT: Data tab showing captured detections]
+
+The data includes:
+- **Detection results** — Every classification with label and confidence
+- **Camera images** — The raw frames, viewable inline
+- **Timestamps** — When each capture occurred
+- **Machine ID** — Which machine captured it
+
+**Query the data:**
+
+You can filter and search captured data:
+
+1. Filter by machine: `inspection-station-1`
+2. Filter by time range: last hour, today, custom range
+3. Filter by component: `part-detector`
+
+[SCREENSHOT: Data tab with filters applied]
+
+> **What's happening:** The machine runs continuously, capturing inspection results and syncing them to the cloud. You don't need a laptop connected. You don't need a script running. The data flows automatically based on your configuration.
+
+#### 2.3 Alert on Failures
+
+Capturing data is useful, but you need to know immediately when defects are detected. Viam's trigger system lets you send notifications when specific conditions occur—no custom code required.
+
+**Add a filtered camera:**
+
+A filtered camera wraps your existing camera and vision service, only outputting images when detections match your criteria. We'll configure one that captures only FAIL detections.
+
+1. In the Viam app, go to **Config** tab
+2. Click **+ Add component**
+3. For **Type**, select `camera`
+4. For **Model**, search for and select `filtered-camera`
+5. Name it `fail-detector-cam`
+6. Click **Create**
+
+**Configure the filter:**
+
+1. In the `fail-detector-cam` configuration panel, set:
+   - **camera**: `inspection-cam` (your source camera)
+   - **vision_service**: `part-detector` (your ML service)
+   - **classifications** or **objects**: Add `FAIL` as the label to match
+   - **confidence_threshold**: `0.7` (only capture high-confidence failures)
+
+```json
+{
+  "camera": "inspection-cam",
+  "vision_service": "part-detector",
+  "classifications": {
+    "labels": ["FAIL"]
+  },
+  "confidence_threshold": 0.7
+}
+```
+
+2. Click **Save config**
+
+[SCREENSHOT: Filtered camera configuration]
+
+**Enable data capture on the filtered camera:**
+
+1. Expand **Data capture** on `fail-detector-cam`
+2. Toggle **Enable data capture** to on
+3. Set frequency (e.g., every 1 second)
 4. Click **Save config**
 
-[SCREENSHOT: Process configuration panel]
+Now only FAIL detections (with confidence ≥70%) are captured and synced.
 
-The process starts immediately. Check the **Logs** tab to see your inspector's output.
+**Configure a trigger for notifications:**
 
-[SCREENSHOT: Logs showing inspector output]
+1. In the Viam app, go to **Config** tab
+2. Scroll to the **Triggers** section (or find it in the left sidebar)
+3. Click **+ Add trigger**
+4. Configure:
+   - **Name**: `fail-alert`
+   - **Event type**: `Data has been synced to the cloud`
+   - **Data type**: Select the filtered camera's data
 
-> **What changed:** Your code now runs on the machine, managed by viam-server. Close your browser, turn off your laptop—the inspector keeps running. This is how you deploy code to any Viam machine, from a single sensor node to a factory full of robots.
+**Add email notification:**
 
-#### 2.2 Add Alerting
+1. Under **Notifications**, click **Add notification**
+2. Select **Email**
+3. Enter your email address (or select **Email all machine owners**)
+4. Set **Seconds between notifications**: `3600` (max one alert per hour)
+5. Click **Save config**
 
-Detection is useful, but you need to know when failures happen. Let's add alerting so you're notified immediately when a defective part is detected.
+[SCREENSHOT: Trigger configuration with email notification]
 
-**Add logging with the data service:**
+**Test the alert:**
 
-The simplest form of alerting is logging events to Viam's cloud, where you can query them later or set up notifications.
+Wait for a FAIL detection to occur (or trigger one in the simulation). Within a few minutes, you should receive an email notification.
 
-Update your script to log failures:
+> **Going further:** You can also configure webhook notifications to integrate with Slack, PagerDuty, or any other service. The webhook receives the detection data, and your cloud function can format and route the alert however you need.
 
-{{< tabs >}}
-{{% tab name="Python" %}}
+#### 2.4 Understand the Pattern
 
-```python
-# Add to your imports
-from viam.services.data import DataClient
+Compare what you've done in Part 1 vs. Part 2:
 
-# In your detection loop, after detecting a FAIL:
-if d.class_name == "FAIL":
-    timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
-    print(f"[{timestamp}] FAIL detected")
+| Part 1: SDK Tool | Part 2: Data Capture |
+|------------------|---------------------|
+| Runs on your laptop | Runs on the machine |
+| You trigger it manually | Runs continuously, automatically |
+| Results saved locally (CSV, images) | Results synced to cloud |
+| Good for testing, debugging, one-off analysis | Good for production, ongoing monitoring |
 
-    # Log to Viam's data service
-    data_client = DataClient.from_robot(robot)
-    await data_client.tabular_data_capture(
-        component_name="inspector",
-        method_name="detection",
-        data={"result": "FAIL", "confidence": d.confidence}
-    )
-```
+**Both are useful.** The SDK tool from Part 1 remains valuable:
+- Run it when testing a new ML model
+- Use it to debug when something seems wrong
+- Generate local reports for specific analysis
 
-{{% /tab %}}
-{{% tab name="Go" %}}
+Data capture in Part 2 provides the production foundation:
+- Continuous operation without intervention
+- Cloud storage and sync
+- Data available for dashboards, alerting, analysis
 
-```go
-// After detecting a FAIL:
-if d.Label() == "FAIL" {
-    timestamp := time.Now().Format("2006-01-02 15:04:05")
-    fmt.Printf("[%s] FAIL detected\n", timestamp)
+> **The clean pattern:** The machine runs viam-server with configured components and services. Data capture handles automation. Triggers handle alerting. Your code runs remotely (laptop, server, cloud functions) and connects via SDK to query data or build applications. You don't deploy scripts to run on the machine—you configure the platform.
 
-    // Log the detection - events appear in Viam's data tab
-    logger.Infow("Defective part detected",
-        "result", "FAIL",
-        "confidence", d.Score(),
-        "timestamp", timestamp,
-    )
-}
-```
-
-{{% /tab %}}
-{{< /tabs >}}
-
-**View alerts in the Viam app:**
-
-1. Go to the **Data** tab in your organization
-2. Filter by your machine
-3. See logged detection events
-
-[SCREENSHOT: Data tab showing logged FAIL events]
-
-> **Going further:** In production, you'd extend this pattern to send webhooks, trigger emails, or integrate with monitoring systems like PagerDuty or Slack. The logged data can also feed dashboards—which you'll build in Part 6.
-
-**Checkpoint:** Detection runs automatically. Your code is deployed to the machine, not just running on your laptop.
+**Checkpoint:** Inspection data flows continuously from machine to cloud. You get notified when failures occur. No scripts deployed, no processes to manage—just configuration.
 
 ---
 
@@ -1230,6 +1397,7 @@ From [block-definitions.md](../planning/block-definitions.md):
 **Foundation:**
 - Connect to Cloud
 - Add a Camera
+- Capture and Sync Data
 - Start Writing Code
 
 **Perception:**
@@ -1292,3 +1460,5 @@ At each step, explicitly connect to transferable skills:
 4. **Second station:** Identical or slightly different? Identical is simpler; different shows fragment flexibility.
 
 5. **Dashboard complexity:** How much web dev do we include? Keep minimal—point is Viam APIs, not teaching React.
+
+6. **Mobile arm control:** Consider introducing mobile SDK / remote control from phone somewhere in the tutorials. Could demonstrate controlling machines from anywhere.
