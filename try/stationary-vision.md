@@ -883,7 +883,7 @@ Data capture in Part 2 provides the production foundation:
 
 You have one working inspection station. Now imagine you need 10 more—or 100. Manually copying configuration to each machine would be tedious and error-prone.
 
-Viam solves this with *fragments*: reusable configuration blocks that can be applied to any machine. Think of a fragment as a template. Define your camera, vision service, and inspector process once, then apply that template to as many machines as you need.
+Viam solves this with *fragments*: reusable configuration blocks that can be applied to any machine. Think of a fragment as a template. Define your camera, vision service, data capture, and triggers once, then apply that template to as many machines as you need.
 
 **Create a fragment from your configuration:**
 
@@ -910,7 +910,7 @@ Now you'll copy the configuration from your machine into the fragment.
 
 [SCREENSHOT: Fragment editor with pasted configuration]
 
-Your fragment now contains everything: the camera component, ML model service, vision service, and inspector process. Any machine with this fragment applied will have this exact setup.
+Your fragment now contains everything: the camera, filtered camera, ML model service, vision service, data capture settings, and trigger configuration. Any machine with this fragment applied will have this exact setup.
 
 > **Fragments are powerful.** When you update a fragment, every machine using it receives the update automatically. Change a detection threshold once, and 100 stations update. This is how you manage configuration at scale.
 
@@ -950,7 +950,7 @@ Instead of manually configuring everything, you'll apply your fragment.
 
 [SCREENSHOT: Adding fragment to machine]
 
-Within seconds, the machine reloads its configuration. It now has the camera, vision service, and inspector process—all from the fragment.
+Within seconds, the machine reloads its configuration. It now has the camera, vision service, data capture, and alerting—all from the fragment.
 
 **Verify it works:**
 
@@ -1015,12 +1015,12 @@ One of the most powerful aspects of fragments is pushing updates. Let's change a
 
 **Modify the fragment:**
 
-Suppose you want to adjust how often the inspector runs. Instead of checking every 1 second, you want every 2 seconds.
+Suppose you want to adjust the confidence threshold for failure alerts. Instead of alerting at 70% confidence, you want 80% to reduce false positives.
 
 1. Go to **Fragments** in the left sidebar
 2. Open your `inspection-station` fragment
-3. Find the inspector process configuration
-4. Change the relevant setting (or modify the script's sleep interval)
+3. Find the `fail-detector-cam` (filtered camera) configuration
+4. Change `confidence_threshold` from `0.7` to `0.8`
 5. Click **Save**
 
 [SCREENSHOT: Editing fragment configuration]
@@ -1038,10 +1038,10 @@ You didn't SSH into either machine. You didn't run any deployment commands. You 
 **Verify the change:**
 
 1. Click into `inspection-station-1`
-2. Check the **Logs** tab
-3. Confirm the inspector is now running at the new interval
+2. Go to **Config** tab and check the filtered camera
+3. Confirm the confidence threshold is now 0.8
 
-[SCREENSHOT: Logs showing updated inspection interval]
+[SCREENSHOT: Updated confidence threshold in config]
 
 > **This is fleet management.** Need to update an ML model across 50 machines? Update the fragment. Need to roll back a bad change? Revert the fragment. The machines sync automatically. This same pattern scales from 2 machines to 2,000.
 
@@ -1073,11 +1073,11 @@ This simulates what happens when a camera lens gets dirty or lighting conditions
 
 Within a few seconds, you should see signs of trouble:
 
-1. **Logs:** The inspector might report unusual confidence scores or errors
-2. **Data:** Detection results become inconsistent
-3. **Alerts:** If you configured alerting, you might see unexpected patterns
+1. **Data:** Detection results become inconsistent—lower confidence scores, missed detections
+2. **Alerts:** You might receive unexpected alerts (or stop receiving expected ones)
+3. **Logs:** Error messages or warnings from the vision service
 
-In a real deployment, this is how you'd first learn about a problem—through monitoring data, not a phone call from the factory floor.
+In a real deployment, this is how you'd first learn about a problem—through monitoring data and alerts, not a phone call from the factory floor.
 
 #### 5.2 Diagnose Remotely
 
@@ -1227,10 +1227,10 @@ Create a file called `dashboard.html`:
                 API_KEY
             );
 
-            // Query inspection results from the last 24 hours
+            // Query detection results from the last 24 hours
             const results = await dataClient.tabularDataByFilter({
                 filter: {
-                    componentName: 'inspector',
+                    componentName: 'part-detector',
                     interval: {
                         start: new Date(Date.now() - 24 * 60 * 60 * 1000),
                         end: new Date()
@@ -1240,7 +1240,9 @@ Create a file called `dashboard.html`:
 
             // Calculate stats
             const total = results.length;
-            const fails = results.filter(r => r.data.result === 'FAIL').length;
+            const fails = results.filter(r =>
+                r.data.detections?.some(d => d.class_name === 'FAIL')
+            ).length;
             const passRate = total > 0 ? ((total - fails) / total * 100).toFixed(1) : 0;
 
             // Update UI
@@ -1379,7 +1381,8 @@ These all use the same patterns: configure components, add services, write logic
 |-----------|------|-------|
 | `inspection-cam` | camera | Gazebo RGB camera |
 | `part-detector` | vision | ML model service |
-| `inspector` | process | Detection + alerting script |
+| `fail-detector-cam` | camera (filtered) | Captures only FAIL detections |
+| `fail-alert` | trigger | Email notification on failures |
 
 ### Simulated Events
 
