@@ -19,7 +19,7 @@ These browser-based simulations let you experience the full Viam platform withou
 
 ## Choose Your Work Cell
 
-### [Stationary Vision](./stationary-vision.md) 🔴
+### [Stationary Vision](./stationary-vision.md) 🟡
 *Camera + Compute*
 
 A vision system that monitors, inspects, and alerts. Perfect for quality inspection, monitoring, and counting applications.

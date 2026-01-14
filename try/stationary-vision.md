@@ -42,7 +42,7 @@ By the end of this tutorial, you'll understand how to:
 | Configure components | Add hardware to a Viam machine | Any sensor, actuator, or peripheral |
 | Add services | Attach capabilities like ML inference | Vision, navigation, motion planning |
 | Write control logic | Code that reads sensors and makes decisions | Any automation task |
-| Deploy code to machines | Run your logic on the machine itself | All production deployments |
+| Configure automation | Set up data capture, triggers, and alerts | Production monitoring |
 | Scale with fragments | Reuse configurations across machines | Any fleet, any size |
 | Manage fleets | Monitor, update, and debug remotely | Production operations |
 | Build customer apps | Create products on top of Viam | Shipping to your customers |
@@ -185,7 +185,7 @@ In Viam, a component is any piece of hardware: cameras, motors, arms, sensors, g
 1. In the Viam app, click the **Config** tab
 2. Click **+ Add component**
 3. For **Type**, select `camera`
-4. For **Model**, select `webcam`
+4. For **Model**, select `webcam` (this is the *driver* model—the software that knows how to talk to this type of camera)
 
    > The simulated camera presents itself as a standard webcam to the operating system—just like a USB camera would on a real machine.
 
@@ -263,9 +263,9 @@ First, you need an ML model. We've provided a pre-trained model for this tutoria
 **Configure the model location:**
 
 1. In the `part-classifier` configuration panel, find the **model_path** field
-2. Enter: `/path/to/part-classifier.tflite`
+2. Enter: `/opt/viam/models/part-classifier.tflite`
 
-   > This model file is pre-installed in the simulation. On real hardware, you'd deploy your own trained model.
+   > This model file is pre-installed in the simulation environment. On real hardware, you'd deploy your own trained model using Viam's ML model registry.
 
 3. Click **Save config**
 
@@ -301,6 +301,8 @@ You should see the camera image with detection results—bounding boxes around d
 [SCREENSHOT: Vision service showing detection results with bounding boxes]
 
 > **What you've built:** A complete ML inference pipeline. The vision service grabs an image from the camera, runs it through the TensorFlow Lite model, and returns structured detection results. This same pattern works for any ML task—object detection, classification, segmentation—you just swap the model.
+
+You've now configured a working inspection system entirely through the Viam app—no code yet. Next, you'll write code to interact with this system programmatically.
 
 #### 1.7 Run an Inspection Session
 
@@ -1510,7 +1512,8 @@ Document and provide explicit guidance for:
 - [ ] Account creation flow
 - [ ] Finding the camera panel in the app
 - [ ] Vision service configuration steps
-- [ ] Process configuration location
+- [ ] Data capture configuration UI
+- [ ] Trigger configuration UI
 - [ ] Fragment creation UI
 - [ ] Fleet view navigation
 
@@ -1536,10 +1539,10 @@ At each step, explicitly connect to transferable skills:
 
 2. **ML model:** Pre-trained (provided) vs. walk through training? Pre-trained keeps focus on platform skills.
 
-3. **Alert mechanism:** What works without user setup? In-app notification? Logged event?
+3. ~~**Alert mechanism:** What works without user setup?~~ **Resolved:** Using filtered camera + trigger with email notification.
 
 4. **Second station:** Identical or slightly different? Identical is simpler; different shows fragment flexibility.
 
 5. **Dashboard complexity:** How much web dev do we include? Keep minimal—point is Viam APIs, not teaching React.
 
-6. **Mobile arm control:** Consider introducing mobile SDK / remote control from phone somewhere in the tutorials. Could demonstrate controlling machines from anywhere.
+6. **Mobile app control:** Consider introducing mobile SDK / remote control from phone somewhere in the tutorials. Could demonstrate controlling machines from anywhere.
