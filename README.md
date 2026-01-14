@@ -147,6 +147,7 @@ These are our working documents, not user-facing content:
 - [Content Guidelines](./planning/content-guidelines.md) 🟡
 - [Hardware Recommendations](./planning/hardware-recommendations.md) 🔴
 - [Simulation Requirements](./planning/simulation-requirements.md) 🟡
+- [Data Egress Patterns](./planning/data-egress-patterns.md) 🔴
 
 ---
 
@@ -162,5 +163,5 @@ These are our working documents, not user-facing content:
 | Maintain | 6 | 6 | 0 | 0 |
 | Reference | 4 | 4 | 0 | 0 |
 | Work Cells | 4 | 4 | 0 | 0 |
-| Planning | 7 | 1 | 4 | 2 |
-| **Total** | **70** | **62** | **6** | **2** |
+| Planning | 8 | 2 | 4 | 2 |
+| **Total** | **71** | **63** | **6** | **2** |
