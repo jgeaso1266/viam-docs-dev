@@ -30,51 +30,14 @@ This is the living navigation for the new Viam documentation structure. Click an
 ## [Build](./build/INDEX.md) 🟡
 *Task-oriented blocks — modular tutorials you compose*
 
-### [Foundation](./build/foundation/INDEX.md) 🔴
-- [Connect to Cloud](./build/foundation/connect-to-cloud.md) 🔴
-- [Add a Camera](./build/foundation/add-camera.md) 🔴
-- [Capture and Sync Data](./build/foundation/capture-sync-data.md) 🔴
-- [Basic Filtering](./build/foundation/basic-filtering.md) 🔴
-- [Configure Data Pipelines](./build/foundation/configure-data-pipelines.md) 🔴
-- [Sync Data to Your Database](./build/foundation/sync-data-to-your-database.md) 🔴
-- [Start Writing Code](./build/foundation/start-writing-code.md) 🔴
+- [Foundation](./build/foundation/INDEX.md) — 7 blocks 🔴
+- [Perception](./build/perception/INDEX.md) — 6 blocks 🔴
+- [Stationary Vision](./build/stationary-vision/INDEX.md) — 4 blocks 🔴
+- [Mobile Base](./build/mobile-base/INDEX.md) — 6 blocks 🔴
+- [Arm + Manipulation](./build/arm-manipulation/INDEX.md) — 6 blocks 🔴
+- [Integration](./build/integration/INDEX.md) — 5 blocks 🔴
 
-### [Perception](./build/perception/INDEX.md) 🔴
-- [Add Computer Vision](./build/perception/add-computer-vision.md) 🔴
-- [Detect Objects (2D)](./build/perception/detect-objects-2d.md) 🔴
-- [Classify Objects](./build/perception/classify-objects.md) 🔴
-- [Track Objects Across Frames](./build/perception/track-objects.md) 🔴
-- [Measure Depth](./build/perception/measure-depth.md) 🔴
-- [Localize Objects in 3D](./build/perception/localize-3d.md) 🔴
-
-### [Stationary Vision](./build/stationary-vision/INDEX.md) 🔴
-- [Trigger on Detection](./build/stationary-vision/trigger-on-detection.md) 🔴
-- [Count Objects](./build/stationary-vision/count-objects.md) 🔴
-- [Inspect for Defects](./build/stationary-vision/inspect-defects.md) 🔴
-- [Monitor Over Time](./build/stationary-vision/monitor-over-time.md) 🔴
-
-### [Mobile Base](./build/mobile-base/INDEX.md) 🔴
-- [Control Motors](./build/mobile-base/control-motors.md) 🔴
-- [Read Odometry](./build/mobile-base/read-odometry.md) 🔴
-- [Build a Map](./build/mobile-base/build-map.md) 🔴
-- [Navigate to Waypoint](./build/mobile-base/navigate-waypoint.md) 🔴
-- [Avoid Obstacles](./build/mobile-base/avoid-obstacles.md) 🔴
-- [Follow a Patrol Route](./build/mobile-base/patrol-route.md) 🔴
-
-### [Arm + Manipulation](./build/arm-manipulation/INDEX.md) 🔴
-- [Move Joints](./build/arm-manipulation/move-joints.md) 🔴
-- [Control Gripper](./build/arm-manipulation/control-gripper.md) 🔴
-- [Move to Pose](./build/arm-manipulation/move-to-pose.md) 🔴
-- [Pick an Object](./build/arm-manipulation/pick-object.md) 🔴
-- [Place an Object](./build/arm-manipulation/place-object.md) 🔴
-- [Visual Servoing](./build/arm-manipulation/visual-servoing.md) 🔴
-
-### [Integration](./build/integration/INDEX.md) 🔴
-- [Detect While Moving](./build/integration/detect-while-moving.md) 🔴
-- [Navigate to Detected Object](./build/integration/navigate-to-detected.md) 🔴
-- [Pick from Bin](./build/integration/pick-from-bin.md) 🔴
-- [Mobile Pick-and-Place](./build/integration/mobile-pick-place.md) 🔴
-- [Multi-step Task Sequence](./build/integration/multi-step-task.md) 🔴
+See [Block Definitions](./planning/block-definitions.md) for full block details.
 
 ---
 

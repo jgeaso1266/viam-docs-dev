@@ -20,6 +20,8 @@ Start here. Every project needs these basics.
 - Add a Camera
 - Capture and Sync Data
 - Basic Filtering
+- Configure Data Pipelines
+- Sync Data to Your Database
 - Start Writing Code
 
 ### [Perception](./perception/INDEX.md) 🔴
