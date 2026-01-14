@@ -310,22 +310,10 @@ This code runs on your laptop (not on the machine). It connects to the machine o
 
 Viam provides SDKs for Python, Go, TypeScript, C++, and Flutter. We'll use Python and Go here—choose whichever you're more comfortable with.
 
-**Get your connection credentials:**
-
-1. In the Viam app, click the **Code sample** tab
-2. Select your language (Python or Go)
-3. Copy the connection code snippet
-
-This snippet contains your machine's address and API key. Keep these credentials secure—they grant full access to your machine.
-
-[SCREENSHOT: Code sample tab showing connection snippet]
-
 **Set up your development environment:**
 
 {{< tabs >}}
 {{% tab name="Python" %}}
-
-Create a new directory and set up a virtual environment:
 
 ```bash
 mkdir inspection-session && cd inspection-session
@@ -336,8 +324,6 @@ pip install viam-sdk pillow
 
 {{% /tab %}}
 {{% tab name="Go" %}}
-
-Create a new Go module:
 
 ```bash
 mkdir inspection-session && cd inspection-session
@@ -350,15 +336,253 @@ go get go.viam.com/rdk/services/vision
 {{% /tab %}}
 {{< /tabs >}}
 
-**Write the inspection session script:**
+Create a file called `inspection_session.py` (or `main.go` for Go). We'll build it step by step.
 
-This script will:
-- Run a specified number of inspections
-- Log each result to a CSV file
-- Save images of any failures for review
-- Print a summary when complete
+##### Step 1: Connect to your machine
 
-Create a file called `inspection_session.py` (or `inspection_session.go`):
+First, get your connection credentials:
+
+1. In the Viam app, click the **Code sample** tab on your machine's page
+2. Select your language (Python or Go)
+3. Copy the connection snippet
+
+[SCREENSHOT: Code sample tab showing connection snippet]
+
+The snippet contains your machine's address and API credentials. Add the connection code to your file:
+
+{{< tabs >}}
+{{% tab name="Python" %}}
+
+```python
+import asyncio
+from viam.robot.client import RobotClient
+
+async def connect():
+    opts = RobotClient.Options.with_api_key(
+        api_key='YOUR_API_KEY',        # Replace with your key
+        api_key_id='YOUR_API_KEY_ID'   # Replace with your key ID
+    )
+    return await RobotClient.at_address('YOUR_MACHINE_ADDRESS', opts)
+
+async def main():
+    robot = await connect()
+    print("Connected!")
+    await robot.close()
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+{{% /tab %}}
+{{% tab name="Go" %}}
+
+```go
+package main
+
+import (
+    "context"
+    "fmt"
+    "go.viam.com/rdk/logging"
+    "go.viam.com/rdk/robot/client"
+    "go.viam.com/utils/rpc"
+)
+
+func main() {
+    ctx := context.Background()
+    logger := logging.NewLogger("inspection")
+
+    robot, err := client.New(ctx,
+        "YOUR_MACHINE_ADDRESS",  // Replace with your address
+        logger,
+        client.WithDialOptions(rpc.WithEntityCredentials(
+            "YOUR_API_KEY_ID",   // Replace with your key ID
+            rpc.Credentials{
+                Type:    rpc.CredentialsTypeAPIKey,
+                Payload: "YOUR_API_KEY",  // Replace with your key
+            },
+        )),
+    )
+    if err != nil {
+        logger.Fatal(err)
+    }
+    defer robot.Close(ctx)
+    fmt.Println("Connected!")
+}
+```
+
+{{% /tab %}}
+{{< /tabs >}}
+
+Run it to verify the connection works. You should see "Connected!" printed.
+
+`RobotClient` is your entry point to the machine. Once connected, you can access any component or service configured on that machine—from anywhere with network access.
+
+##### Step 2: Get components and services
+
+With a connection established, you can get references to the camera and vision service by name:
+
+{{< tabs >}}
+{{% tab name="Python" %}}
+
+```python
+from viam.components.camera import Camera
+from viam.services.vision import VisionClient
+
+async def main():
+    robot = await connect()
+
+    # Get components/services by the names you configured in the Viam app
+    camera = Camera.from_robot(robot, "inspection-cam")
+    detector = VisionClient.from_robot(robot, "part-detector")
+
+    print(f"Got camera: {camera.name}")
+    print(f"Got detector: {detector.name}")
+
+    await robot.close()
+```
+
+{{% /tab %}}
+{{% tab name="Go" %}}
+
+```go
+import (
+    "go.viam.com/rdk/components/camera"
+    "go.viam.com/rdk/services/vision"
+)
+
+func main() {
+    // ... connection code ...
+
+    // Get components/services by the names you configured in the Viam app
+    cam, err := camera.FromRobot(robot, "inspection-cam")
+    if err != nil {
+        logger.Fatal(err)
+    }
+    detector, err := vision.FromRobot(robot, "part-detector")
+    if err != nil {
+        logger.Fatal(err)
+    }
+
+    fmt.Printf("Got camera: %s\n", cam.Name())
+    fmt.Printf("Got detector: %s\n", detector.Name())
+}
+```
+
+{{% /tab %}}
+{{< /tabs >}}
+
+The names `"inspection-cam"` and `"part-detector"` match what you configured in the Viam app. This pattern—getting resources by name—works for any component or service: motors, arms, sensors, navigation services, etc.
+
+##### Step 3: Run a detection
+
+Now let's run ML inference. The vision service's `get_detections_from_camera` method captures an image and runs the model in one call:
+
+{{< tabs >}}
+{{% tab name="Python" %}}
+
+```python
+async def main():
+    robot = await connect()
+    detector = VisionClient.from_robot(robot, "part-detector")
+
+    # Run detection - this captures an image and runs inference
+    detections = await detector.get_detections_from_camera("inspection-cam")
+
+    # Each detection has a label (class_name), confidence score, and bounding box
+    for d in detections:
+        print(f"Found: {d.class_name} ({d.confidence:.1%})")
+        print(f"  Bounding box: ({d.x_min}, {d.y_min}) to ({d.x_max}, {d.y_max})")
+
+    await robot.close()
+```
+
+{{% /tab %}}
+{{% tab name="Go" %}}
+
+```go
+func main() {
+    // ... connection code ...
+    detector, _ := vision.FromRobot(robot, "part-detector")
+
+    // Run detection - this captures an image and runs inference
+    detections, err := detector.DetectionsFromCamera(ctx, "inspection-cam", nil)
+    if err != nil {
+        logger.Fatal(err)
+    }
+
+    // Each detection has a label, confidence score, and bounding box
+    for _, d := range detections {
+        fmt.Printf("Found: %s (%.1f%%)\n", d.Label(), d.Score()*100)
+        box := d.BoundingBox()
+        fmt.Printf("  Bounding box: (%d, %d) to (%d, %d)\n",
+            box.Min.X, box.Min.Y, box.Max.X, box.Max.Y)
+    }
+}
+```
+
+{{% /tab %}}
+{{< /tabs >}}
+
+The response is a list of detections. Each detection includes:
+- **class_name/Label()** — What the model thinks it found (e.g., "PASS" or "FAIL")
+- **confidence/Score()** — How confident the model is (0.0 to 1.0)
+- **Bounding box** — Where in the image the detection is located
+
+##### Step 4: Get an image from the camera
+
+When a failure is detected, you'll want to save the image for review. The camera's `get_image` method returns the current frame:
+
+{{< tabs >}}
+{{% tab name="Python" %}}
+
+```python
+async def main():
+    robot = await connect()
+    camera = Camera.from_robot(robot, "inspection-cam")
+
+    # Get the current image from the camera
+    image = await camera.get_image()
+
+    # The image is a PIL Image - you can save it directly
+    image.save("snapshot.png")
+    print(f"Saved image: {image.size[0]}x{image.size[1]} pixels")
+
+    await robot.close()
+```
+
+{{% /tab %}}
+{{% tab name="Go" %}}
+
+```go
+import (
+    "image/jpeg"
+    "os"
+)
+
+func main() {
+    // ... connection code ...
+    cam, _ := camera.FromRobot(robot, "inspection-cam")
+
+    // Get the current image from the camera
+    img, _, err := cam.Image(ctx, "", nil)
+    if err != nil {
+        logger.Fatal(err)
+    }
+
+    // Save the image
+    f, _ := os.Create("snapshot.jpg")
+    defer f.Close()
+    jpeg.Encode(f, img, nil)
+    fmt.Println("Saved snapshot.jpg")
+}
+```
+
+{{% /tab %}}
+{{< /tabs >}}
+
+##### Step 5: Build the complete inspection session
+
+Now let's combine these pieces into a practical tool that runs multiple inspections, logs results to CSV, and saves images of failures:
 
 {{< tabs >}}
 {{% tab name="Python" %}}
@@ -372,108 +596,60 @@ from viam.robot.client import RobotClient
 from viam.components.camera import Camera
 from viam.services.vision import VisionClient
 
-# Configuration
 NUM_INSPECTIONS = 20
-INSPECTION_INTERVAL = 2.0  # seconds between inspections
 OUTPUT_DIR = "inspection_results"
 
 async def connect():
     opts = RobotClient.Options.with_api_key(
-        # Replace with your credentials from the Code sample tab
         api_key='YOUR_API_KEY',
         api_key_id='YOUR_API_KEY_ID'
     )
     return await RobotClient.at_address('YOUR_MACHINE_ADDRESS', opts)
 
 async def main():
-    # Setup output directory
-    os.makedirs(OUTPUT_DIR, exist_ok=True)
     os.makedirs(f"{OUTPUT_DIR}/failures", exist_ok=True)
 
-    # Connect to machine
     robot = await connect()
-    print(f"Connected to machine. Running {NUM_INSPECTIONS} inspections...\n")
-
-    # Get camera and vision service
     camera = Camera.from_robot(robot, "inspection-cam")
     detector = VisionClient.from_robot(robot, "part-detector")
 
-    # Track results
-    results = []
-    pass_count = 0
-    fail_count = 0
-
-    # Open CSV log
+    pass_count, fail_count = 0, 0
     csv_path = f"{OUTPUT_DIR}/session_{datetime.now():%Y%m%d_%H%M%S}.csv"
-    with open(csv_path, 'w', newline='') as csvfile:
-        writer = csv.writer(csvfile)
-        writer.writerow(['timestamp', 'inspection_num', 'result', 'confidence'])
+
+    with open(csv_path, 'w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(['timestamp', 'result', 'confidence'])
 
         for i in range(NUM_INSPECTIONS):
-            timestamp = datetime.now()
-
-            # Run detection
             detections = await detector.get_detections_from_camera("inspection-cam")
 
-            # Find the primary detection (highest confidence)
             if detections:
-                detection = max(detections, key=lambda d: d.confidence)
-                result = detection.class_name
-                confidence = detection.confidence
+                best = max(detections, key=lambda d: d.confidence)
+                result, confidence = best.class_name, best.confidence
             else:
-                result = "NO_DETECTION"
-                confidence = 0.0
+                result, confidence = "NO_DETECTION", 0.0
 
-            # Log result
-            writer.writerow([timestamp.isoformat(), i + 1, result, f"{confidence:.3f}"])
+            writer.writerow([datetime.now().isoformat(), result, f"{confidence:.3f}"])
 
-            # Track counts
             if result == "PASS":
                 pass_count += 1
-                status = "✓ PASS"
             elif result == "FAIL":
                 fail_count += 1
-                status = "✗ FAIL"
-
-                # Save failure image for review
                 image = await camera.get_image()
-                image_path = f"{OUTPUT_DIR}/failures/fail_{i+1}_{timestamp:%H%M%S}.png"
-                image.save(image_path)
-                status += f" (saved: {image_path})"
-            else:
-                status = f"? {result}"
+                image.save(f"{OUTPUT_DIR}/failures/fail_{i+1}.png")
 
-            print(f"[{i+1}/{NUM_INSPECTIONS}] {status} ({confidence:.1%})")
-
-            # Wait before next inspection
-            if i < NUM_INSPECTIONS - 1:
-                await asyncio.sleep(INSPECTION_INTERVAL)
+            print(f"[{i+1}/{NUM_INSPECTIONS}] {result} ({confidence:.1%})")
+            await asyncio.sleep(2)
 
     await robot.close()
 
-    # Print summary
     total = pass_count + fail_count
-    pass_rate = (pass_count / total * 100) if total > 0 else 0
-
-    print(f"\n{'='*50}")
-    print(f"INSPECTION SESSION COMPLETE")
-    print(f"{'='*50}")
-    print(f"Total inspections: {NUM_INSPECTIONS}")
-    print(f"Results:  {pass_count} PASS / {fail_count} FAIL")
-    print(f"Pass rate: {pass_rate:.1f}%")
-    print(f"Log saved: {csv_path}")
-    if fail_count > 0:
-        print(f"Failure images: {OUTPUT_DIR}/failures/")
-    print(f"{'='*50}")
+    print(f"\nResults: {pass_count} PASS / {fail_count} FAIL")
+    print(f"Pass rate: {pass_count/total*100:.1f}%" if total else "No detections")
+    print(f"Log: {csv_path}")
 
 if __name__ == "__main__":
     asyncio.run(main())
-```
-
-Run it:
-
-```bash
-python inspection_session.py
 ```
 
 {{% /tab %}}
@@ -486,6 +662,7 @@ import (
     "context"
     "encoding/csv"
     "fmt"
+    "image/jpeg"
     "os"
     "path/filepath"
     "time"
@@ -494,81 +671,37 @@ import (
     "go.viam.com/rdk/logging"
     "go.viam.com/rdk/robot/client"
     "go.viam.com/rdk/services/vision"
-    "go.viam.com/rdk/utils"
     "go.viam.com/utils/rpc"
 )
 
-const (
-    numInspections      = 20
-    inspectionInterval  = 2 * time.Second
-    outputDir           = "inspection_results"
-)
+const numInspections = 20
+const outputDir = "inspection_results"
 
 func main() {
-    logger := logging.NewLogger("inspection")
     ctx := context.Background()
+    logger := logging.NewLogger("inspection")
 
-    // Setup output directories
-    os.MkdirAll(outputDir, 0755)
     os.MkdirAll(filepath.Join(outputDir, "failures"), 0755)
 
-    // Connect to machine
-    robot, err := client.New(
-        ctx,
-        "YOUR_MACHINE_ADDRESS",
-        logger,
-        client.WithDialOptions(rpc.WithEntityCredentials(
-            "YOUR_API_KEY_ID",
-            rpc.Credentials{
-                Type:    rpc.CredentialsTypeAPIKey,
-                Payload: "YOUR_API_KEY",
-            },
-        )),
-    )
-    if err != nil {
-        logger.Fatal(err)
-    }
+    robot, _ := client.New(ctx, "YOUR_MACHINE_ADDRESS", logger,
+        client.WithDialOptions(rpc.WithEntityCredentials("YOUR_API_KEY_ID",
+            rpc.Credentials{Type: rpc.CredentialsTypeAPIKey, Payload: "YOUR_API_KEY"})))
     defer robot.Close(ctx)
 
-    fmt.Printf("Connected to machine. Running %d inspections...\n\n", numInspections)
+    cam, _ := camera.FromRobot(robot, "inspection-cam")
+    detector, _ := vision.FromRobot(robot, "part-detector")
 
-    // Get camera and vision service
-    cam, err := camera.FromRobot(robot, "inspection-cam")
-    if err != nil {
-        logger.Fatal(err)
-    }
-    detector, err := vision.FromRobot(robot, "part-detector")
-    if err != nil {
-        logger.Fatal(err)
-    }
-
-    // Track results
-    passCount := 0
-    failCount := 0
-
-    // Open CSV log
-    timestamp := time.Now().Format("20060102_150405")
-    csvPath := filepath.Join(outputDir, fmt.Sprintf("session_%s.csv", timestamp))
-    csvFile, err := os.Create(csvPath)
-    if err != nil {
-        logger.Fatal(err)
-    }
+    passCount, failCount := 0, 0
+    csvPath := filepath.Join(outputDir, fmt.Sprintf("session_%s.csv",
+        time.Now().Format("20060102_150405")))
+    csvFile, _ := os.Create(csvPath)
     defer csvFile.Close()
-
     writer := csv.NewWriter(csvFile)
-    writer.Write([]string{"timestamp", "inspection_num", "result", "confidence"})
+    writer.Write([]string{"timestamp", "result", "confidence"})
 
     for i := 0; i < numInspections; i++ {
-        now := time.Now()
+        detections, _ := detector.DetectionsFromCamera(ctx, "inspection-cam", nil)
 
-        // Run detection
-        detections, err := detector.DetectionsFromCamera(ctx, "inspection-cam", nil)
-        if err != nil {
-            logger.Error(err)
-            continue
-        }
-
-        // Find primary detection (highest confidence)
         var result string
         var confidence float64
         if len(detections) > 0 {
@@ -578,77 +711,37 @@ func main() {
                     best = d
                 }
             }
-            result = best.Label()
-            confidence = best.Score()
+            result, confidence = best.Label(), best.Score()
         } else {
-            result = "NO_DETECTION"
-            confidence = 0.0
+            result, confidence = "NO_DETECTION", 0.0
         }
 
-        // Log result
-        writer.Write([]string{
-            now.Format(time.RFC3339),
-            fmt.Sprintf("%d", i+1),
-            result,
-            fmt.Sprintf("%.3f", confidence),
-        })
+        writer.Write([]string{time.Now().Format(time.RFC3339), result,
+            fmt.Sprintf("%.3f", confidence)})
 
-        // Track counts and print status
-        var status string
         if result == "PASS" {
             passCount++
-            status = "✓ PASS"
         } else if result == "FAIL" {
             failCount++
-            status = "✗ FAIL"
-
-            // Save failure image
-            img, _, err := cam.Image(ctx, utils.MimeTypeJPEG, nil)
-            if err == nil {
-                imgPath := filepath.Join(outputDir, "failures",
-                    fmt.Sprintf("fail_%d_%s.jpg", i+1, now.Format("150405")))
-                // Save image (simplified - actual implementation would encode properly)
-                status += fmt.Sprintf(" (saved: %s)", imgPath)
-            }
-        } else {
-            status = fmt.Sprintf("? %s", result)
+            img, _, _ := cam.Image(ctx, "", nil)
+            f, _ := os.Create(filepath.Join(outputDir, "failures",
+                fmt.Sprintf("fail_%d.jpg", i+1)))
+            jpeg.Encode(f, img, nil)
+            f.Close()
         }
 
-        fmt.Printf("[%d/%d] %s (%.1f%%)\n", i+1, numInspections, status, confidence*100)
-
-        // Wait before next inspection
-        if i < numInspections-1 {
-            time.Sleep(inspectionInterval)
-        }
+        fmt.Printf("[%d/%d] %s (%.1f%%)\n", i+1, numInspections, result, confidence*100)
+        time.Sleep(2 * time.Second)
     }
-
     writer.Flush()
 
-    // Print summary
     total := passCount + failCount
-    passRate := float64(0)
+    fmt.Printf("\nResults: %d PASS / %d FAIL\n", passCount, failCount)
     if total > 0 {
-        passRate = float64(passCount) / float64(total) * 100
+        fmt.Printf("Pass rate: %.1f%%\n", float64(passCount)/float64(total)*100)
     }
-
-    fmt.Printf("\n%s\n", "==================================================")
-    fmt.Printf("INSPECTION SESSION COMPLETE\n")
-    fmt.Printf("%s\n", "==================================================")
-    fmt.Printf("Total inspections: %d\n", numInspections)
-    fmt.Printf("Results:  %d PASS / %d FAIL\n", passCount, failCount)
-    fmt.Printf("Pass rate: %.1f%%\n", passRate)
-    fmt.Printf("Log saved: %s\n", csvPath)
-    if failCount > 0 {
-        fmt.Printf("Failure images: %s/failures/\n", outputDir)
-    }
-    fmt.Printf("%s\n", "==================================================")
+    fmt.Printf("Log: %s\n", csvPath)
 }
-```
-
-Run it:
-
-```bash
-go run inspection_session.go
 ```
 
 {{% /tab %}}
@@ -656,51 +749,36 @@ go run inspection_session.go
 
 **Run the inspection session:**
 
-Execute the script and watch it run through 20 inspections:
+```bash
+python inspection_session.py   # or: go run main.go
+```
 
 ```
-Connected to machine. Running 20 inspections...
-
-[1/20] ✓ PASS (94.2%)
-[2/20] ✓ PASS (91.8%)
-[3/20] ✗ FAIL (87.3%) (saved: inspection_results/failures/fail_3_142315.png)
-[4/20] ✓ PASS (95.1%)
+[1/20] PASS (94.2%)
+[2/20] PASS (91.8%)
+[3/20] FAIL (87.3%)
 ...
-[20/20] ✓ PASS (92.7%)
+[20/20] PASS (92.7%)
 
-==================================================
-INSPECTION SESSION COMPLETE
-==================================================
-Total inspections: 20
-Results:  17 PASS / 3 FAIL
+Results: 17 PASS / 3 FAIL
 Pass rate: 85.0%
-Log saved: inspection_results/session_20240115_142300.csv
-Failure images: inspection_results/failures/
-==================================================
+Log: inspection_results/session_20240115_142300.csv
 ```
 
-**Review the results:**
+**What you've built:**
 
-After the session completes, you have:
+After the session, you have:
+- **CSV log** — Every inspection with timestamp, result, and confidence
+- **Failure images** — Photos of defective parts for review
 
-1. **CSV log** — Every inspection with timestamp, result, and confidence score. Import into a spreadsheet for analysis.
+This is a practical tool for:
+- **Testing models** — Measure accuracy before deploying
+- **Tuning thresholds** — Analyze confidence scores to set cutoffs
+- **Debugging** — Review failure images to identify false positives
 
-2. **Failure images** — Photos of every failed part, saved locally for review. Use these to verify the model is catching real defects, or to identify false positives.
+The code runs on your laptop, connecting remotely. You could run this from anywhere—the machine just needs to be online.
 
-[SCREENSHOT: Folder showing CSV and failure images]
-
-**What this demonstrates:**
-
-This isn't just a "hello world"—it's a practical tool you'd actually use:
-
-- **Testing a new model** — Run sessions to measure accuracy before deploying
-- **Tuning thresholds** — Analyze confidence scores to set appropriate cutoffs
-- **Shift handoff** — Run a session at shift change to verify the system is working
-- **Debugging issues** — When something seems wrong, run a session and review the images
-
-The code runs on your laptop, connecting to the machine remotely. You could run this from anywhere—your office, your home, a different continent. The machine just needs to be online.
-
-> **This is the pattern.** Whether you're reading sensors, moving a robot arm, or running ML inference, the flow is the same: connect to the machine, get components and services by name, call their methods. The APIs are consistent across all hardware.
+> **This is the pattern.** Connect to the machine, get components and services by name, call their methods. The same approach works for motors, arms, sensors—any Viam resource.
 
 **Checkpoint:** You've installed viam-server, connected a machine to Viam, configured a camera and vision service, and built a practical inspection tool. This is the complete prototype workflow for any Viam project.
 
