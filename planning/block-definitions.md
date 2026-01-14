@@ -22,6 +22,8 @@ See [Content Guidelines](./content-guidelines.md) for detailed authoring guidanc
 | Add a Camera | Camera + compute | Component configuration, viewing feeds | 1.1, 1.2, 1.9 |
 | Capture and Sync Data | Camera + compute + cloud | Data pipeline, storage, sync | 1.12, 2.13, 2.14 |
 | Basic Filtering | Camera + compute | Time-based sampling, sensor thresholds | 2.13, 2.14 |
+| Configure Data Pipelines | Cloud + data | Windowed roll-ups, aggregations, derived metrics, cost-efficient querying | 2.13, 2.14, 3.10 |
+| Sync Data to Your Database | Cloud + external MongoDB | Direct capture to your cluster, egress patterns, "Viam as ingestion layer" architecture | 2.13, 3.10 |
 | Start Writing Code | Laptop + robot | Run code remotely against hardware | 1.3, 1.21 |
 
 ---

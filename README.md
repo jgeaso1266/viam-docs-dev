@@ -35,6 +35,8 @@ This is the living navigation for the new Viam documentation structure. Click an
 - [Add a Camera](./build/foundation/add-camera.md) 🔴
 - [Capture and Sync Data](./build/foundation/capture-sync-data.md) 🔴
 - [Basic Filtering](./build/foundation/basic-filtering.md) 🔴
+- [Configure Data Pipelines](./build/foundation/configure-data-pipelines.md) 🔴
+- [Sync Data to Your Database](./build/foundation/sync-data-to-your-database.md) 🔴
 - [Start Writing Code](./build/foundation/start-writing-code.md) 🔴
 
 ### [Perception](./build/perception/INDEX.md) 🔴
@@ -94,6 +96,7 @@ This is the living navigation for the new Viam documentation structure. Click an
 - [Configuration Management](./scale/configuration-management.md) 🔴
 - [Handling Hardware Variance](./scale/hardware-variance.md) 🔴
 - [Fleet Monitoring](./scale/fleet-monitoring.md) 🔴
+- [Data Architecture Decisions](./scale/data-architecture.md) 🔴
 - [OTA Updates](./scale/ota-updates.md) 🔴
 - [Staged Rollouts](./scale/staged-rollouts.md) 🔴
 - [Multi-tenancy](./scale/multi-tenancy.md) 🔴
@@ -152,12 +155,12 @@ These are our working documents, not user-facing content:
 | Section | Total Items | 🔴 | 🟡 | 🟢 |
 |---------|-------------|-----|-----|-----|
 | Understand | 3 | 2 | 1 | 0 |
-| Try | 3 | 3 | 0 | 0 |
-| Build | 27 | 27 | 0 | 0 |
+| Try | 3 | 2 | 1 | 0 |
+| Build | 29 | 29 | 0 | 0 |
 | Deploy | 5 | 5 | 0 | 0 |
-| Scale | 8 | 8 | 0 | 0 |
+| Scale | 9 | 9 | 0 | 0 |
 | Maintain | 6 | 6 | 0 | 0 |
 | Reference | 4 | 4 | 0 | 0 |
 | Work Cells | 4 | 4 | 0 | 0 |
 | Planning | 7 | 1 | 4 | 2 |
-| **Total** | **67** | **61** | **4** | **2** |
+| **Total** | **70** | **62** | **6** | **2** |
