@@ -28,7 +28,7 @@ See [Content Guidelines](./content-guidelines.md) for detailed authoring guidanc
 
 ---
 
-## Perception Blocks
+## Vision & Detection Blocks
 
 *Building understanding of the environment.*
 
@@ -62,12 +62,15 @@ See [Content Guidelines](./content-guidelines.md) for detailed authoring guidanc
 
 | Block | Components | What You Learn | Problems Addressed |
 |-------|------------|----------------|-------------------|
-| Control Motors | Base + motors | Velocity commands, encoders | 1.3 |
-| Read Odometry | Base + encoders | Position estimation, drift | 1.3, 1.4 |
+| Drive the Base | Base + motors | Velocity commands, encoders | 1.3 |
+| Estimate Position | Base + encoders | Position estimation, drift | 1.3, 1.4 |
 | Build a Map | Base + lidar + SLAM | Mapping service, localization | 1.17, 1.18 |
 | Navigate to Waypoint | Base + lidar + nav service | Motion planning, goal-seeking | 1.17, 1.18 |
 | Avoid Obstacles | Base + sensors | Reactive control, safety | 1.7, 1.20 |
 | Follow a Patrol Route | Base + nav + waypoints | Multi-point missions, state machines | 1.16 |
+| Detect While Moving | Base + camera + ML | Perception during motion | 1.5, 1.19 |
+| Navigate to Detected Object | Base + camera + nav | Perception-driven goals | 1.16, 1.19 |
+| Mobile Pick-and-Place | Base + arm + camera | Mobile manipulation | 1.5, 1.16 |
 
 ---
 
@@ -77,30 +80,17 @@ See [Content Guidelines](./content-guidelines.md) for detailed authoring guidanc
 
 | Block | Components | What You Learn | Problems Addressed |
 |-------|------------|----------------|-------------------|
-| Move Joints | Arm | Joint positions, velocity control | 1.3 |
+| Move the Arm | Arm | Joint positions, velocity control | 1.3 |
 | Control Gripper | Gripper | Open/close, force sensing | 1.3 |
 | Move to Pose | Arm + motion service | Inverse kinematics, motion planning | 1.17 |
 | Pick an Object | Arm + gripper + camera | Grasp planning, coordination | 1.5, 1.19 |
 | Place an Object | Arm + gripper | Precision, release | 1.5 |
+| Pick from Bin | Arm + camera + ML | Full pick-and-place cycle | 1.5, 1.19 |
 | Visual Servoing | Arm + camera | Closed-loop control, alignment | 1.19 |
 
 ---
 
-## Integration Blocks
-
-*Combining capabilities.*
-
-| Block | Components | What You Learn | Problems Addressed |
-|-------|------------|----------------|-------------------|
-| Detect While Moving | Base + camera + ML | Perception during motion | 1.5, 1.19 |
-| Navigate to Detected Object | Base + camera + nav | Perception-driven goals | 1.16, 1.19 |
-| Pick from Bin | Arm + camera + ML | Full pick-and-place cycle | 1.5, 1.19 |
-| Mobile Pick-and-Place | Base + arm + camera | Mobile manipulation | 1.5, 1.16 |
-| Multi-step Task Sequence | Any | State machines, task logic | 1.15, 1.16 |
-
----
-
-## Fleet/Deployment Blocks
+## Fleet Management Blocks
 
 *Beyond a single robot.*
 
@@ -120,7 +110,7 @@ See [Content Guidelines](./content-guidelines.md) for detailed authoring guidanc
 | Block | Components | What You Learn | Problems Addressed |
 |-------|------------|----------------|-------------------|
 | Build a Customer Dashboard | TypeScript SDK | Web apps, real-time data display | 4.9 |
-| Set Up White-Label Auth | Auth config | Customer login with your branding | 4.9 |
+| Branded Customer Login | Auth config | Customer login with your branding | 4.9 |
 | Configure Billing | Billing config | Per-machine/per-data pricing, metering | 4.8 |
 
 ---
@@ -137,7 +127,7 @@ Foundation
 ├── Basic Filtering
 └── Start Writing Code
         ↓
-Perception
+Vision & Detection
 ├── Add Computer Vision
 ├── Detect Objects (2D)
 └── Classify Objects
@@ -147,13 +137,13 @@ Stationary Vision
 ├── Count Objects
 └── Inspect for Defects
         ↓
-Fleet/Deployment
+Fleet Management
 ├── Configure Multiple Machines
 └── Monitor a Fleet
         ↓
 Productize
 ├── Build a Customer Dashboard
-├── Set Up White-Label Auth
+├── Branded Customer Login
 └── Configure Billing
 ```
 
@@ -167,31 +157,29 @@ Foundation
 ├── Basic Filtering
 └── Start Writing Code
         ↓
-Perception
+Vision & Detection
 ├── Add Computer Vision
 ├── Detect Objects (2D)
 └── Track Objects Across Frames
         ↓
 Mobile Base
-├── Control Motors
-├── Read Odometry
+├── Drive the Base
+├── Estimate Position
 ├── Build a Map
 ├── Navigate to Waypoint
 ├── Avoid Obstacles
-└── Follow a Patrol Route
-        ↓
-Integration
+├── Follow a Patrol Route
 ├── Detect While Moving
 └── Navigate to Detected Object
         ↓
-Fleet/Deployment
+Fleet Management
 ├── Configure Multiple Machines
 ├── Monitor a Fleet
 └── Push Updates
         ↓
 Productize
 ├── Build a Customer Dashboard
-├── Set Up White-Label Auth
+├── Branded Customer Login
 └── Configure Billing
 ```
 
@@ -205,29 +193,27 @@ Foundation
 ├── Basic Filtering
 └── Start Writing Code
         ↓
-Perception
+Vision & Detection
 ├── Add Computer Vision
 ├── Detect Objects (2D)
 ├── Measure Depth
 └── Localize Objects in 3D
         ↓
 Arm + Manipulation
-├── Move Joints
+├── Move the Arm
 ├── Control Gripper
 ├── Move to Pose
 ├── Pick an Object
-└── Place an Object
-        ↓
-Integration
+├── Place an Object
 └── Pick from Bin
         ↓
-Fleet/Deployment
+Fleet Management
 ├── Configure Multiple Machines
 └── Monitor a Fleet
         ↓
 Productize
 ├── Build a Customer Dashboard
-├── Set Up White-Label Auth
+├── Branded Customer Login
 └── Configure Billing
 ```
 

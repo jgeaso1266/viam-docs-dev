@@ -31,11 +31,10 @@ This is the living navigation for the new Viam documentation structure. Click an
 *Task-oriented blocks — modular tutorials you compose*
 
 - [Foundation](./build/foundation/INDEX.md) — 7 blocks 🔴
-- [Perception](./build/perception/INDEX.md) — 6 blocks 🔴
+- [Vision & Detection](./build/perception/INDEX.md) — 6 blocks 🔴
 - [Stationary Vision](./build/stationary-vision/INDEX.md) — 4 blocks 🔴
-- [Mobile Base](./build/mobile-base/INDEX.md) — 6 blocks 🔴
-- [Arm + Manipulation](./build/arm-manipulation/INDEX.md) — 6 blocks 🔴
-- [Integration](./build/integration/INDEX.md) — 5 blocks 🔴
+- [Mobile Base](./build/mobile-base/INDEX.md) — 9 blocks 🔴
+- [Arm + Manipulation](./build/arm-manipulation/INDEX.md) — 7 blocks 🔴
 
 See [Block Definitions](./planning/block-definitions.md) for full block details.
 
@@ -120,11 +119,11 @@ These are our working documents, not user-facing content:
 |---------|-------------|-----|-----|-----|
 | Understand | 3 | 2 | 1 | 0 |
 | Try | 3 | 2 | 1 | 0 |
-| Build | 29 | 29 | 0 | 0 |
+| Build | 33 | 33 | 0 | 0 |
 | Deploy | 5 | 5 | 0 | 0 |
 | Scale | 9 | 9 | 0 | 0 |
 | Maintain | 6 | 6 | 0 | 0 |
 | Reference | 4 | 4 | 0 | 0 |
 | Work Cells | 4 | 4 | 0 | 0 |
 | Planning | 8 | 2 | 4 | 2 |
-| **Total** | **71** | **63** | **6** | **2** |
+| **Total** | **75** | **67** | **6** | **2** |

@@ -24,7 +24,7 @@ Start here. Every project needs these basics.
 - Sync Data to Your Database
 - Start Writing Code
 
-### [Perception](./perception/INDEX.md) 🔴
+### [Vision & Detection](./perception/INDEX.md) 🔴
 Understanding what the robot sees.
 - Add Computer Vision
 - Detect Objects (2D)
@@ -42,29 +42,25 @@ Vision systems that don't move.
 
 ### [Mobile Base](./mobile-base/INDEX.md) 🔴
 Robots that move.
-- Control Motors
-- Read Odometry
+- Drive the Base
+- Estimate Position
 - Build a Map
 - Navigate to Waypoint
 - Avoid Obstacles
 - Follow a Patrol Route
+- Detect While Moving
+- Navigate to Detected Object
+- Mobile Pick-and-Place
 
 ### [Arm + Manipulation](./arm-manipulation/INDEX.md) 🔴
 Robots that grab things.
-- Move Joints
+- Move the Arm
 - Control Gripper
 - Move to Pose
 - Pick an Object
 - Place an Object
-- Visual Servoing
-
-### [Integration](./integration/INDEX.md) 🔴
-Combining capabilities.
-- Detect While Moving
-- Navigate to Detected Object
 - Pick from Bin
-- Mobile Pick-and-Place
-- Multi-step Task Sequence
+- Visual Servoing
 
 ---
 
