@@ -244,27 +244,28 @@ Services often *use* components. The vision service will use your camera to get 
 
 **Add the ML model:**
 
-First, you need an ML model. We've provided a pre-trained model for this tutorial that classifies parts as PASS or FAIL.
+First, you need an ML model. Viam's registry includes pre-trained models you can deploy directly, plus any custom models you've trained.
 
-1. In the Viam app, click the **Config** tab
-2. Click **+ Add service**
-3. For **Type**, select `mlmodel`
-4. For **Model**, select `tflite_cpu`
+1. In the Viam app, click the **Configure** tab
+2. Click **+** next to your machine part in the left sidebar
+3. Select **Service**, then **ML model**
+4. Search for `TFLite CPU` and select it
 5. Name it `part-classifier`
 6. Click **Create**
 
 [SCREENSHOT: Add service dialog for ML model]
 
-**Configure the model location:**
+**Select a model from the registry:**
 
-1. In the `part-classifier` configuration panel, find the **model_path** field
-2. Enter: `/opt/viam/models/part-classifier.tflite`
+1. In the `part-classifier` configuration panel, click **Select model**
+2. Click the **Registry** tab
+3. Search for `part-quality-classifier` (a tutorial model that classifies parts as PASS or FAIL)
+4. Select it from the list
+5. Click **Save config**
 
-   > This model file is pre-installed in the simulation environment. On real hardware, you'd deploy your own trained model using Viam's ML model registry.
+[SCREENSHOT: Select model dialog showing registry models]
 
-3. Click **Save config**
-
-[SCREENSHOT: ML model configuration with model_path]
+> **Your own models:** For production, you'd train a model on your specific parts and upload it to the registry. The registry handles versioning and deployment across your fleet.
 
 **Add the vision service:**
 
