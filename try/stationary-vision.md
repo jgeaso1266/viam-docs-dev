@@ -240,6 +240,8 @@ Now you'll add machine learning to your camera. In Viam, ML capabilities are pro
 
 Services often *use* components. The vision service will use your camera to get images, then run ML inference on them.
 
+> **ML Models in Viam:** Viam's vision service works with classification models, object detectors, and segmentation models. You can bring your own TensorFlow, ONNX, or PyTorch models, or use Viam's registry to deploy and version models across your fleet.
+
 **Add the ML model:**
 
 First, you need an ML model. We've provided a pre-trained model for this tutorial that classifies parts as PASS or FAIL.
