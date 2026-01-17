@@ -76,7 +76,7 @@ A working inspection system with:
 
 ## Tutorial Flow
 
-### Part 1: Prototype (~25 min)
+### Part 1: Vision Pipeline (~25 min)
 
 **Goal:** Get a working detection pipeline on one simulated camera.
 
@@ -303,21 +303,23 @@ You should see the camera image with detection results—bounding boxes around d
 
 > **What you've built:** A complete ML inference pipeline. The vision service grabs an image from the camera, runs it through the TensorFlow Lite model, and returns structured detection results. This same pattern works for any ML task—object detection, classification, segmentation—you just swap the model.
 
-You've now configured a working inspection system entirely through the Viam app—no code yet. Next, you'll write code to interact with this system programmatically.
+**Checkpoint:** You've configured a complete ML inference pipeline—camera, model, and vision service—entirely through the Viam app. The system can detect defects. Next, you'll write code to act on those detections.
 
-#### 1.7 Run an Inspection Session
+---
 
-So far you've configured everything through the Viam app. Now you'll write code that connects to your machine remotely and runs inspections—the same code that will eventually run in production.
+### Part 2: Control Logic (~30 min)
 
-During development, you run this code on your laptop. It connects to the machine over the network, uses the camera and vision service you configured, and lets you iterate quickly without deploying anything. When you're ready for production, you upload your module to the Viam registry and add it to your machine's configuration—just like you added the ML model service earlier. The machine pulls the module and runs your service. No revisions required for production.
+**Goal:** Write inspection logic that detects defects and rejects them, then deploy it as a module.
 
-This is the **module-first development pattern**: prototype your code in a package that will ultimately become your production logic, test it locally against remote hardware, then publish to the registry and configure your machines to use it.
+**Skills:** Module-first development, Viam SDK, adding actuators, module deployment.
 
-Viam provides SDKs for Python, Go, TypeScript, C++, and Flutter. We'll use Python and Go here—choose whichever you're more comfortable with.
+In Part 1, you configured the hardware. Now you'll write code.
 
-##### Set up your project
+You'll use the **module-first development pattern**: code that runs on your laptop during development, connecting to remote hardware over the network. When it works, you package it as a module and deploy it to the machine. Same code, different context.
 
-Create a minimal project with two files: your service logic and a CLI to test it.
+#### 2.1 Set Up Your Project
+
+Create a project with two files: your service logic and a CLI to test it.
 
 {{< tabs >}}
 {{% tab name="Go" %}}
@@ -326,14 +328,18 @@ Create a minimal project with two files: your service logic and a CLI to test it
 mkdir inspection-module && cd inspection-module
 go mod init inspection-module
 go get go.viam.com/rdk
+go get github.com/erh/vmodutils
+mkdir -p cmd/cli cmd/module
 ```
 
-Create two files:
+Create this structure:
 
 ```
 inspection-module/
-├── inspector.go    # Your service logic
-├── main.go         # CLI for testing
+├── cmd/
+│   ├── cli/main.go        # Development CLI
+│   └── module/main.go     # Production entry point (added later)
+├── inspector.go           # Your service logic
 └── go.mod
 ```
 
@@ -357,16 +363,207 @@ inspection-module/
 {{% /tab %}}
 {{< /tabs >}}
 
-The key insight: your service logic lives in one file and the CLI imports it. During development, you run the CLI on your laptop—it connects to the remote machine and uses the camera and vision service over the network. You iterate locally without deploying anything.
+Your service logic lives in one file; the CLI imports it. During development, the CLI runs on your laptop and connects to the remote machine. You iterate locally without deploying anything.
 
-##### Write the CLI
+#### 2.2 Build the Inspector
 
-Before writing service logic, create the CLI that connects to your machine and converts it to dependencies. This CLI stays the same across iterations—you only change what you call on the inspector.
+You'll build the inspector iteratively, testing each change against real hardware. Start with the simplest operation—grab an image from the camera.
 
 {{< tabs >}}
 {{% tab name="Go" %}}
 
-Create `main.go`:
+Create `inspector.go`:
+
+```go
+package inspector
+
+import (
+	"context"
+	"fmt"
+	"image/jpeg"
+	"os"
+
+	"github.com/mitchellh/mapstructure"
+	"go.viam.com/rdk/components/camera"
+	"go.viam.com/rdk/logging"
+	"go.viam.com/rdk/resource"
+	"go.viam.com/rdk/services/generic"
+	"go.viam.com/rdk/services/vision"
+)
+
+// Config declares which dependencies the inspector needs.
+type Config struct {
+	Camera        string `json:"camera"`
+	VisionService string `json:"vision_service"`
+}
+
+// Validate checks the config and returns dependency names.
+// Returns (required deps, optional deps, error).
+func (cfg *Config) Validate(path string) ([]string, []string, error) {
+	if cfg.Camera == "" {
+		return nil, nil, fmt.Errorf("camera is required")
+	}
+	if cfg.VisionService == "" {
+		return nil, nil, fmt.Errorf("vision_service is required")
+	}
+	return []string{cfg.Camera, cfg.VisionService}, nil, nil
+}
+
+// Inspector implements resource.Resource.
+type Inspector struct {
+	resource.AlwaysRebuild
+
+	name   resource.Name
+	conf   *Config
+	logger logging.Logger
+
+	cam      camera.Camera
+	detector vision.Service
+}
+
+// NewInspector is the exported constructor called by both CLI and module.
+func NewInspector(
+	ctx context.Context,
+	deps resource.Dependencies,
+	name resource.Name,
+	conf *Config,
+	logger logging.Logger,
+) (resource.Resource, error) {
+	cam, err := camera.FromDependencies(deps, conf.Camera)
+	if err != nil {
+		return nil, err
+	}
+	detector, err := vision.FromDependencies(deps, conf.VisionService)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Inspector{
+		name:     name,
+		conf:     conf,
+		logger:   logger,
+		cam:      cam,
+		detector: detector,
+	}, nil
+}
+
+func (i *Inspector) Name() resource.Name {
+	return i.name
+}
+
+// Command struct for DoCommand parsing.
+type inspectorCmd struct {
+	Capture bool
+}
+
+func (i *Inspector) DoCommand(ctx context.Context, cmdMap map[string]interface{}) (map[string]interface{}, error) {
+	var cmd inspectorCmd
+	if err := mapstructure.Decode(cmdMap, &cmd); err != nil {
+		return nil, err
+	}
+
+	if cmd.Capture {
+		if err := i.captureImage(ctx); err != nil {
+			return nil, err
+		}
+		return map[string]interface{}{"saved": "snapshot.jpg"}, nil
+	}
+
+	return nil, fmt.Errorf("unknown command: %v", cmdMap)
+}
+
+func (i *Inspector) Close(ctx context.Context) error {
+	return nil
+}
+
+func (i *Inspector) captureImage(ctx context.Context) error {
+	img, _, err := i.cam.Image(ctx, "", nil)
+	if err != nil {
+		return err
+	}
+
+	f, err := os.Create("snapshot.jpg")
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	return jpeg.Encode(f, img, nil)
+}
+```
+
+{{% /tab %}}
+{{% tab name="Python" %}}
+
+Create `inspector.py`:
+
+```python
+from dataclasses import dataclass
+from typing import Any, Mapping
+from viam.components.camera import Camera
+from viam.services.vision import VisionClient
+
+@dataclass
+class Config:
+    camera: str
+    vision_service: str
+
+    def validate(self) -> list[str]:
+        """Check config and return dependency names."""
+        if not self.camera:
+            raise ValueError("camera is required")
+        if not self.vision_service:
+            raise ValueError("vision_service is required")
+        return [self.camera, self.vision_service]
+
+class Inspector:
+    """Inspector implements the generic service interface."""
+
+    def __init__(self, name: str, conf: Config, cam: Camera, detector: VisionClient):
+        self.name = name
+        self.conf = conf
+        self.cam = cam
+        self.detector = detector
+
+    @classmethod
+    async def new(cls, deps: dict, cfg: Config) -> "Inspector":
+        """Create an inspector by extracting dependencies from the map."""
+        cam = next((v for k, v in deps.items() if k.name == cfg.camera), None)
+        detector = next((v for k, v in deps.items() if k.name == cfg.vision_service), None)
+        return cls("inspector", cfg, cam, detector)
+
+    async def do_command(self, command: Mapping[str, Any]) -> Mapping[str, Any]:
+        """Generic service interface. All commands go through here."""
+        if command.get("capture"):
+            await self._capture_image()
+            return {"saved": "snapshot.jpg"}
+        raise ValueError(f"unknown command: {command}")
+
+    async def close(self) -> None:
+        pass
+
+    async def _capture_image(self) -> None:
+        img = await self.cam.get_image()
+        img.save("snapshot.jpg")
+```
+
+{{% /tab %}}
+{{< /tabs >}}
+
+**Fetch dependencies:**
+
+```bash
+go mod tidy
+```
+
+#### 2.3 Write the Development CLI
+
+Now create the CLI that imports and tests your inspector. The CLI connects to your remote machine and converts its resources to a Dependencies map—the same format the module system uses in production.
+
+{{< tabs >}}
+{{% tab name="Go" %}}
+
+Create `cmd/cli/main.go`:
 
 ```go
 package main
@@ -376,52 +573,74 @@ import (
 	"flag"
 	"fmt"
 
+	"github.com/erh/vmodutils"
 	"go.viam.com/rdk/logging"
-	"go.viam.com/rdk/resource"
-	"go.viam.com/rdk/robot/client"
-	"go.viam.com/utils/rpc"
+	"go.viam.com/rdk/services/generic"
+
+	inspector "inspection-module"
 )
 
 func main() {
-	host := flag.String("host", "", "Machine address")
-	apiKey := flag.String("api-key", "", "API key")
-	apiKeyID := flag.String("api-key-id", "", "API key ID")
-	flag.Parse()
+	err := realMain()
+	if err != nil {
+		panic(err)
+	}
+}
 
+func realMain() error {
 	ctx := context.Background()
 	logger := logging.NewLogger("cli")
 
-	// 1. Connect to the remote machine
-	machine, err := client.New(ctx, *host, logger,
-		client.WithDialOptions(rpc.WithEntityCredentials(*apiKeyID,
-			rpc.Credentials{Type: rpc.CredentialsTypeAPIKey, Payload: *apiKey})))
-	if err != nil {
-		logger.Fatal(err)
-	}
-	defer machine.Close(ctx)
+	host := flag.String("host", "", "Machine address")
+	cmd := flag.String("cmd", "", "Command: capture, detect, inspect")
+	flag.Parse()
 
-	// 2. Convert machine resources to Dependencies
-	deps := make(resource.Dependencies)
-	for _, name := range machine.ResourceNames() {
-		r, err := machine.ResourceByName(name)
-		if err != nil {
-			continue
-		}
-		deps[name] = r
+	if *host == "" {
+		return fmt.Errorf("need -host flag")
+	}
+	if *cmd == "" {
+		return fmt.Errorf("need -cmd flag")
 	}
 
-	// 3. Create inspector with Dependencies - same call the module would make
-	cfg := Config{
+	// 1. Config with hardcoded dependency names
+	cfg := inspector.Config{
 		Camera:        "inspection-cam",
 		VisionService: "part-detector",
 	}
-	inspector, err := NewInspector(deps, cfg, logger)
+
+	// 2. Validate the config
+	_, _, err := cfg.Validate("")
 	if err != nil {
-		logger.Fatal(err)
+		return err
 	}
 
-	// TODO: Call inspector methods here
-	fmt.Println("Inspector ready")
+	// 3. Connect using vmodutils
+	machine, err := vmodutils.ConnectToHostFromCLIToken(ctx, *host, logger)
+	if err != nil {
+		return err
+	}
+	defer machine.Close(ctx)
+
+	// 4. Get dependencies using vmodutils
+	deps, err := vmodutils.MachineToDependencies(machine)
+	if err != nil {
+		return err
+	}
+
+	// 5. Create service using exported constructor
+	svc, err := inspector.NewInspector(ctx, deps, generic.Named("inspector"), &cfg, logger)
+	if err != nil {
+		return err
+	}
+	defer svc.Close(ctx)
+
+	// 6. Call DoCommand with the command from -cmd flag
+	result, err := svc.DoCommand(ctx, map[string]interface{}{*cmd: true})
+	if err != nil {
+		return err
+	}
+	logger.Infof("Result: %v", result)
+	return nil
 }
 ```
 
@@ -438,32 +657,45 @@ from viam.robot.client import RobotClient
 from inspector import Inspector, Config
 
 async def main():
-    host = sys.argv[1] if len(sys.argv) > 1 else ""
-    api_key = sys.argv[2] if len(sys.argv) > 2 else ""
-    api_key_id = sys.argv[3] if len(sys.argv) > 3 else ""
-
-    if not all([host, api_key, api_key_id]):
-        print("Usage: python cli.py HOST API_KEY API_KEY_ID")
+    if len(sys.argv) < 3:
+        print("Usage: python cli.py HOST COMMAND")
+        print("Commands: capture, detect, inspect")
         return
 
-    # 1. Connect to the remote machine
-    robot = await RobotClient.at_address(
-        host,
-        RobotClient.Options.with_api_key(api_key=api_key, api_key_id=api_key_id)
+    host = sys.argv[1]
+    cmd = sys.argv[2]
+
+    # 1. Config with hardcoded dependency names
+    cfg = Config(
+        camera="inspection-cam",
+        vision_service="part-detector"
     )
 
-    # 2. Convert machine resources to dependencies dict
+    # 2. Validate the config
+    cfg.validate()
+
+    # 3. Connect to the remote machine
+    robot = await RobotClient.at_address(host)
+
+    # 4. Get dependencies
     deps = {}
     for name in robot.resource_names:
-        deps[name] = robot.get_component(name)
+        try:
+            deps[name] = robot.get_component(name)
+        except:
+            try:
+                deps[name] = robot.get_service(name)
+            except:
+                pass
 
-    # 3. Create inspector with dependencies - same call the module would make
-    cfg = Config(camera="inspection-cam", vision_service="part-detector")
+    # 5. Create service using exported constructor
     inspector = await Inspector.new(deps, cfg)
 
-    # TODO: Call inspector methods here
-    print("Inspector ready")
+    # 6. Call do_command with the command from CLI args
+    result = await inspector.do_command({cmd: True})
+    print(f"Result: {result}")
 
+    await inspector.close()
     await robot.close()
 
 if __name__ == "__main__":
@@ -473,191 +705,94 @@ if __name__ == "__main__":
 {{% /tab %}}
 {{< /tabs >}}
 
-The key is step 2→3: convert machine resources to a `Dependencies` map, then pass it to `NewInspector`. This is exactly what the module system does when running your code in production. The constructor signature is identical in both contexts.
+The CLI uses `{*cmd: true}` to pass whatever command you specify via `-cmd` flag. This means the same CLI works for `capture`, `detect`, and `inspect`—you don't need to modify it as you add commands to the inspector.
 
-**Get your API credentials:**
+**Authenticate the CLI:**
+
+The Go CLI uses your Viam CLI token for authentication. Make sure you're logged in:
+
+```bash
+viam login
+```
+
+This stores a token that `vmodutils.ConnectToHostFromCLIToken` uses automatically.
+
+**Get your machine address:**
 
 1. In the Viam app, go to your machine's page
 2. Click the **Code sample** tab
-3. Toggle **Include API key** to see your credentials
-4. Copy the host address, API key, and API key ID
+3. Copy the machine address (looks like `your-machine-main.abc123.viam.cloud`)
 
-[SCREENSHOT: Code sample tab showing API credentials]
+[SCREENSHOT: Code sample tab showing machine address]
 
-Now you'll build the inspector through three iterations, testing each change against real hardware.
-
-##### Iteration 1: Capture an image
-
-Start with the simplest operation—grab an image from the camera.
-
-{{< tabs >}}
-{{% tab name="Go" %}}
-
-Create `inspector.go`:
-
-```go
-package main
-
-import (
-	"context"
-	"image/jpeg"
-	"os"
-
-	"go.viam.com/rdk/components/camera"
-	"go.viam.com/rdk/logging"
-	"go.viam.com/rdk/resource"
-	"go.viam.com/rdk/services/vision"
-)
-
-// Config declares which dependencies the inspector needs by name.
-type Config struct {
-	Camera        string
-	VisionService string
-}
-
-// Inspector is your service. It holds references to its dependencies.
-type Inspector struct {
-	cam      camera.Camera
-	detector vision.Service
-	camName  string
-	logger   logging.Logger
-}
-
-// NewInspector creates an inspector by extracting dependencies from the map.
-// This signature is what the module system calls in production.
-func NewInspector(deps resource.Dependencies, cfg Config, logger logging.Logger) (*Inspector, error) {
-	cam, err := camera.FromDependencies(deps, cfg.Camera)
-	if err != nil {
-		return nil, err
-	}
-	detector, err := vision.FromDependencies(deps, cfg.VisionService)
-	if err != nil {
-		return nil, err
-	}
-
-	return &Inspector{
-		cam:      cam,
-		detector: detector,
-		camName:  cfg.Camera,
-		logger:   logger,
-	}, nil
-}
-
-func (i *Inspector) CaptureImage(ctx context.Context) error {
-	img, _, err := i.cam.Image(ctx, "", nil)
-	if err != nil {
-		return err
-	}
-
-	f, err := os.Create("snapshot.jpg")
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	return jpeg.Encode(f, img, nil)
-}
-```
-
-Update `main.go` to call it:
-
-```go
-// Replace the TODO line with:
-if err := inspector.CaptureImage(ctx); err != nil {
-    logger.Fatal(err)
-}
-fmt.Println("Saved snapshot.jpg")
-```
-
-{{% /tab %}}
-{{% tab name="Python" %}}
-
-Create `inspector.py`:
-
-```python
-from dataclasses import dataclass
-from viam.components.camera import Camera
-from viam.services.vision import VisionClient
-
-@dataclass
-class Config:
-    camera: str
-    vision_service: str
-
-class Inspector:
-    def __init__(self, cam: Camera, detector: VisionClient, cam_name: str):
-        self.cam = cam
-        self.detector = detector
-        self.cam_name = cam_name
-
-    @classmethod
-    async def new(cls, deps: dict, cfg: Config) -> "Inspector":
-        """Create an inspector by extracting dependencies from the map.
-        This signature is what the module system calls in production."""
-        cam = deps.get(cfg.camera) or next(
-            (v for k, v in deps.items() if k.name == cfg.camera), None
-        )
-        detector = deps.get(cfg.vision_service) or next(
-            (v for k, v in deps.items() if k.name == cfg.vision_service), None
-        )
-        return cls(cam, detector, cfg.camera)
-
-    async def capture_image(self) -> None:
-        img = await self.cam.get_image()
-        img.save("snapshot.jpg")
-```
-
-Update `cli.py` to call it:
-
-```python
-# Replace the TODO line with:
-await inspector.capture_image()
-print("Saved snapshot.jpg")
-```
-
-{{% /tab %}}
-{{< /tabs >}}
+#### 2.4 Test Your First Command
 
 **Test it:**
 
 ```bash
-go run . -host YOUR_HOST -api-key YOUR_KEY -api-key-id YOUR_KEY_ID
-# or: python cli.py YOUR_HOST YOUR_KEY YOUR_KEY_ID
+go run ./cmd/cli -host your-machine-main.abc123.viam.cloud -cmd capture
+# or: python cli.py your-machine-main.abc123.viam.cloud capture
 ```
 
 ```
-Inspector ready
-Saved snapshot.jpg
+Result: map[saved:snapshot.jpg]
 ```
 
 Open `snapshot.jpg`—you should see the current view from your inspection camera. This image was captured on the remote machine and transferred to your laptop.
 
 ##### Iteration 2: Run detection
 
-Add a method to run the ML model and get classification results.
+Add the detect command. You need to:
+1. Add `Detect bool` to the command struct
+2. Add a handler for `cmd.Detect` in `DoCommand`
+3. Add the new `detect()` method
 
 {{< tabs >}}
 {{% tab name="Go" %}}
 
-Add to `inspector.go`:
+Update `inspector.go`—replace the command struct and `DoCommand`, then add the `detect()` method:
 
 ```go
-type DetectionResult struct {
-	Label      string
-	Confidence float64
+// Command struct for DoCommand parsing.
+type inspectorCmd struct {
+	Capture bool
+	Detect  bool
 }
 
-func (i *Inspector) Detect(ctx context.Context) (*DetectionResult, error) {
-	detections, err := i.detector.DetectionsFromCamera(ctx, i.camName, nil)
-	if err != nil {
+func (i *Inspector) DoCommand(ctx context.Context, cmdMap map[string]interface{}) (map[string]interface{}, error) {
+	var cmd inspectorCmd
+	if err := mapstructure.Decode(cmdMap, &cmd); err != nil {
 		return nil, err
 	}
 
-	if len(detections) == 0 {
-		return &DetectionResult{Label: "NO_DETECTION", Confidence: 0}, nil
+	if cmd.Capture {
+		if err := i.captureImage(ctx); err != nil {
+			return nil, err
+		}
+		return map[string]interface{}{"saved": "snapshot.jpg"}, nil
 	}
 
-	// Find highest confidence detection
+	if cmd.Detect {
+		label, confidence, err := i.detect(ctx)
+		if err != nil {
+			return nil, err
+		}
+		return map[string]interface{}{"label": label, "confidence": confidence}, nil
+	}
+
+	return nil, fmt.Errorf("unknown command: %v", cmdMap)
+}
+
+func (i *Inspector) detect(ctx context.Context) (string, float64, error) {
+	detections, err := i.detector.DetectionsFromCamera(ctx, i.conf.Camera, nil)
+	if err != nil {
+		return "", 0, err
+	}
+
+	if len(detections) == 0 {
+		return "NO_DETECTION", 0, nil
+	}
+
 	best := detections[0]
 	for _, d := range detections[1:] {
 		if d.Score() > best.Score() {
@@ -665,53 +800,35 @@ func (i *Inspector) Detect(ctx context.Context) (*DetectionResult, error) {
 		}
 	}
 
-	return &DetectionResult{Label: best.Label(), Confidence: best.Score()}, nil
+	return best.Label(), best.Score(), nil
 }
-```
-
-Update `main.go`:
-
-```go
-// Replace previous call with:
-result, err := inspector.Detect(ctx)
-if err != nil {
-    logger.Fatal(err)
-}
-fmt.Printf("Detection: %s (%.1f%% confidence)\n", result.Label, result.Confidence*100)
 ```
 
 {{% /tab %}}
 {{% tab name="Python" %}}
 
-Add to `inspector.py`:
+Update `inspector.py`—replace `do_command` and add the `_detect` method:
 
 ```python
-from dataclasses import dataclass
+async def do_command(self, command: Mapping[str, Any]) -> Mapping[str, Any]:
+    if command.get("capture"):
+        await self._capture_image()
+        return {"saved": "snapshot.jpg"}
 
-@dataclass
-class DetectionResult:
-    label: str
-    confidence: float
+    if command.get("detect"):
+        label, confidence = await self._detect()
+        return {"label": label, "confidence": confidence}
 
-class Inspector:
-    # ... existing __init__ and capture_image ...
+    raise ValueError(f"unknown command: {command}")
 
-    async def detect(self) -> DetectionResult:
-        detections = await self.detector.get_detections_from_camera(self.cam_name)
+async def _detect(self) -> tuple[str, float]:
+    detections = await self.detector.get_detections_from_camera(self.conf.camera)
 
-        if not detections:
-            return DetectionResult(label="NO_DETECTION", confidence=0.0)
+    if not detections:
+        return "NO_DETECTION", 0.0
 
-        best = max(detections, key=lambda d: d.confidence)
-        return DetectionResult(label=best.class_name, confidence=best.confidence)
-```
-
-Update `cli.py`:
-
-```python
-# Replace previous call with:
-result = await inspector.detect()
-print(f"Detection: {result.label} ({result.confidence*100:.1f}% confidence)")
+    best = max(detections, key=lambda d: d.confidence)
+    return best.class_name, best.confidence
 ```
 
 {{% /tab %}}
@@ -720,149 +837,554 @@ print(f"Detection: {result.label} ({result.confidence*100:.1f}% confidence)")
 **Test it:**
 
 ```bash
-go run . -host YOUR_HOST -api-key YOUR_KEY -api-key-id YOUR_KEY_ID
+go run ./cmd/cli -host your-machine-main.abc123.viam.cloud -cmd detect
+# or: python cli.py your-machine-main.abc123.viam.cloud detect
 ```
 
 ```
-Inspector ready
-Detection: PASS (94.2% confidence)
+Result: map[confidence:0.942 label:PASS]
 ```
 
-You're now running ML inference on the remote machine from your laptop. The image capture and model execution happen on the machine; only the results come back.
+You're now running ML inference on the remote machine from your laptop.
 
-##### Iteration 3: Add inspection logic with reject placeholder
+#### 2.5 Configure the Rejector
 
-Add the complete inspection method that determines whether to reject a part. For now, `would_reject` is just a flag—you'll connect it to an actual reject mechanism later.
+Your inspector can detect defects. Now add hardware to act on them.
+
+**Add the reject mechanism to your work cell:**
+
+Click the button below to add a part rejector to your simulation:
+
+[BUTTON: Add Reject Mechanism]
+
+The simulation now shows a pneumatic pusher mounted beside the conveyor. When activated, it pushes parts into a reject bin.
+
+[SCREENSHOT: Work cell with reject mechanism visible]
+
+**Configure it in Viam:**
+
+1. In the Viam app, go to your machine's **Configure** tab
+2. Click **+** next to your machine in the left sidebar
+3. Select **Component**, then **motor**
+4. For **Model**, select `gpio` (or the appropriate model for your simulation)
+5. Name it `rejector`
+6. Click **Create**
+
+**Configure the motor:**
+
+Set the board and pin that controls the rejector:
+
+```json
+{
+  "board": "local",
+  "pins": {
+    "pwm": "32"
+  }
+}
+```
+
+[SCREENSHOT: Rejector motor configuration]
+
+**Test it:**
+
+1. Find the `rejector` motor in your config
+2. Click **Test** at the bottom of its configuration card
+3. Click **Run** to activate it briefly
+4. Watch the simulation—the pusher should extend and retract
+
+[SCREENSHOT: Motor test panel with Run button]
+
+**Update your code to use the rejector:**
+
+Now add the rejector as a dependency. Same pattern: add to Config, update Validate, add to struct, extract in constructor.
 
 {{< tabs >}}
 {{% tab name="Go" %}}
 
-Add to `inspector.go`:
+Update `inspector.go`:
 
 ```go
-type InspectionResult struct {
-	Label       string
-	Confidence  float64
-	WouldReject bool
+import (
+	// ... existing imports ...
+	"go.viam.com/rdk/components/motor"
+)
+
+type Config struct {
+	Camera        string `json:"camera"`
+	VisionService string `json:"vision_service"`
+	Rejector      string `json:"rejector"`
 }
 
-func (i *Inspector) Inspect(ctx context.Context) (*InspectionResult, error) {
-	detection, err := i.Detect(ctx)
+func (cfg *Config) Validate(path string) ([]string, []string, error) {
+	if cfg.Camera == "" {
+		return nil, nil, fmt.Errorf("camera is required")
+	}
+	if cfg.VisionService == "" {
+		return nil, nil, fmt.Errorf("vision_service is required")
+	}
+	if cfg.Rejector == "" {
+		return nil, nil, fmt.Errorf("rejector is required")
+	}
+	return []string{cfg.Camera, cfg.VisionService, cfg.Rejector}, nil, nil
+}
+
+type Inspector struct {
+	resource.AlwaysRebuild
+
+	name   resource.Name
+	conf   *Config
+	logger logging.Logger
+
+	cam      camera.Camera
+	detector vision.Service
+	rejector motor.Motor
+}
+
+func NewInspector(
+	ctx context.Context,
+	deps resource.Dependencies,
+	name resource.Name,
+	conf *Config,
+	logger logging.Logger,
+) (resource.Resource, error) {
+	cam, err := camera.FromDependencies(deps, conf.Camera)
+	if err != nil {
+		return nil, err
+	}
+	detector, err := vision.FromDependencies(deps, conf.VisionService)
+	if err != nil {
+		return nil, err
+	}
+	rejector, err := motor.FromDependencies(deps, conf.Rejector)
 	if err != nil {
 		return nil, err
 	}
 
-	// Reject if FAIL detected with sufficient confidence
-	wouldReject := detection.Label == "FAIL" && detection.Confidence > 0.7
-
-	return &InspectionResult{
-		Label:       detection.Label,
-		Confidence:  detection.Confidence,
-		WouldReject: wouldReject,
+	return &Inspector{
+		name:     name,
+		conf:     conf,
+		logger:   logger,
+		cam:      cam,
+		detector: detector,
+		rejector: rejector,
 	}, nil
 }
 ```
 
-Update `main.go`:
+Update the config in `cmd/cli/main.go`:
 
 ```go
-// Replace previous call with:
-result, err := inspector.Inspect(ctx)
-if err != nil {
-    logger.Fatal(err)
+cfg := inspector.Config{
+	Camera:        "inspection-cam",
+	VisionService: "part-detector",
+	Rejector:      "rejector",
 }
-fmt.Printf("Inspection: %s (%.1f%% confidence)\n", result.Label, result.Confidence*100)
-fmt.Printf("Would reject: %v\n", result.WouldReject)
 ```
 
 {{% /tab %}}
 {{% tab name="Python" %}}
 
-Add to `inspector.py`:
+Update `inspector.py`:
 
 ```python
+from viam.components.motor import Motor
+
 @dataclass
-class InspectionResult:
-    label: str
-    confidence: float
-    would_reject: bool
+class Config:
+    camera: str
+    vision_service: str
+    rejector: str
+
+    def validate(self) -> list[str]:
+        if not self.camera:
+            raise ValueError("camera is required")
+        if not self.vision_service:
+            raise ValueError("vision_service is required")
+        if not self.rejector:
+            raise ValueError("rejector is required")
+        return [self.camera, self.vision_service, self.rejector]
 
 class Inspector:
-    # ... existing methods ...
+    def __init__(self, name: str, conf: Config, cam: Camera, detector: VisionClient, rejector: Motor):
+        self.name = name
+        self.conf = conf
+        self.cam = cam
+        self.detector = detector
+        self.rejector = rejector
 
-    async def inspect(self) -> InspectionResult:
-        detection = await self.detect()
-
-        # Reject if FAIL detected with sufficient confidence
-        would_reject = detection.label == "FAIL" and detection.confidence > 0.7
-
-        return InspectionResult(
-            label=detection.label,
-            confidence=detection.confidence,
-            would_reject=would_reject
-        )
+    @classmethod
+    async def new(cls, deps: dict, cfg: Config) -> "Inspector":
+        cam = next((v for k, v in deps.items() if k.name == cfg.camera), None)
+        detector = next((v for k, v in deps.items() if k.name == cfg.vision_service), None)
+        rejector = next((v for k, v in deps.items() if k.name == cfg.rejector), None)
+        return cls("inspector", cfg, cam, detector, rejector)
 ```
 
-Update `cli.py`:
+Update the config in `cli.py`:
 
 ```python
-# Replace previous call with:
-result = await inspector.inspect()
-print(f"Inspection: {result.label} ({result.confidence*100:.1f}% confidence)")
-print(f"Would reject: {result.would_reject}")
+cfg = Config(
+    camera="inspection-cam",
+    vision_service="part-detector",
+    rejector="rejector"
+)
 ```
 
 {{% /tab %}}
 {{< /tabs >}}
 
-**Test it:**
+Run your code to verify it still works—it should connect successfully even though you're not using the rejector yet.
+
+#### 2.6 Add Rejection Logic
+
+Now add the `inspect` command. Update the command struct and add the internal methods.
+
+{{< tabs >}}
+{{% tab name="Go" %}}
+
+Update `inspector.go`:
+
+```go
+type inspectorCmd struct {
+	Capture bool
+	Detect  bool
+	Inspect bool
+}
+
+func (i *Inspector) DoCommand(ctx context.Context, cmdMap map[string]interface{}) (map[string]interface{}, error) {
+	var cmd inspectorCmd
+	if err := mapstructure.Decode(cmdMap, &cmd); err != nil {
+		return nil, err
+	}
+
+	if cmd.Capture {
+		if err := i.captureImage(ctx); err != nil {
+			return nil, err
+		}
+		return map[string]interface{}{"saved": "snapshot.jpg"}, nil
+	}
+
+	if cmd.Detect {
+		label, confidence, err := i.detect(ctx)
+		if err != nil {
+			return nil, err
+		}
+		return map[string]interface{}{"label": label, "confidence": confidence}, nil
+	}
+
+	if cmd.Inspect {
+		label, confidence, rejected, err := i.inspect(ctx)
+		if err != nil {
+			return nil, err
+		}
+		return map[string]interface{}{
+			"label":      label,
+			"confidence": confidence,
+			"rejected":   rejected,
+		}, nil
+	}
+
+	return nil, fmt.Errorf("unknown command: %v", cmdMap)
+}
+
+func (i *Inspector) inspect(ctx context.Context) (string, float64, bool, error) {
+	label, confidence, err := i.detect(ctx)
+	if err != nil {
+		return "", 0, false, err
+	}
+
+	shouldReject := label == "FAIL" && confidence > 0.7
+
+	if shouldReject {
+		if err := i.reject(ctx); err != nil {
+			i.logger.Errorw("Failed to reject part", "error", err)
+		}
+	}
+
+	return label, confidence, shouldReject, nil
+}
+
+func (i *Inspector) reject(ctx context.Context) error {
+	if err := i.rejector.GoFor(ctx, 100, 1, nil); err != nil {
+		return err
+	}
+	i.logger.Info("Part rejected")
+	return nil
+}
+```
+
+{{% /tab %}}
+{{% tab name="Python" %}}
+
+Update `inspector.py`:
+
+```python
+async def do_command(self, command: Mapping[str, Any]) -> Mapping[str, Any]:
+    if command.get("capture"):
+        await self._capture_image()
+        return {"saved": "snapshot.jpg"}
+
+    if command.get("detect"):
+        label, confidence = await self._detect()
+        return {"label": label, "confidence": confidence}
+
+    if command.get("inspect"):
+        label, confidence, rejected = await self._inspect()
+        return {"label": label, "confidence": confidence, "rejected": rejected}
+
+    raise ValueError(f"unknown command: {command}")
+
+async def _inspect(self) -> tuple[str, float, bool]:
+    label, confidence = await self._detect()
+    should_reject = label == "FAIL" and confidence > 0.7
+
+    if should_reject:
+        try:
+            await self._reject()
+        except Exception as e:
+            print(f"Failed to reject part: {e}")
+
+    return label, confidence, should_reject
+
+async def _reject(self) -> None:
+    await self.rejector.go_for(rpm=100, revolutions=1)
+    print("Part rejected")
+```
+
+{{% /tab %}}
+{{< /tabs >}}
+
+#### 2.7 Test the Complete Loop
+
+Run your code and watch the simulation:
 
 ```bash
-go run . -host YOUR_HOST -api-key YOUR_KEY -api-key-id YOUR_KEY_ID
+go run ./cmd/cli -host your-machine-main.abc123.viam.cloud -cmd inspect
+# or: python cli.py your-machine-main.abc123.viam.cloud inspect
 ```
 
+With a passing part:
 ```
-Inspector ready
-Inspection: PASS (94.2% confidence)
-Would reject: false
-```
-
-Or if a defect is detected:
-
-```
-Inspection: FAIL (87.3% confidence)
-Would reject: true
+Result: map[confidence:0.942 label:PASS rejected:false]
 ```
 
-The `would_reject` flag doesn't do anything yet—there's no reject mechanism. You'll add that hardware and connect it in Part 3.
+With a failing part:
+```
+Result: map[confidence:0.873 label:FAIL rejected:true]
+```
 
-##### What you've built
+Watch the simulation—when a FAIL is detected, the rejector activates and pushes the part into the reject bin.
+
+[SCREENSHOT: Simulation showing part being rejected]
+
+**You've closed the control loop:**
+1. **Sees** — Camera captures the part
+2. **Thinks** — Vision service classifies it
+3. **Acts** — Rejector removes defective parts
+
+This is the complete sense-think-act cycle that defines robotic systems.
+
+#### 2.8 Deploy as a Module
+
+Your code works. Now package it as a module so it runs on the machine itself, not your laptop.
+
+**Why deploy as a module?**
+
+During development, your laptop runs the logic and talks to the machine over the network. This is great for iteration—edit, run, see results. But for production:
+- The machine should run autonomously
+- Network latency adds delay to the control loop
+- Your laptop shouldn't need to be connected
+
+Modules run directly on the machine as part of viam-server.
+
+**Create the module entry point:**
+
+{{< tabs >}}
+{{% tab name="Go" %}}
+
+Create `cmd/module/main.go`:
+
+```go
+package main
+
+import (
+	"go.viam.com/rdk/module"
+	"go.viam.com/rdk/resource"
+	"go.viam.com/rdk/services/generic"
+
+	inspector "inspection-module"
+)
+
+func main() {
+	module.ModularMain(
+		resource.APIModel{generic.API, inspector.Model},
+	)
+}
+```
+
+Add registration to `inspector.go` (at the top, before Config):
+
+```go
+var Model = resource.NewModel("your-org", "inspection", "inspector")
+
+func init() {
+	resource.RegisterService(generic.API, Model,
+		resource.Registration[resource.Resource, *Config]{
+			Constructor: newInspector,
+		},
+	)
+}
+
+// newInspector is the module constructor - extracts config and calls NewInspector.
+func newInspector(
+	ctx context.Context,
+	deps resource.Dependencies,
+	rawConf resource.Config,
+	logger logging.Logger,
+) (resource.Resource, error) {
+	conf, err := resource.NativeConfig[*Config](rawConf)
+	if err != nil {
+		return nil, err
+	}
+	return NewInspector(ctx, deps, rawConf.ResourceName(), conf, logger)
+}
+
+// NewInspector is the exported constructor - called by both CLI and module.
+func NewInspector(...) (resource.Resource, error) {
+	// ... same as before ...
+}
+```
+
+This matches the viam-chess pattern exactly:
+- `init()` registers with a module constructor
+- Module constructor (`newInspector`) extracts the config and calls the exported constructor
+- Exported constructor (`NewInspector`) is used by both CLI and module
+
+{{% /tab %}}
+{{% tab name="Python" %}}
+
+Create `main.py`:
+
+```python
+import asyncio
+from viam.module.module import Module
+from viam.services.generic import Generic
+
+from inspector import Inspector
+
+async def main():
+    module = Module.from_args()
+    module.add_model_from_registry(Generic.SUBTYPE, Inspector.MODEL)
+    await module.start()
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+Add registration to `inspector.py`:
+
+```python
+from viam.services.generic import Generic
+from viam.resource.types import Model, ModelFamily
+
+class Inspector(Generic):
+    MODEL = Model(ModelFamily("your-org", "inspection"), "inspector")
+
+    @classmethod
+    async def new(cls, deps: dict, cfg: Config) -> "Inspector":
+        """Called by both CLI and module system."""
+        # ... same as before ...
+```
+
+{{% /tab %}}
+{{< /tabs >}}
+
+**Create `meta.json`:**
+
+```json
+{
+  "module_id": "your-org:inspection-module",
+  "visibility": "private",
+  "url": "",
+  "description": "Part inspection with automatic rejection",
+  "models": [
+    {
+      "api": "rdk:service:generic",
+      "model": "your-org:inspection:inspector"
+    }
+  ],
+  "entrypoint": "run.sh"
+}
+```
+
+**Upload to the registry:**
+
+```bash
+viam module upload --version 1.0.0 --platform linux/amd64
+```
+
+**Add the module to your machine:**
+
+1. In the Viam app, go to your machine's **Configure** tab
+2. Click **+** next to your machine
+3. Select **Service**, then **Local module**, then **Local module**
+4. Enter the module name from the registry
+5. Click **Create**
+
+**Configure the inspector service:**
+
+1. Click **+** next to your machine again
+2. Select **Service**, then your module's model
+3. Name it `inspector`
+4. Configure its dependencies:
+
+```json
+{
+  "camera": "inspection-cam",
+  "vision_service": "part-detector",
+  "rejector": "rejector"
+}
+```
+
+5. Click **Save config**
+
+The machine now runs your inspection logic autonomously. The same code that ran on your laptop now runs on the machine as part of viam-server.
+
+#### 2.9 Summary
 
 In three iterations, you went from nothing to a working inspection system:
 
 1. **Capture image** — Proved you can access remote hardware
 2. **Run detection** — Added ML inference
-3. **Inspection logic** — Made a decision (reject or not)
+3. **Inspect and reject** — Made a decision and acted on it
 
 Each iteration was: edit → rebuild → run → see results. No deployment, no waiting. Your code ran on your laptop while the hardware ran on the machine.
 
-Notice the pattern: your `NewInspector` function takes `resource.Dependencies` and extracts what it needs by name. The CLI builds that Dependencies map from the remote machine; in production, the module system provides it. **Same constructor, same code, different context.** That's module-first development.
+Then you packaged and deployed the same code as a module. **Same constructor, same `DoCommand`, different context.** That's module-first development.
 
-**Checkpoint:** You can write code that talks to your machine. The inspection logic is ready—it just needs hardware to act on its decisions.
+**The module-first pattern:**
+- **Config** — One field per dependency (declares what you need)
+- **Constructor** — Extract dependencies using `FromDependencies`, return `resource.Resource`
+- **DoCommand** — The generic service interface; all operations go through here
+- **CLI** — Creates your service locally, calls `DoCommand`, just like the module system does
+
+When you need to add another sensor or actuator, it's the same pattern: add to config, extract in constructor, add a command to `DoCommand`.
+
+**Checkpoint:** Your inspection system runs autonomously on the machine. It sees, thinks, and acts—the complete control loop.
 
 ---
 
-### Part 2: Automate (~10 min)
+### Part 3: Monitor (~15 min)
 
-**Goal:** Enable continuous recording so every inspection is captured and queryable.
+**Goal:** Enable continuous recording and monitoring so every inspection is captured, queryable, and you're alerted to problems.
 
-**Skills:** Data capture configuration, cloud sync, querying captured data.
+**Skills:** Data capture configuration, triggers and alerts, querying captured data.
 
-In Part 1, you set up the detection pipeline and wrote inspection logic using the module-first pattern. The `would_reject` flag is a placeholder—you'll connect it to real hardware in Part 3. First, let's get continuous data capture working. We're building a complete prototype quickly, then circling back to close the control loop.
+Your inspection system runs autonomously on the machine. Now add the infrastructure for production: continuous data capture, machine health monitoring, and queryable inspection history.
 
 Viam's data capture is built-in. Toggle it on, and every detection result and image gets stored locally, synced to the cloud, and made queryable—automatically.
 
-#### 2.1 Configure Data Capture
+#### 3.1 Configure Data Capture
 
 **Enable data capture on the vision service:**
 
@@ -895,7 +1417,32 @@ You want the raw images alongside detection results—so you can review what the
 
 The machine is now capturing detection results and images every 2 seconds—whether or not you're connected.
 
-#### 2.2 View Data in the Cloud
+#### 3.2 Add Machine Health Alert
+
+Get notified if your inspection station goes offline. This is a simple trigger—no code required.
+
+**Create the trigger:**
+
+1. In the Viam app, go to your machine's **Configure** tab
+2. Click **+** next to your machine in the left sidebar
+3. Select **Trigger**
+4. Name it `offline-alert`
+5. Click **Create**
+
+**Configure the trigger:**
+
+1. For **Type**, select `Part is offline`
+2. Toggle **Email all machine owners** to on (or add specific email addresses)
+3. Set **Minutes between notifications** to `5` (so you don't get spammed)
+4. Click **Save config**
+
+[SCREENSHOT: Offline trigger configuration]
+
+That's it. If your inspection station loses connection for any reason—network issues, power loss, viam-server crash—you'll get an email.
+
+> **Other triggers:** You can also create triggers for "Part is online" (useful for knowing when a machine comes back) or "Data synced" (fires when data reaches the cloud). For detection-based alerts, see Part 7.
+
+#### 3.3 View and Query Data
 
 Viam automatically syncs captured data to the cloud and removes it from the machine to free up storage. No additional configuration required.
 
@@ -914,7 +1461,7 @@ Viam automatically syncs captured data to the cloud and removes it from the mach
 - **Timestamps** — When each capture occurred
 - **Machine ID** — Which machine captured it (matters when you have multiple stations)
 
-**Filter and query:**
+**Filter the data:**
 
 1. Click **Filter** and select your machine: `inspection-station-1`
 2. Set time range to "Last hour"
@@ -922,27 +1469,48 @@ Viam automatically syncs captured data to the cloud and removes it from the mach
 
 [SCREENSHOT: Data tab with filters applied]
 
+**Query with SQL or MQL:**
+
+For more complex queries, use the **Query** page:
+
+1. In the Viam app, click **Data** then **Query**
+2. Select **SQL** or **MQL** as your query language
+3. Try a simple query to find all failures:
+
+```sql
+SELECT time_received, data
+FROM readings
+WHERE component_name = 'part-detector'
+  AND data LIKE '%FAIL%'
+ORDER BY time_received DESC
+LIMIT 10
+```
+
+[SCREENSHOT: Query page with results]
+
+This is powerful for incident investigation: "Show me all FAIL detections from the last hour" or "How many parts failed on Tuesday's shift?"
+
 This data serves multiple purposes:
 - **Compliance** — Auditable record of every inspection
 - **Quality trends** — "FAIL rate increased 20% this week"
 - **Model improvement** — Export images to retrain your ML model
 - **Incident review** — "Show me all FAILs from Tuesday's shift"
 
-#### 2.3 What Data Capture Adds
+#### 3.4 Summary
 
-You now have two complementary capabilities:
+You now have three layers working together:
 
-| Your Inspector (Part 1) | + Data Capture (Part 2) |
-|------------------------|-------------------------|
-| Runs from your laptop | Records continuously on the machine |
-| You trigger inspections | Captures every frame automatically |
-| Results print to terminal | Results sync to cloud |
-| Use for: testing, debugging, iterating | Adds: monitoring, compliance, analytics |
+| Your Module (Part 2) | + Data Capture (Part 3) |
+|---------------------|-------------------------|
+| Runs on the machine | Records continuously |
+| Executes control logic | Captures every inspection |
+| Rejects defective parts | Syncs results to cloud |
+| Use for: production control | Adds: monitoring, compliance, analytics |
 
-Your inspector code from Part 1 remains your development tool:
+Your development CLI from Part 2 remains useful:
 - Test changes to inspection logic before deploying
 - Debug issues by running inspections manually
-- Add new features (like the reject mechanism in Part 3)
+- Iterate on new features without redeploying
 
 Data capture adds the production recording layer:
 - Runs 24/7 without intervention
@@ -950,350 +1518,9 @@ Data capture adds the production recording layer:
 - Powers dashboards and analytics
 - Feeds data back for ML model improvement
 
-**Checkpoint:** Inspection data flows continuously from machine to cloud—all through configuration.
+Machine health alerts ensure you know when something's wrong—before your customers do.
 
----
-
-### Part 3: Control (~10 min)
-
-**Goal:** Add a reject mechanism and connect it to your inspection logic.
-
-**Skills:** Adding actuators, updating module dependencies, closing the control loop.
-
-#### 3.1 Add the Reject Mechanism
-
-Your inspection system detects failures but doesn't act on them yet. The `would_reject` flag in your code is just a placeholder. Now you'll add hardware to actually reject defective parts.
-
-**Add the reject mechanism to your work cell:**
-
-Click the button below to add a part rejector to your simulation:
-
-[BUTTON: Add Reject Mechanism]
-
-The simulation now shows a pneumatic pusher mounted beside the conveyor. When activated, it pushes parts into a reject bin.
-
-[SCREENSHOT: Work cell with reject mechanism visible]
-
-**Configure it in Viam:**
-
-1. In the Viam app, go to your machine's **Config** tab
-2. Click **+ Create component**
-3. For **Type**, select `motor`
-4. For **Model**, select `gpio` (or the appropriate model for your simulation)
-5. Name it `rejector`
-6. Click **Create**
-
-**Configure the motor:**
-
-Set the board and pin that controls the rejector:
-
-```json
-{
-  "board": "local",
-  "pins": {
-    "pwm": "32"
-  }
-}
-```
-
-[SCREENSHOT: Rejector motor configuration]
-
-**Test it manually:**
-
-1. Go to the **Control** tab
-2. Find the `rejector` motor
-3. Click **Run** to activate it briefly
-4. Watch the simulation—the pusher should extend and retract
-
-[SCREENSHOT: Motor control panel with Run button]
-
-The hardware works. Now connect it to your inspection logic.
-
-#### 3.2 Update Your Code
-
-Add the rejector to your inspector so it can act on failures.
-
-{{< tabs >}}
-{{% tab name="Go" %}}
-
-**Update `inspector.go`:**
-
-First, add the motor to your imports and Config:
-
-```go
-import (
-	// ... existing imports ...
-	"go.viam.com/rdk/components/motor"
-)
-
-// Config declares which dependencies the inspector needs by name.
-type Config struct {
-	Camera        string
-	VisionService string
-	Rejector      string  // Add this
-}
-```
-
-Update `NewInspector` to extract the motor:
-
-```go
-func NewInspector(deps resource.Dependencies, cfg Config, logger logging.Logger) (*Inspector, error) {
-	cam, err := camera.FromDependencies(deps, cfg.Camera)
-	if err != nil {
-		return nil, err
-	}
-	detector, err := vision.FromDependencies(deps, cfg.VisionService)
-	if err != nil {
-		return nil, err
-	}
-	rejector, err := motor.FromDependencies(deps, cfg.Rejector)
-	if err != nil {
-		return nil, err
-	}
-
-	return &Inspector{
-		cam:      cam,
-		detector: detector,
-		rejector: rejector,
-		camName:  cfg.Camera,
-		logger:   logger,
-	}, nil
-}
-```
-
-Add the rejector field to the struct:
-
-```go
-type Inspector struct {
-	cam      camera.Camera
-	detector vision.Service
-	rejector motor.Motor  // Add this
-	camName  string
-	logger   logging.Logger
-}
-```
-
-Add a `Reject` method:
-
-```go
-func (i *Inspector) Reject(ctx context.Context) error {
-	// Activate the rejector briefly to push the part
-	if err := i.rejector.GoFor(ctx, 100, 1, nil); err != nil {
-		return err
-	}
-	i.logger.Info("Part rejected")
-	return nil
-}
-```
-
-Update `Inspect` to call `Reject`:
-
-```go
-func (i *Inspector) Inspect(ctx context.Context) (*InspectionResult, error) {
-	detection, err := i.Detect(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	shouldReject := detection.Label == "FAIL" && detection.Confidence > 0.7
-
-	// Actually reject the part
-	if shouldReject {
-		if err := i.Reject(ctx); err != nil {
-			i.logger.Errorw("Failed to reject part", "error", err)
-		}
-	}
-
-	return &InspectionResult{
-		Label:      detection.Label,
-		Confidence: detection.Confidence,
-		Rejected:   shouldReject,  // Renamed from WouldReject
-	}, nil
-}
-```
-
-Update the result struct:
-
-```go
-type InspectionResult struct {
-	Label      string
-	Confidence float64
-	Rejected   bool  // Was WouldReject, now actually happens
-}
-```
-
-{{% /tab %}}
-{{% tab name="Python" %}}
-
-**Update `inspector.py`:**
-
-First, add the motor import and update Config:
-
-```python
-from viam.components.motor import Motor
-
-@dataclass
-class Config:
-    camera: str
-    vision_service: str
-    rejector: str  # Add this
-```
-
-Update the `new` method to extract the motor:
-
-```python
-@classmethod
-async def new(cls, deps: dict, cfg: Config) -> "Inspector":
-    cam = next((v for k, v in deps.items() if k.name == cfg.camera), None)
-    detector = next((v for k, v in deps.items() if k.name == cfg.vision_service), None)
-    rejector = next((v for k, v in deps.items() if k.name == cfg.rejector), None)
-    return cls(cam, detector, rejector, cfg.camera)
-```
-
-Update `__init__`:
-
-```python
-def __init__(self, cam: Camera, detector: VisionClient, rejector: Motor, cam_name: str):
-    self.cam = cam
-    self.detector = detector
-    self.rejector = rejector  # Add this
-    self.cam_name = cam_name
-```
-
-Add a `reject` method:
-
-```python
-async def reject(self) -> None:
-    """Activate the rejector to push the part off the line."""
-    await self.rejector.go_for(rpm=100, revolutions=1)
-    print("Part rejected")
-```
-
-Update `inspect` to call `reject`:
-
-```python
-async def inspect(self) -> InspectionResult:
-    detection = await self.detect()
-
-    should_reject = detection.label == "FAIL" and detection.confidence > 0.7
-
-    # Actually reject the part
-    if should_reject:
-        try:
-            await self.reject()
-        except Exception as e:
-            print(f"Failed to reject part: {e}")
-
-    return InspectionResult(
-        label=detection.label,
-        confidence=detection.confidence,
-        rejected=should_reject  # Renamed from would_reject
-    )
-```
-
-Update the result class:
-
-```python
-@dataclass
-class InspectionResult:
-    label: str
-    confidence: float
-    rejected: bool  # Was would_reject, now actually happens
-```
-
-{{% /tab %}}
-{{< /tabs >}}
-
-**Update `main.go` (or `cli.py`):**
-
-Add the rejector to your config:
-
-{{< tabs >}}
-{{% tab name="Go" %}}
-
-```go
-cfg := Config{
-    Camera:        "inspection-cam",
-    VisionService: "part-detector",
-    Rejector:      "rejector",  // Add this
-}
-```
-
-Update the output:
-
-```go
-fmt.Printf("Inspection: %s (%.1f%% confidence)\n", result.Label, result.Confidence*100)
-fmt.Printf("Rejected: %v\n", result.Rejected)
-```
-
-{{% /tab %}}
-{{% tab name="Python" %}}
-
-```python
-cfg = Config(
-    camera="inspection-cam",
-    vision_service="part-detector",
-    rejector="rejector"  # Add this
-)
-```
-
-Update the output:
-
-```python
-print(f"Inspection: {result.label} ({result.confidence*100:.1f}% confidence)")
-print(f"Rejected: {result.rejected}")
-```
-
-{{% /tab %}}
-{{< /tabs >}}
-
-#### 3.3 Test the Complete Loop
-
-Run your updated code:
-
-```bash
-go run . -host YOUR_HOST -api-key YOUR_KEY -api-key-id YOUR_KEY_ID
-```
-
-With a passing part:
-```
-Inspector ready
-Inspection: PASS (94.2% confidence)
-Rejected: false
-```
-
-With a failing part:
-```
-Inspector ready
-Inspection: FAIL (87.3% confidence)
-Part rejected
-Rejected: true
-```
-
-Watch the simulation—when a FAIL is detected, the rejector activates and pushes the part into the reject bin.
-
-[SCREENSHOT: Simulation showing part being rejected]
-
-**You've closed the control loop.** Your system now:
-1. **Sees** — Camera captures the part
-2. **Thinks** — Vision service classifies it
-3. **Acts** — Rejector removes defective parts
-
-This is the complete sense-think-act cycle that defines robotic systems.
-
-#### 3.4 The Pattern
-
-Look at how little changed to add an actuator:
-
-1. **Config** — Added one field: `Rejector string`
-2. **Constructor** — Added one extraction: `motor.FromDependencies`
-3. **Logic** — Added one method call: `i.Reject(ctx)`
-
-The module-first pattern made this easy. Your constructor already takes `Dependencies`—adding a new dependency is just one more extraction. The CLI already builds the Dependencies map—the motor is automatically included.
-
-When you deploy this as a module, the same code runs on the machine. The module system provides the Dependencies; your constructor extracts what it needs. Nothing changes.
-
-**Checkpoint:** Your inspection system takes action. Detect → Decide → Reject. The control loop is closed.
+**Checkpoint:** Your inspection system runs autonomously, records everything, and alerts you to problems—all through configuration.
 
 ---
 
@@ -1303,7 +1530,7 @@ When you deploy this as a module, the same code runs on the machine. The module 
 
 **Skills:** Configuration reuse with fragments, fleet basics.
 
-#### 3.1 Create a Fragment
+#### 4.1 Create a Fragment
 
 You have one working inspection station. Now imagine you need 10 more—or 100. Manually copying configuration to each machine would be tedious and error-prone.
 
@@ -1334,11 +1561,11 @@ Now you'll copy the configuration from your machine into the fragment.
 
 [SCREENSHOT: Fragment editor with pasted configuration]
 
-Your fragment now contains everything: the camera, filtered camera, ML model service, vision service, data capture settings, and trigger configuration. Any machine with this fragment applied will have this exact setup.
+Your fragment now contains everything: the camera, ML model service, vision service, inspector module, data capture settings, and trigger configuration. Any machine with this fragment applied will have this exact setup.
 
 > **Fragments are powerful.** When you update a fragment, every machine using it receives the update automatically. Change a detection threshold once, and 100 stations update. This is how you manage configuration at scale.
 
-#### 3.2 Add a Second Machine
+#### 4.2 Add a Second Machine
 
 Let's spin up a second inspection station and apply the fragment.
 
@@ -1439,12 +1666,12 @@ One of the most powerful aspects of fragments is pushing updates. Let's change a
 
 **Modify the fragment:**
 
-Suppose you want to adjust the confidence threshold for failure alerts. Instead of alerting at 70% confidence, you want 80% to reduce false positives.
+Suppose you want to increase the data capture frequency to get more granular inspection data. Instead of capturing every 2 seconds, you want every 1 second.
 
 1. Go to **Fragments** in the left sidebar
 2. Open your `inspection-station` fragment
-3. Find the `fail-detector-cam` (filtered camera) configuration
-4. Change `confidence_threshold` from `0.7` to `0.8`
+3. Find the `part-detector` vision service configuration
+4. In the data capture settings, change the frequency from `2` to `1` seconds
 5. Click **Save**
 
 [SCREENSHOT: Editing fragment configuration]
@@ -1462,10 +1689,10 @@ You didn't SSH into either machine. You didn't run any deployment commands. You 
 **Verify the change:**
 
 1. Click into `inspection-station-1`
-2. Go to **Config** tab and check the filtered camera
-3. Confirm the confidence threshold is now 0.8
+2. Go to **Config** tab and check the vision service data capture settings
+3. Confirm the frequency is now 1 second
 
-[SCREENSHOT: Updated confidence threshold in config]
+[SCREENSHOT: Updated capture frequency in config]
 
 > **This is fleet management.** Need to update an ML model across 50 machines? Update the fragment. Need to roll back a bad change? Revert the fragment. The machines sync automatically. This same pattern scales from 2 machines to 2,000.
 
@@ -1806,9 +2033,11 @@ These all use the same patterns: configure components, add services, write logic
 | Component | Type | Notes |
 |-----------|------|-------|
 | `inspection-cam` | camera | Gazebo RGB camera |
-| `part-detector` | vision | ML model service |
-| `fail-detector-cam` | camera (filtered) | Captures only FAIL detections |
-| `fail-alert` | trigger | Email notification on failures |
+| `part-classifier` | mlmodel | TFLite model for PASS/FAIL classification |
+| `part-detector` | vision | ML model service connected to camera |
+| `rejector` | motor | Pneumatic pusher for rejecting parts |
+| `inspector` | generic (module) | Control logic service |
+| `offline-alert` | trigger | Email notification when machine goes offline |
 
 ### Simulated Events
 
@@ -1885,7 +2114,7 @@ At each step, explicitly connect to transferable skills:
 
 2. **ML model:** Pre-trained (provided) vs. walk through training? Pre-trained keeps focus on platform skills.
 
-3. ~~**Alert mechanism:** What works without user setup?~~ **Resolved:** Using filtered camera + trigger with email notification.
+3. ~~**Alert mechanism:** What works without user setup?~~ **Resolved:** Using machine health trigger (offline alert) with email notification. Detection-based alerts deferred to Part 7.
 
 4. **Second station:** Identical or slightly different? Identical is simpler; different shows fragment flexibility.
 
