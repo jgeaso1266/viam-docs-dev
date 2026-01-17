@@ -852,15 +852,15 @@ Notice the pattern: your `NewInspector` function takes `resource.Dependencies` a
 
 ---
 
-### Part 2: Automate (~15 min)
+### Part 2: Automate (~10 min)
 
-**Goal:** Configure continuous data capture and alerting so inspections run automatically.
+**Goal:** Enable continuous recording so every inspection is captured and queryable.
 
-**Skills:** Data capture configuration, cloud sync, filtered cameras, triggers and notifications.
+**Skills:** Data capture configuration, cloud sync, querying captured data.
 
-In Part 1, you set up the detection pipeline and wrote inspection logic using the module-first pattern. The `would_reject` flag is a placeholder—you'll connect it to real hardware in Part 3. First, let's get the rest of the system working: continuous data capture, cloud sync, and failure alerts. We're building a complete prototype quickly, then circling back to close the control loop.
+In Part 1, you set up the detection pipeline and wrote inspection logic using the module-first pattern. The `would_reject` flag is a placeholder—you'll connect it to real hardware in Part 3. First, let's get continuous data capture working. We're building a complete prototype quickly, then circling back to close the control loop.
 
-Data capture in Viam is configuration, not code. You enable capture on components and services, and Viam handles the rest—storing locally, syncing to the cloud, making it queryable. No scripts to deploy, no processes to manage.
+Viam's data capture is built-in. Toggle it on, and every detection result and image gets stored locally, synced to the cloud, and made queryable—automatically.
 
 #### 2.1 Configure Data Capture
 
@@ -890,15 +890,14 @@ You want the raw images alongside detection results—so you can review what the
 
 **Verify it's working:**
 
-1. Go to the **Control** tab
-2. Find the `part-detector` vision service
-3. You should see a small indicator showing data is being captured
+1. In the config, find `part-detector` and click **Test** at the bottom of its card
+2. You should see a capture indicator showing data is being recorded
 
 The machine is now capturing detection results and images every 2 seconds—whether or not you're connected.
 
 #### 2.2 View Data in the Cloud
 
-Data captured on the machine automatically syncs to Viam's cloud. You don't need to configure sync separately—it happens in the background.
+Viam automatically syncs captured data to the cloud and removes it from the machine to free up storage. No additional configuration required.
 
 **Check the data:**
 
@@ -929,111 +928,29 @@ This data serves multiple purposes:
 - **Model improvement** — Export images to retrain your ML model
 - **Incident review** — "Show me all FAILs from Tuesday's shift"
 
-#### 2.3 Add a Filtered Camera for Failures
+#### 2.3 What Data Capture Adds
 
-You're capturing every inspection, but you want to treat failures specially—capture higher-resolution images and trigger alerts. A *filtered camera* wraps your existing camera and vision service, only outputting when detections match your criteria.
+You now have two complementary capabilities:
 
-**Create the filtered camera:**
+| Your Inspector (Part 1) | + Data Capture (Part 2) |
+|------------------------|-------------------------|
+| Runs from your laptop | Records continuously on the machine |
+| You trigger inspections | Captures every frame automatically |
+| Results print to terminal | Results sync to cloud |
+| Use for: testing, debugging, iterating | Adds: monitoring, compliance, analytics |
 
-1. In the Viam app, go to **Config** tab
-2. Click **+ Create component**
-3. For **Type**, select `camera`
-4. For **Model**, search for and select `filtered-camera`
-5. Name it `fail-detector-cam`
-6. Click **Create**
-
-**Configure the filter:**
-
-```json
-{
-  "camera": "inspection-cam",
-  "vision_service": "part-detector",
-  "classifications": {
-    "labels": ["FAIL"]
-  },
-  "confidence_threshold": 0.7
-}
-```
-
-This camera only outputs an image when `part-detector` detects FAIL with ≥70% confidence.
-
-[SCREENSHOT: Filtered camera configuration]
-
-**Enable data capture on it:**
-
-1. On `fail-detector-cam`, expand **Data capture**
-2. Toggle **Enable data capture** to on
-3. Set frequency: `1` second (check more frequently for failures)
-4. Click **Save config**
-
-**Verify it works:**
-
-1. Go to the **Control** tab
-2. Find `fail-detector-cam`
-3. The stream shows nothing most of the time—it only shows an image when a FAIL is detected
-4. Wait for a failure (or trigger one in the simulation) and confirm you see the image
-
-Now you're capturing all inspections at 2-second intervals, plus high-frequency capture specifically when failures occur.
-
-#### 2.4 Configure Failure Alerts
-
-Capturing failure data is useful for analysis, but you need to know immediately when defects occur. Viam's trigger system sends notifications when specific events happen—no code required.
-
-**Add a trigger:**
-
-1. In the Viam app, go to **Config** tab
-2. Scroll to the **Triggers** section
-3. Click **+ Add trigger**
-4. Configure:
-   - **Name**: `fail-alert`
-   - **Event type**: `Data has been synced to the cloud`
-   - **Data source**: Select `fail-detector-cam`
-
-**Add email notification:**
-
-1. Under **Notifications**, click **Add notification**
-2. Select **Email**
-3. Enter your email address
-4. Set **Seconds between notifications**: `3600` (one alert per hour max—you don't want inbox spam)
-5. Click **Save config**
-
-[SCREENSHOT: Trigger configuration with email notification]
-
-**Test the alert:**
-
-1. In the simulation, trigger a FAIL detection (place a defective part)
-2. Wait 1-2 minutes for the data to sync
-3. Check your email—you should receive a failure notification
-
-[SCREENSHOT: Email notification received]
-
-> **Going further:** You can configure webhook notifications to integrate with Slack, PagerDuty, or custom systems. The webhook receives the detection data as JSON, and your endpoint can format and route alerts however you need.
-
-#### 2.5 Development vs. Production
-
-You now have two ways to run inspections:
-
-| Development (Part 1) | Production (Part 2) |
-|---------------------|---------------------|
-| Your inspector code runs on your laptop | Data capture runs on the machine |
-| You trigger inspections manually | Inspections run continuously |
-| Results print to your terminal | Results sync to cloud |
-| Good for: testing, debugging, iterating on logic | Good for: ongoing monitoring, compliance, alerting |
-
-**Both remain valuable.** Your inspector code from Part 1 is still useful:
+Your inspector code from Part 1 remains your development tool:
 - Test changes to inspection logic before deploying
 - Debug issues by running inspections manually
 - Add new features (like the reject mechanism in Part 3)
 
-Data capture provides the production foundation:
+Data capture adds the production recording layer:
 - Runs 24/7 without intervention
 - Creates audit trail for compliance
-- Powers dashboards and alerting
+- Powers dashboards and analytics
 - Feeds data back for ML model improvement
 
-> **The pattern:** The machine runs viam-server with configured components and services. Data capture handles continuous operation. Triggers handle alerting. Your module code (when deployed) handles control logic like rejection. You configure the platform; you don't deploy scripts.
-
-**Checkpoint:** Inspection data flows continuously from machine to cloud. You get alerts when failures occur. All through configuration—no code deployed to the machine yet.
+**Checkpoint:** Inspection data flows continuously from machine to cloud—all through configuration.
 
 ---
 
@@ -1659,6 +1576,8 @@ The data captured during the incident (the anomalous detections, the degraded im
 ---
 
 ### Part 7: Productize (~15 min)
+
+<!-- TODO: Add a section on alerting - query data for FAIL detections and send notifications programmatically -->
 
 **Goal:** Build a customer-facing product.
 
