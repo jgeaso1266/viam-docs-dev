@@ -303,21 +303,157 @@ You should see the camera image with detection results—bounding boxes around d
 
 > **What you've built:** A complete ML inference pipeline. The vision service grabs an image from the camera, runs it through the TensorFlow Lite model, and returns structured detection results. This same pattern works for any ML task—object detection, classification, segmentation—you just swap the model.
 
-**Checkpoint:** You've configured a complete ML inference pipeline—camera, model, and vision service—entirely through the Viam app. The system can detect defects. Next, you'll write code to act on those detections.
+**Checkpoint:** You've configured a complete ML inference pipeline—camera, model, and vision service—entirely through the Viam app. The system can detect defects. Next, you'll set up continuous data capture so every detection is recorded and queryable.
 
 ---
 
-### Part 2: Control Logic (~30 min)
+### Part 2: Data Capture (~15 min)
+
+**Goal:** Enable continuous recording and monitoring so every detection is captured, queryable, and you're alerted to problems.
+
+**Skills:** Data capture configuration, triggers and alerts, querying captured data.
+
+Your vision pipeline is running. Before writing custom code, set up the data infrastructure—continuous capture, cloud sync, and alerting. This runs automatically in the background, recording every detection for compliance, analytics, and model improvement.
+
+Viam's data capture is built-in. Toggle it on, and every detection result and image gets stored locally, synced to the cloud, and made queryable—automatically.
+
+#### 2.1 Configure Data Capture
+
+**Enable data capture on the vision service:**
+
+1. In the Viam app, go to your machine's **Config** tab
+2. Find the `part-detector` vision service
+3. Click the **Data capture** section to expand it
+4. Toggle **Enable data capture** to on
+5. Set the capture frequency: `2` seconds
+6. Select the method to capture: `GetDetectionsFromCamera`
+7. Click **Save config**
+
+[SCREENSHOT: Vision service data capture configuration]
+
+**Also capture camera images:**
+
+You want the raw images alongside detection results—so you can review what the model saw and use images to improve your model later.
+
+1. Find the `inspection-cam` camera in your config
+2. Expand **Data capture**
+3. Toggle **Enable data capture** to on
+4. Set frequency: `2` seconds (matching the vision service)
+5. Click **Save config**
+
+[SCREENSHOT: Camera data capture configuration]
+
+**Verify it's working:**
+
+1. In the config, find `part-detector` and click **Test** at the bottom of its card
+2. You should see a capture indicator showing data is being recorded
+
+The machine is now capturing detection results and images every 2 seconds—whether or not you're connected.
+
+#### 2.2 Add Machine Health Alert
+
+Get notified if your inspection station goes offline. This is a simple trigger—no code required.
+
+**Create the trigger:**
+
+1. In the Viam app, go to your machine's **Configure** tab
+2. Click **+** next to your machine in the left sidebar
+3. Select **Trigger**
+4. Name it `offline-alert`
+5. Click **Create**
+
+**Configure the trigger:**
+
+1. For **Type**, select `Part is offline`
+2. Toggle **Email all machine owners** to on (or add specific email addresses)
+3. Set **Minutes between notifications** to `5` (so you don't get spammed)
+4. Click **Save config**
+
+[SCREENSHOT: Offline trigger configuration]
+
+That's it. If your inspection station loses connection for any reason—network issues, power loss, viam-server crash—you'll get an email.
+
+> **Other triggers:** You can also create triggers for "Part is online" (useful for knowing when a machine comes back) or "Data synced" (fires when data reaches the cloud). For detection-based alerts, see Part 7.
+
+#### 2.3 View and Query Data
+
+Viam automatically syncs captured data to the cloud and removes it from the machine to free up storage. No additional configuration required.
+
+**Check the data:**
+
+1. In the Viam app, click **Data** in the left sidebar (at the organization level, not the machine)
+2. Wait 1-2 minutes for initial sync
+3. You should see detection results and images appearing
+
+[SCREENSHOT: Data tab showing captured detections]
+
+**Verify the data includes:**
+
+- **Detection results** — Each row shows label (PASS/FAIL) and confidence score
+- **Camera images** — Click any row to see the image that was analyzed
+- **Timestamps** — When each capture occurred
+- **Machine ID** — Which machine captured it (matters when you have multiple stations)
+
+**Filter the data:**
+
+1. Click **Filter** and select your machine: `inspection-station-1`
+2. Set time range to "Last hour"
+3. You can also filter by component to see only vision service results or only camera images
+
+[SCREENSHOT: Data tab with filters applied]
+
+**Query with SQL or MQL:**
+
+For more complex queries, use the **Query** page:
+
+1. In the Viam app, click **Data** then **Query**
+2. Select **SQL** or **MQL** as your query language
+3. Try a simple query to find all failures:
+
+```sql
+SELECT time_received, data
+FROM readings
+WHERE component_name = 'part-detector'
+  AND data LIKE '%FAIL%'
+ORDER BY time_received DESC
+LIMIT 10
+```
+
+[SCREENSHOT: Query page with results]
+
+This is powerful for incident investigation: "Show me all FAIL detections from the last hour" or "How many parts failed on Tuesday's shift?"
+
+This data serves multiple purposes:
+- **Compliance** — Auditable record of every inspection
+- **Quality trends** — "FAIL rate increased 20% this week"
+- **Model improvement** — Export images to retrain your ML model
+- **Incident review** — "Show me all FAILs from Tuesday's shift"
+
+#### 2.4 Summary
+
+Data capture is now running in the background:
+- Captures every detection and camera image
+- Syncs to cloud automatically
+- Queryable for analytics and compliance
+- Alerts you when the machine goes offline
+
+This foundation records everything your vision pipeline sees. In Part 3, you'll write custom control logic to act on detections.
+
+**Checkpoint:** Your system records every detection automatically. Data syncs to the cloud where you can query it and build dashboards.
+
+---
+
+### Part 3: Control Logic (~30 min)
 
 **Goal:** Write inspection logic that detects defects and rejects them, then deploy it as a module.
 
 **Skills:** Module-first development, Viam SDK, adding actuators, module deployment.
 
-In Part 1, you configured the hardware. Now you'll write code.
+Your vision pipeline detects defects and records the results. Now you'll write code to act on those detections—rejecting defective parts automatically.
 
 You'll use the **module-first development pattern**: code that runs on your laptop during development, connecting to remote hardware over the network. When it works, you package it as a module and deploy it to the machine. Same code, different context.
 
-#### 2.1 Set Up Your Project
+#### 3.1 Set Up Your Project
 
 Create a project with two files: your service logic and a CLI to test it.
 
@@ -365,7 +501,7 @@ inspection-module/
 
 Your service logic lives in one file; the CLI imports it. During development, the CLI runs on your laptop and connects to the remote machine. You iterate locally without deploying anything.
 
-#### 2.2 Build the Inspector
+#### 3.2 Build the Inspector
 
 You'll build the inspector iteratively, testing each change against real hardware. Start with the simplest operation—grab an image from the camera.
 
@@ -556,7 +692,7 @@ class Inspector:
 go mod tidy
 ```
 
-#### 2.3 Write the Development CLI
+#### 3.3 Write the Development CLI
 
 Now create the CLI that imports and tests your inspector. The CLI connects to your remote machine and converts its resources to a Dependencies map—the same format the module system uses in production.
 
@@ -725,7 +861,7 @@ This stores a token that `vmodutils.ConnectToHostFromCLIToken` uses automaticall
 
 [SCREENSHOT: Code sample tab showing machine address]
 
-#### 2.4 Test Your First Command
+#### 3.4 Test Your First Command
 
 **Test it:**
 
@@ -847,7 +983,7 @@ Result: map[confidence:0.942 label:PASS]
 
 You're now running ML inference on the remote machine from your laptop.
 
-#### 2.5 Configure the Rejector
+#### 3.5 Configure the Rejector
 
 Your inspector can detect defects. Now add hardware to act on them.
 
@@ -1035,7 +1171,7 @@ cfg = Config(
 
 Run your code to verify it still works—it should connect successfully even though you're not using the rejector yet.
 
-#### 2.6 Add Rejection Logic
+#### 3.6 Add Rejection Logic
 
 Now add the `inspect` command. Update the command struct and add the internal methods.
 
@@ -1154,7 +1290,7 @@ async def _reject(self) -> None:
 {{% /tab %}}
 {{< /tabs >}}
 
-#### 2.7 Test the Complete Loop
+#### 3.7 Test the Complete Loop
 
 Run your code and watch the simulation:
 
@@ -1184,7 +1320,7 @@ Watch the simulation—when a FAIL is detected, the rejector activates and pushe
 
 This is the complete sense-think-act cycle that defines robotic systems.
 
-#### 2.8 Deploy as a Module
+#### 3.8 Deploy as a Module
 
 Your code works. Now package it as a module so it runs on the machine itself, not your laptop.
 
@@ -1350,7 +1486,7 @@ viam module upload --version 1.0.0 --platform linux/amd64
 
 The machine now runs your inspection logic autonomously. The same code that ran on your laptop now runs on the machine as part of viam-server.
 
-#### 2.9 Summary
+#### 3.9 Summary
 
 In three iterations, you went from nothing to a working inspection system:
 
@@ -1371,156 +1507,6 @@ Then you packaged and deployed the same code as a module. **Same constructor, sa
 When you need to add another sensor or actuator, it's the same pattern: add to config, extract in constructor, add a command to `DoCommand`.
 
 **Checkpoint:** Your inspection system runs autonomously on the machine. It sees, thinks, and acts—the complete control loop.
-
----
-
-### Part 3: Monitor (~15 min)
-
-**Goal:** Enable continuous recording and monitoring so every inspection is captured, queryable, and you're alerted to problems.
-
-**Skills:** Data capture configuration, triggers and alerts, querying captured data.
-
-Your inspection system runs autonomously on the machine. Now add the infrastructure for production: continuous data capture, machine health monitoring, and queryable inspection history.
-
-Viam's data capture is built-in. Toggle it on, and every detection result and image gets stored locally, synced to the cloud, and made queryable—automatically.
-
-#### 3.1 Configure Data Capture
-
-**Enable data capture on the vision service:**
-
-1. In the Viam app, go to your machine's **Config** tab
-2. Find the `part-detector` vision service
-3. Click the **Data capture** section to expand it
-4. Toggle **Enable data capture** to on
-5. Set the capture frequency: `2` seconds
-6. Select the method to capture: `GetDetectionsFromCamera`
-7. Click **Save config**
-
-[SCREENSHOT: Vision service data capture configuration]
-
-**Also capture camera images:**
-
-You want the raw images alongside detection results—so you can review what the model saw and use images to improve your model later.
-
-1. Find the `inspection-cam` camera in your config
-2. Expand **Data capture**
-3. Toggle **Enable data capture** to on
-4. Set frequency: `2` seconds (matching the vision service)
-5. Click **Save config**
-
-[SCREENSHOT: Camera data capture configuration]
-
-**Verify it's working:**
-
-1. In the config, find `part-detector` and click **Test** at the bottom of its card
-2. You should see a capture indicator showing data is being recorded
-
-The machine is now capturing detection results and images every 2 seconds—whether or not you're connected.
-
-#### 3.2 Add Machine Health Alert
-
-Get notified if your inspection station goes offline. This is a simple trigger—no code required.
-
-**Create the trigger:**
-
-1. In the Viam app, go to your machine's **Configure** tab
-2. Click **+** next to your machine in the left sidebar
-3. Select **Trigger**
-4. Name it `offline-alert`
-5. Click **Create**
-
-**Configure the trigger:**
-
-1. For **Type**, select `Part is offline`
-2. Toggle **Email all machine owners** to on (or add specific email addresses)
-3. Set **Minutes between notifications** to `5` (so you don't get spammed)
-4. Click **Save config**
-
-[SCREENSHOT: Offline trigger configuration]
-
-That's it. If your inspection station loses connection for any reason—network issues, power loss, viam-server crash—you'll get an email.
-
-> **Other triggers:** You can also create triggers for "Part is online" (useful for knowing when a machine comes back) or "Data synced" (fires when data reaches the cloud). For detection-based alerts, see Part 7.
-
-#### 3.3 View and Query Data
-
-Viam automatically syncs captured data to the cloud and removes it from the machine to free up storage. No additional configuration required.
-
-**Check the data:**
-
-1. In the Viam app, click **Data** in the left sidebar (at the organization level, not the machine)
-2. Wait 1-2 minutes for initial sync
-3. You should see detection results and images appearing
-
-[SCREENSHOT: Data tab showing captured detections]
-
-**Verify the data includes:**
-
-- **Detection results** — Each row shows label (PASS/FAIL) and confidence score
-- **Camera images** — Click any row to see the image that was analyzed
-- **Timestamps** — When each capture occurred
-- **Machine ID** — Which machine captured it (matters when you have multiple stations)
-
-**Filter the data:**
-
-1. Click **Filter** and select your machine: `inspection-station-1`
-2. Set time range to "Last hour"
-3. You can also filter by component to see only vision service results or only camera images
-
-[SCREENSHOT: Data tab with filters applied]
-
-**Query with SQL or MQL:**
-
-For more complex queries, use the **Query** page:
-
-1. In the Viam app, click **Data** then **Query**
-2. Select **SQL** or **MQL** as your query language
-3. Try a simple query to find all failures:
-
-```sql
-SELECT time_received, data
-FROM readings
-WHERE component_name = 'part-detector'
-  AND data LIKE '%FAIL%'
-ORDER BY time_received DESC
-LIMIT 10
-```
-
-[SCREENSHOT: Query page with results]
-
-This is powerful for incident investigation: "Show me all FAIL detections from the last hour" or "How many parts failed on Tuesday's shift?"
-
-This data serves multiple purposes:
-- **Compliance** — Auditable record of every inspection
-- **Quality trends** — "FAIL rate increased 20% this week"
-- **Model improvement** — Export images to retrain your ML model
-- **Incident review** — "Show me all FAILs from Tuesday's shift"
-
-#### 3.4 Summary
-
-You now have three layers working together:
-
-| Your Module (Part 2) | + Data Capture (Part 3) |
-|---------------------|-------------------------|
-| Runs on the machine | Records continuously |
-| Executes control logic | Captures every inspection |
-| Rejects defective parts | Syncs results to cloud |
-| Use for: production control | Adds: monitoring, compliance, analytics |
-
-Your development CLI from Part 2 remains useful:
-- Test changes to inspection logic before deploying
-- Debug issues by running inspections manually
-- Iterate on new features without redeploying
-
-Data capture adds the production recording layer:
-- Runs 24/7 without intervention
-- Creates audit trail for compliance
-- Powers dashboards and analytics
-- Feeds data back for ML model improvement
-
-Machine health alerts ensure you know when something's wrong—before your customers do.
-
-**Checkpoint:** Your inspection system runs autonomously, records everything, and alerts you to problems—all through configuration.
 
 ---
 
