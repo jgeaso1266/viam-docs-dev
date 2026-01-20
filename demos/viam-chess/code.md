@@ -11,8 +11,7 @@ This page walks through the Go code that makes viam-chess work.
 ```
 viam-chess/
 ├── cmd/
-│   ├── module/main.go     # Production entry point (deployed)
-│   └── cli/main.go        # Development CLI (runs on your laptop)
+│   └── module/main.go     # Module entry point
 ├── chess.go               # Main chess service
 ├── piece_finder.go        # Vision service for detecting pieces
 ├── reset.go               # Board reset logic
@@ -20,10 +19,6 @@ viam-chess/
 ├── meta.json              # Module manifest
 └── Makefile
 ```
-
-Two entry points, one codebase:
-- `cmd/module/main.go` — Runs on the robot as a Viam module
-- `cmd/cli/main.go` — Runs on your laptop for development, connects to remote hardware
 
 ## Module Registration
 
@@ -148,32 +143,21 @@ Viam uses this to:
 
 ## Constructor Pattern
 
-### Two Constructors
+### The Constructor
 
 ```go
-// Private: called by Viam with raw config
+// Called by Viam with raw config
 func newViamChessChess(ctx context.Context, deps resource.Dependencies,
     rawConf resource.Config, logger logging.Logger) (resource.Resource, error) {
 
+    // Convert raw JSON config to typed struct
     conf, err := resource.NativeConfig[*ChessConfig](rawConf)
     if err != nil {
         return nil, err
     }
     return NewChess(ctx, deps, rawConf.ResourceName(), conf, logger)
 }
-
-// Public: called by CLI with typed config
-func NewChess(ctx context.Context, deps resource.Dependencies,
-    name resource.Name, conf *ChessConfig, logger logging.Logger) (resource.Resource, error) {
-    // ... actual construction ...
-}
 ```
-
-Why two constructors?
-- `newViamChessChess` — Viam calls this; handles raw JSON → typed config
-- `NewChess` — CLI calls this directly with pre-built config
-
-This enables the **CLI development pattern** (covered in [Development Workflow](./development.md)).
 
 ### Extracting Dependencies
 
@@ -438,7 +422,6 @@ State persists in `$VIAM_MODULE_DATA/state.json`. The robot can:
 |---------|---------|---------|
 | **Interface dependencies** | `arm.Arm` not `xArm6` | Swap hardware without code changes |
 | **Validate returns deps** | `return []string{cfg.Arm, ...}` | Viam ensures deps exist before construction |
-| **Two constructors** | `newX` (private) + `NewX` (public) | Enable CLI development pattern |
 | **DoCommand map** | `cmd["go"]`, `cmd["reset"]` | Flexible service interface |
 | **Frame transforms** | `TransformPointCloud(..., "world")` | Automatic coordinate conversion |
 | **Motion service** | `motion.Move(destination)` | Path planning handled for you |

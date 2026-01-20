@@ -1,6 +1,6 @@
 # Configuration Deep-Dive
 
-[← Back to Overview](./index.md) | [← Code Walkthrough](./code.md) | [Next: Development Workflow →](./development.md)
+[← Back to Overview](./index.md) | [← Code Walkthrough](./code.md)
 
 ---
 
@@ -354,7 +354,6 @@ The Stream Deck becomes a physical control panel for the chess service.
 **Key points:**
 - `type: registry` — Download from Viam module registry
 - `version: latest` — Always use newest version
-- `reload_enabled: true` — Hot-reload during development (see [Development Workflow](./development.md))
 
 ### ML Model Package
 
@@ -387,8 +386,7 @@ Downloads an ML model from Viam's registry. Referenced in config as:
 | **Virtual cameras** | `board-cam` wraps `cam` | Transform data pipeline |
 | **Saved positions as switches** | `hack-pose-look-straight-down` | Reusable arm poses |
 | **Module registry** | `type: registry` | One-line installation |
-| **Hot reload** | `reload_enabled: true` | Fast development iteration |
 
 ---
 
-**[Next: Development Workflow →](./development.md)**
+**[← Back to Overview](./index.md)**

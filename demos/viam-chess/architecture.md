@@ -4,7 +4,23 @@
 
 ---
 
-This page explains how viam-chess is structured—from hardware abstraction through application logic.
+## Viam Basics
+
+Viam is a platform for building robotics applications. Here's what you need to know:
+
+**viam-server** runs on your robot. It's the runtime that loads your configuration, starts hardware drivers, launches services, and exposes everything through consistent APIs.
+
+**Components** are hardware abstractions—cameras, arms, motors, sensors. All cameras expose the same API regardless of manufacturer. Swap hardware by changing config, not code.
+
+**Services** are higher-level capabilities that operate on components—vision analyzes camera images, motion plans arm movements, navigation drives mobile bases.
+
+**Modules** package custom code for deployment. Write a driver or service, publish it to the Viam Registry, install it on any machine with one config line.
+
+**Fragments** are reusable configuration templates. Define a camera-arm-gripper setup once, apply it to many machines with variable substitution for machine-specific values.
+
+With that context, here's how viam-chess is structured.
+
+---
 
 ## The Big Picture
 

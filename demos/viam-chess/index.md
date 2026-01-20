@@ -26,12 +26,6 @@ Moving a gripper to a 3D point requires inverse kinematics, path planning, and c
 
 **Viam pattern:** Motion service + frame system for spatial reasoning
 
-### Test on Your Laptop, Deploy to the Robot
-
-During development, the chess logic ran on a laptop while controlling the actual arm over the network. Edit code, rebuild, run — no upload, no restart, no SSH. When it worked, one command deployed it to the robot.
-
-**Viam pattern:** CLI development with remote hardware
-
 ### One Config Line Installs a Module
 
 The chess module is published to Viam's registry. Any machine can use it by adding:
@@ -61,7 +55,6 @@ No apt-get, no pip, no dependency hell. Viam handles download, installation, and
 | [Architecture](./architecture.md) | How fragments, modules, and services compose into a working system |
 | [Code Walkthrough](./code.md) | Inside the Go module: chess logic, piece detection, arm control |
 | [Configuration](./configuration.md) | Every config block explained—what it does and why |
-| [Development Workflow](./development.md) | The CLI pattern for testing locally against remote hardware |
 
 ---
 
