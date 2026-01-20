@@ -1878,144 +1878,203 @@ The data captured during the incident (the anomalous detections, the degraded im
 
 **Skills:** Building apps with Viam SDKs, white-label deployment.
 
-#### 7.1 Create a Customer Dashboard
+#### 7.1 Create a Dashboard
 
-You've built a working system—but right now, only you can see it through the Viam app. Your customers need their own interface, with your branding, showing only what they need to see.
+You've built a working system—but right now, only you can see it through the Viam app. Your customers need their own interface showing inspection results.
 
-Viam's SDKs let you build custom applications that connect to machines and query data. Let's create a simple dashboard that shows inspection results.
+Viam offers two approaches:
+1. **Built-in Teleop Dashboard** — No code, drag-and-drop widgets
+2. **Custom Web App** — Full control with TypeScript SDK
+
+##### Option A: Built-in Teleop Dashboard (No Code)
+
+Viam's Teleop dashboard lets you create custom views without writing code.
+
+**Create a dashboard workspace:**
+
+1. In the Viam app, go to **Fleet** → **Teleop** tab
+2. Click **+ Create workspace**
+3. Name it `Inspection Overview`
+4. Select the location containing your inspection stations
+
+**Add widgets:**
+
+Click **+ Add widget** and configure:
+
+1. **Camera Stream** — Select `inspection-cam` from any station to show live video
+2. **Time Series Graph** — Plot detection confidence over time from `part-detector`
+3. **Table Widget** — Display recent detection results with labels and timestamps
+4. **Stat Widget** — Show current pass/fail counts
+
+Drag widgets to arrange your layout. The dashboard updates in real-time.
+
+[SCREENSHOT: Teleop dashboard with inspection widgets]
+
+> **Quick wins:** The Teleop dashboard is great for internal monitoring and demos. For customer-facing products with your branding, use Option B.
+
+##### Option B: Custom Web App (TypeScript SDK)
+
+For full control over branding and features, build a custom dashboard with Viam's TypeScript SDK.
 
 **Set up a TypeScript project:**
 
 ```bash
 mkdir inspection-dashboard && cd inspection-dashboard
 npm init -y
-npm install @viamrobotics/sdk
+npm install @viamrobotics/sdk vite
 ```
 
-**Create the dashboard:**
+**Create `src/main.ts`:**
 
-Create a file called `dashboard.html`:
+```typescript
+import * as VIAM from "@viamrobotics/sdk";
+
+// Replace with your credentials (from Viam app → Organization → API Keys)
+const API_KEY_ID = "YOUR_API_KEY_ID";
+const API_KEY = "YOUR_API_KEY";
+const ORG_ID = "YOUR_ORG_ID";
+
+async function createClient(): Promise<VIAM.ViamClient> {
+  return await VIAM.createViamClient({
+    serviceHost: "https://app.viam.com:443",
+    credentials: {
+      type: "api-key",
+      authEntity: API_KEY_ID,
+      payload: API_KEY,
+    },
+  });
+}
+
+async function updateDashboard() {
+  const client = await createClient();
+  const dataClient = client.dataClient;
+
+  // Query detection results from the last 24 hours
+  const results = await dataClient.tabularDataBySQL(
+    ORG_ID,
+    `SELECT * FROM readings
+     WHERE component_name = 'part-detector'
+     AND time_received > datetime('now', '-1 day')
+     ORDER BY time_received DESC
+     LIMIT 100`
+  );
+
+  // Calculate stats
+  const total = results.length;
+  const fails = results.filter((r: any) =>
+    JSON.stringify(r).includes("FAIL")
+  ).length;
+  const passRate = total > 0 ? ((total - fails) / total * 100).toFixed(1) : 0;
+
+  // Update UI
+  document.getElementById("total-count")!.textContent = String(total);
+  document.getElementById("fail-count")!.textContent = String(fails);
+  document.getElementById("pass-rate")!.textContent = `${passRate}%`;
+}
+
+// Update on load and every 30 seconds
+updateDashboard();
+setInterval(updateDashboard, 30000);
+```
+
+**Create `index.html`:**
 
 ```html
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Inspection Dashboard</title>
-    <style>
-        body { font-family: system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
-        .stats { display: flex; gap: 20px; margin: 20px 0; }
-        .stat-card { background: #f5f5f5; padding: 20px; border-radius: 8px; flex: 1; }
-        .stat-value { font-size: 48px; font-weight: bold; }
-        .pass { color: #22c55e; }
-        .fail { color: #ef4444; }
-        .station { background: #fff; border: 1px solid #e5e5e5; padding: 15px; margin: 10px 0; border-radius: 8px; }
-        .online { color: #22c55e; }
-        .offline { color: #ef4444; }
-    </style>
+  <title>Inspection Dashboard</title>
+  <style>
+    body { font-family: system-ui; max-width: 800px; margin: 0 auto; padding: 20px; }
+    .stats { display: flex; gap: 20px; margin: 20px 0; }
+    .stat-card { background: #f5f5f5; padding: 20px; border-radius: 8px; flex: 1; }
+    .stat-value { font-size: 48px; font-weight: bold; }
+    .pass { color: #22c55e; }
+    .fail { color: #ef4444; }
+  </style>
 </head>
 <body>
-    <h1>Quality Inspection Dashboard</h1>
-
-    <div class="stats">
-        <div class="stat-card">
-            <div>Today's Inspections</div>
-            <div class="stat-value" id="total-count">--</div>
-        </div>
-        <div class="stat-card">
-            <div>Pass Rate</div>
-            <div class="stat-value pass" id="pass-rate">--%</div>
-        </div>
-        <div class="stat-card">
-            <div>Failures</div>
-            <div class="stat-value fail" id="fail-count">--</div>
-        </div>
+  <h1>Quality Inspection Dashboard</h1>
+  <div class="stats">
+    <div class="stat-card">
+      <div>Recent Inspections</div>
+      <div class="stat-value" id="total-count">--</div>
     </div>
-
-    <h2>Stations</h2>
-    <div id="stations"></div>
-
-    <script type="module">
-        import { createRobotClient, DataClient } from '@viamrobotics/sdk';
-
-        // Replace with your credentials
-        const API_KEY = 'YOUR_API_KEY';
-        const API_KEY_ID = 'YOUR_API_KEY_ID';
-
-        async function updateDashboard() {
-            // Connect to Viam's data service
-            const dataClient = await DataClient.createFromCredentials(
-                API_KEY_ID,
-                API_KEY
-            );
-
-            // Query detection results from the last 24 hours
-            const results = await dataClient.tabularDataByFilter({
-                filter: {
-                    componentName: 'part-detector',
-                    interval: {
-                        start: new Date(Date.now() - 24 * 60 * 60 * 1000),
-                        end: new Date()
-                    }
-                }
-            });
-
-            // Calculate stats
-            const total = results.length;
-            const fails = results.filter(r =>
-                r.data.detections?.some(d => d.class_name === 'FAIL')
-            ).length;
-            const passRate = total > 0 ? ((total - fails) / total * 100).toFixed(1) : 0;
-
-            // Update UI
-            document.getElementById('total-count').textContent = total;
-            document.getElementById('fail-count').textContent = fails;
-            document.getElementById('pass-rate').textContent = `${passRate}%`;
-        }
-
-        // Update every 5 seconds
-        updateDashboard();
-        setInterval(updateDashboard, 5000);
-    </script>
+    <div class="stat-card">
+      <div>Pass Rate</div>
+      <div class="stat-value pass" id="pass-rate">--%</div>
+    </div>
+    <div class="stat-card">
+      <div>Failures</div>
+      <div class="stat-value fail" id="fail-count">--</div>
+    </div>
+  </div>
+  <script type="module" src="/src/main.ts"></script>
 </body>
 </html>
 ```
 
-**Run the dashboard:**
+**Run it:**
 
-Open `dashboard.html` in your browser (or serve it with a local web server). You'll see live inspection statistics pulled from Viam's data service.
+```bash
+npx vite
+```
 
-[SCREENSHOT: Customer dashboard showing inspection stats]
+Open `http://localhost:5173` to see your dashboard.
 
-> **This is your product.** The dashboard has no Viam branding—it's your interface, powered by Viam's APIs. You can add your logo, customize the design, add features. The same APIs that power this simple page can power a full React application, a mobile app, or an enterprise dashboard.
+[SCREENSHOT: Custom dashboard showing inspection stats]
+
+> **This is your product.** No Viam branding—your interface, your design. The same APIs can power a React app, mobile app, or enterprise dashboard.
 
 #### 7.2 Set Up White-Label Auth
 
-Your customers shouldn't log into Viam—they should log into *your* product. Viam supports white-label authentication so you can use your own identity provider.
+Your customers shouldn't log into Viam—they should log into *your* product. Viam supports white-label authentication so your branding appears throughout the experience.
 
-**Configure custom authentication:**
+**Add your logo:**
 
-1. In the Viam app, go to **Organization Settings**
-2. Find the **Custom Authentication** section
-3. Configure your identity provider (OAuth/OIDC)
+Your logo appears on login screens and emails sent to your users:
 
-[SCREENSHOT: Custom auth configuration]
+```bash
+# Get your organization ID from Viam app → Organization Settings
+viam organization logo set --org-id <YOUR_ORG_ID> --logo-path logo.png
+```
+
+The logo must be PNG format, under 200KB.
+
+**Enable custom authentication:**
+
+```bash
+viam organization auth-service enable --org-id <YOUR_ORG_ID>
+```
+
+This enables OAuth/OIDC integration so users authenticate through your identity provider.
+
+**Set support email:**
+
+```bash
+viam organization support-email set --org-id <YOUR_ORG_ID> --email support@yourcompany.com
+```
+
+Now password recovery and verification emails come from your support address, not Viam's.
+
+[SCREENSHOT: Branded login screen with custom logo]
 
 With this configured:
-- Your customers log in through your login page
-- They see only the machines you've given them access to
-- Your branding, your domain, your experience
+- Users see your logo on login
+- Emails come from your support address
+- Your branding, your experience
 
-> **Note:** Full OAuth configuration is beyond the scope of this tutorial. See the [Authentication documentation](../reference/authentication.md) for detailed setup instructions.
+> **Going further:** For full SSO integration with your identity provider (Okta, Auth0, etc.), see the [Authentication documentation](https://docs.viam.com/manage/manage/authentication/).
 
-**Create customer accounts:**
+**Create customer organizations:**
 
-You can also create customer accounts directly:
+For multi-tenant deployments, create separate organizations for each customer:
 
-1. Go to **Organization Settings** → **Members**
-2. Invite your customer with limited permissions
-3. They see only their machines, not your entire fleet
+1. Each customer gets their own organization
+2. They see only their machines
+3. You maintain access to all organizations as the provider
 
-This lets you ship a product where each customer sees only their own inspection stations.
+This lets you ship a product where each customer has isolated access to their own inspection stations.
 
 #### 7.3 (Optional) Configure Billing
 
