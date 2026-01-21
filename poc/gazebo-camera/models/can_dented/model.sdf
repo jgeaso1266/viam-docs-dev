@@ -1,0 +1,211 @@
+<?xml version="1.0" ?>
+<!--
+  Dented Can Model
+
+  Damaged aluminum beverage can with visible dent.
+  The dent is shown as a darker discolored area on the side.
+-->
+<sdf version="1.9">
+  <model name="can_dented">
+    <static>false</static>
+
+    <link name="body">
+      <inertial>
+        <mass>0.35</mass>
+        <inertia>
+          <ixx>0.00045</ixx>
+          <iyy>0.00045</iyy>
+          <izz>0.00020</izz>
+        </inertia>
+      </inertial>
+
+      <!-- Main can body -->
+      <visual name="can_body">
+        <geometry>
+          <cylinder>
+            <radius>0.033</radius>
+            <length>0.12</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.7 0.7 0.75 1</ambient>
+          <diffuse>0.8 0.8 0.85 1</diffuse>
+          <specular>0.9 0.9 0.9 1</specular>
+          <pbr>
+            <metal>
+              <metalness>0.9</metalness>
+              <roughness>0.3</roughness>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+
+      <!-- Top lid -->
+      <visual name="top_lid">
+        <pose>0 0 0.059 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.030</radius>
+            <length>0.003</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.6 0.6 0.65 1</ambient>
+          <diffuse>0.7 0.7 0.75 1</diffuse>
+          <specular>0.85 0.85 0.85 1</specular>
+          <pbr>
+            <metal>
+              <metalness>0.95</metalness>
+              <roughness>0.2</roughness>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+
+      <!-- Damage mark on top - visible from overhead camera -->
+      <visual name="top_damage">
+        <pose>0.008 0.005 0.061 0 0 0</pose>
+        <geometry>
+          <ellipsoid>
+            <radii>0.012 0.008 0.002</radii>
+          </ellipsoid>
+        </geometry>
+        <material>
+          <ambient>0.3 0.2 0.15 1</ambient>
+          <diffuse>0.4 0.28 0.2 1</diffuse>
+          <specular>0.2 0.2 0.2 1</specular>
+          <pbr>
+            <metal>
+              <metalness>0.5</metalness>
+              <roughness>0.7</roughness>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+
+      <!-- Second damage mark on top -->
+      <visual name="top_damage2">
+        <pose>-0.006 0.010 0.061 0 0 0.8</pose>
+        <geometry>
+          <ellipsoid>
+            <radii>0.008 0.005 0.002</radii>
+          </ellipsoid>
+        </geometry>
+        <material>
+          <ambient>0.35 0.25 0.18 1</ambient>
+          <diffuse>0.45 0.32 0.22 1</diffuse>
+          <specular>0.2 0.2 0.2 1</specular>
+          <pbr>
+            <metal>
+              <metalness>0.5</metalness>
+              <roughness>0.65</roughness>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+
+      <!-- Bottom -->
+      <visual name="bottom">
+        <pose>0 0 -0.059 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.030</radius>
+            <length>0.003</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.6 0.6 0.65 1</ambient>
+          <diffuse>0.7 0.7 0.75 1</diffuse>
+          <specular>0.85 0.85 0.85 1</specular>
+          <pbr>
+            <metal>
+              <metalness>0.95</metalness>
+              <roughness>0.2</roughness>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+
+      <!-- Label band (colored stripe) -->
+      <visual name="label">
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.0335</radius>
+            <length>0.06</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.1 0.3 0.6 1</ambient>
+          <diffuse>0.15 0.4 0.7 1</diffuse>
+          <specular>0.3 0.3 0.3 1</specular>
+          <pbr>
+            <metal>
+              <metalness>0.1</metalness>
+              <roughness>0.5</roughness>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+
+      <!-- Dent - visible damage on side (dark discolored area) -->
+      <visual name="dent">
+        <pose>0.028 0.012 0.015 0.2 0.3 0</pose>
+        <geometry>
+          <ellipsoid>
+            <radii>0.012 0.010 0.018</radii>
+          </ellipsoid>
+        </geometry>
+        <material>
+          <ambient>0.25 0.25 0.28 1</ambient>
+          <diffuse>0.35 0.35 0.38 1</diffuse>
+          <specular>0.5 0.5 0.5 1</specular>
+          <pbr>
+            <metal>
+              <metalness>0.7</metalness>
+              <roughness>0.6</roughness>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+
+      <!-- Second smaller dent -->
+      <visual name="dent2">
+        <pose>-0.025 0.018 -0.025 -0.1 0.4 0.2</pose>
+        <geometry>
+          <ellipsoid>
+            <radii>0.008 0.007 0.012</radii>
+          </ellipsoid>
+        </geometry>
+        <material>
+          <ambient>0.28 0.28 0.30 1</ambient>
+          <diffuse>0.38 0.38 0.40 1</diffuse>
+          <specular>0.5 0.5 0.5 1</specular>
+          <pbr>
+            <metal>
+              <metalness>0.7</metalness>
+              <roughness>0.55</roughness>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+
+      <collision name="collision">
+        <geometry>
+          <cylinder>
+            <radius>0.033</radius>
+            <length>0.12</length>
+          </cylinder>
+        </geometry>
+        <surface>
+          <friction>
+            <ode>
+              <mu>0.5</mu>
+              <mu2>0.5</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+    </link>
+  </model>
+</sdf>

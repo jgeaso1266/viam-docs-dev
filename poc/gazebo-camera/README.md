@@ -4,26 +4,63 @@
 
 **Success criteria:**
 - Python script gets camera frames via Viam SDK
-- GzWeb shows the same scene in browser
+- Web viewer shows live camera stream in browser
 - Latency is reasonable (<200ms)
 
 ---
 
-## Quick Start
+## Scenarios
+
+This POC includes two simulation scenarios:
+
+| Scenario | World File | Purpose |
+|----------|------------|---------|
+| **Work Cell** | `work_cell.sdf` | xArm6 arm with pick targets (original POC) |
+| **Can Inspection** | `fruit_inspection.sdf` | Stationary vision tutorial - can quality grading |
+
+---
+
+## Quick Start: Can Inspection
 
 ```bash
 # 1. Build the Docker image
 cd poc/gazebo-camera
 docker build -t gazebo-viam-poc .
 
-# 2. Run the container
+# 2. Run the can inspection scenario
+docker run -it --rm -p 8080:8080 \
+  --entrypoint /entrypoint_fruit.sh \
+  gazebo-viam-poc
+
+# 3. Open web viewer in browser
+open http://localhost:8080
+```
+
+The can inspection world includes:
+- **Conveyor belt** with cans moving past inspection zone
+- **Overhead camera** (640x480, 30fps) looking down at conveyor
+- **Good cans** - silver aluminum, undamaged
+- **Dented cans** - visible dent/damage marks on top
+- **Air jet rejector** - pneumatic nozzle to blow defective cans off conveyor
+- **Reject bin** (red) and **output chute** (green)
+
+---
+
+## Quick Start: Work Cell (Original)
+
+```bash
+# 1. Build the Docker image
+cd poc/gazebo-camera
+docker build -t gazebo-viam-poc .
+
+# 2. Run the work cell scenario (default)
 docker run -it --rm -p 8080:8080 -p 8443:8443 gazebo-viam-poc
 
-# 3. Open GzWeb in browser
+# 3. Open web viewer in browser
 open http://localhost:8080
 
-# 4. In another terminal, test the camera topic
-docker exec -it <container_id> gz topic -e -t /world/camera_world/model/camera_post/link/camera_link/sensor/camera/image
+# 4. In another terminal, list available camera topics
+docker exec -it <container_id> gz topic -l | grep camera
 ```
 
 ---

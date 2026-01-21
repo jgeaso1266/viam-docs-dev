@@ -44,15 +44,18 @@ ENV GZ_SIM_RESOURCE_PATH=/opt/models
 # Copy Viam module
 COPY viam-gazebo-camera/ /opt/viam/modules/viam-gazebo-camera/
 
-# Copy web viewer
+# Copy web viewers
 COPY web_viewer.py /opt/web_viewer.py
+COPY web_viewer_fruit.py /opt/web_viewer_fruit.py
 
-# Copy startup script
+# Copy startup scripts
 COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+COPY entrypoint_fruit.sh /entrypoint_fruit.sh
+RUN chmod +x /entrypoint.sh /entrypoint_fruit.sh
 
-# Copy Viam config
+# Copy Viam configs
 COPY viam-config.json /opt/viam-config.json
+COPY viam-config-fruit.json /opt/viam-config-fruit.json
 
 # Expose web viewer port
 EXPOSE 8080

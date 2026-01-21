@@ -1,0 +1,85 @@
+<?xml version="1.0" ?>
+<!--
+  Bruised Apple Model - Textured version
+
+  Uses UV-mapped mesh with Poly Haven PBR textures.
+  The diffuse texture has bruise marks added.
+  Collision uses simple ellipsoid to avoid physics issues.
+-->
+<sdf version="1.9">
+  <model name="apple_bruised">
+    <static>false</static>
+
+    <link name="body">
+      <inertial>
+        <mass>0.18</mass>
+        <inertia>
+          <ixx>0.000280</ixx>
+          <iyy>0.000280</iyy>
+          <izz>0.000250</izz>
+        </inertia>
+      </inertial>
+
+      <!-- Apple body - textured mesh with bruise in texture -->
+      <visual name="apple_visual">
+        <geometry>
+          <mesh>
+            <uri>meshes/apple.obj</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <double_sided>true</double_sided>
+          <ambient>1 1 1 1</ambient>
+          <diffuse>1 1 1 1</diffuse>
+          <specular>0.3 0.3 0.3 1</specular>
+          <pbr>
+            <metal>
+              <albedo_map>textures/apple_diff_4k.jpg</albedo_map>
+              <normal_map>textures/apple_nor_4k.jpg</normal_map>
+              <roughness_map>textures/apple_rough_4k.jpg</roughness_map>
+              <metalness>0.0</metalness>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+
+      <!-- Stem - small subtle cylinder -->
+      <visual name="stem">
+        <pose>0 0 0.034 0.08 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.002</radius>
+            <length>0.008</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.2 0.12 0.06 1</ambient>
+          <diffuse>0.28 0.18 0.09 1</diffuse>
+          <pbr>
+            <metal>
+              <metalness>0.0</metalness>
+              <roughness>0.85</roughness>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+
+      <!-- Collision - simple ellipsoid for stability -->
+      <collision name="collision">
+        <geometry>
+          <ellipsoid>
+            <radii>0.038 0.038 0.032</radii>
+          </ellipsoid>
+        </geometry>
+        <surface>
+          <friction>
+            <ode>
+              <mu>0.6</mu>
+              <mu2>0.6</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+    </link>
+  </model>
+</sdf>
