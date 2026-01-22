@@ -30,13 +30,11 @@ This is the living navigation for the new Viam documentation structure. Click an
 ## [Build](./build/INDEX.md) 🟡
 *Task-oriented blocks — modular tutorials you compose*
 
-- [Foundation](./build/foundation/INDEX.md) — 7 blocks 🔴
-- [Vision & Detection](./build/perception/INDEX.md) — 6 blocks 🔴
-- [Stationary Vision](./build/stationary-vision/INDEX.md) — 4 blocks 🔴
-- [Mobile Base](./build/mobile-base/INDEX.md) — 9 blocks 🔴
-- [Arm + Manipulation](./build/arm-manipulation/INDEX.md) — 7 blocks 🔴
-
-See [Block Definitions](./planning/block-definitions.md) for full block details.
+- [Foundation](./planning/block-definitions.md#foundation-blocks) — 7 blocks 🔴
+- [Vision & Detection](./planning/block-definitions.md#vision--detection-blocks) — 6 blocks 🔴
+- [Stationary Vision](./planning/block-definitions.md#stationary-vision-blocks) — 4 blocks 🔴
+- [Mobile Base](./planning/block-definitions.md#mobile-base-blocks) — 9 blocks 🔴
+- [Arm + Manipulation](./planning/block-definitions.md#arm--manipulation-blocks) — 7 blocks 🔴
 
 ---
 
