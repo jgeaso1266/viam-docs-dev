@@ -24,7 +24,7 @@ Start here. Every project needs these basics.
 - Sync Data to Your Database
 - Start Writing Code
 
-### [Vision & Detection](../planning/block-definitions.md#vision-detection-blocks) 🔴
+### [Vision & Detection](../planning/block-definitions.md#vision--detection-blocks) 🔴
 Understanding what the robot sees.
 - Add Computer Vision
 - Detect Objects (2D)
@@ -52,7 +52,7 @@ Robots that move.
 - Navigate to Detected Object
 - Mobile Pick-and-Place
 
-### [Arm + Manipulation](../planning/block-definitions.md#arm-manipulation-blocks) 🔴
+### [Arm + Manipulation](../planning/block-definitions.md#arm--manipulation-blocks) 🔴
 Robots that grab things.
 - Move the Arm
 - Control Gripper

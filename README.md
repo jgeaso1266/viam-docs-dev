@@ -31,10 +31,10 @@ This is the living navigation for the new Viam documentation structure. Click an
 *Task-oriented blocks — modular tutorials you compose*
 
 - [Foundation](./planning/block-definitions.md#foundation-blocks) — 7 blocks 🔴
-- [Vision & Detection](./planning/block-definitions.md#vision-detection-blocks) — 6 blocks 🔴
+- [Vision & Detection](./planning/block-definitions.md#vision--detection-blocks) — 6 blocks 🔴
 - [Stationary Vision](./planning/block-definitions.md#stationary-vision-blocks) — 4 blocks 🔴
 - [Mobile Base](./planning/block-definitions.md#mobile-base-blocks) — 9 blocks 🔴
-- [Arm + Manipulation](./planning/block-definitions.md#arm-manipulation-blocks) — 7 blocks 🔴
+- [Arm + Manipulation](./planning/block-definitions.md#arm--manipulation-blocks) — 7 blocks 🔴
 
 ---
 
@@ -73,16 +73,6 @@ This is the living navigation for the new Viam documentation structure. Click an
 - [Pushing Hotfixes](./maintain/hotfixes.md) 🔴
 - [Model Updates and Retraining](./maintain/model-updates.md) 🔴
 - [Performance Degradation](./maintain/performance-degradation.md) 🔴
-
----
-
-## [Fleet Management](./planning/block-definitions.md#fleet-management-blocks) 🔴
-*Beyond a single robot*
-
-- [Configure Multiple Machines](./planning/block-definitions.md#fleet-management-blocks) 🔴
-- [Monitor a Fleet](./planning/block-definitions.md#fleet-management-blocks) 🔴
-- [Push Updates](./planning/block-definitions.md#fleet-management-blocks) 🔴
-- [Aggregate Fleet Data](./planning/block-definitions.md#fleet-management-blocks) 🔴
 
 ---
 
@@ -142,9 +132,8 @@ These are our working documents, not user-facing content:
 | Deploy | 5 | 5 | 0 | 0 |
 | Scale | 9 | 9 | 0 | 0 |
 | Maintain | 6 | 6 | 0 | 0 |
-| Fleet Management | 4 | 4 | 0 | 0 |
 | Productize | 3 | 3 | 0 | 0 |
 | Reference | 4 | 4 | 0 | 0 |
 | Work Cells | 4 | 4 | 0 | 0 |
 | Planning | 10 | 3 | 4 | 3 |
-| **Total** | **84** | **75** | **6** | **3** |
+| **Total** | **80** | **71** | **6** | **3** |

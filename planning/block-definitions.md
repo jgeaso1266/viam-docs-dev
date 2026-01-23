@@ -90,19 +90,6 @@ See [Content Guidelines](./content-guidelines.md) for detailed authoring guidanc
 
 ---
 
-## Fleet Management Blocks
-
-*Beyond a single robot.*
-
-| Block | Components | What You Learn | Problems Addressed |
-|-------|------------|----------------|-------------------|
-| Configure Multiple Machines | Multiple robots | Fragments, configuration management | 3.1, 3.2 |
-| Monitor a Fleet | Multiple robots | Dashboards, health | 3.7, 4.1 |
-| Push Updates | Multiple robots | OTA, staged rollouts | 3.5, 4.3, 4.4 |
-| Aggregate Fleet Data | Multiple robots + cloud | Cross-machine queries | 3.10 |
-
----
-
 ## Productize Blocks
 
 *Ship a product to your customers.*
@@ -137,10 +124,6 @@ Stationary Vision
 ├── Count Objects
 └── Inspect for Defects
         ↓
-Fleet Management
-├── Configure Multiple Machines
-└── Monitor a Fleet
-        ↓
 Productize
 ├── Build a Customer Dashboard
 ├── Branded Customer Login
@@ -172,11 +155,6 @@ Mobile Base
 ├── Detect While Moving
 └── Navigate to Detected Object
         ↓
-Fleet Management
-├── Configure Multiple Machines
-├── Monitor a Fleet
-└── Push Updates
-        ↓
 Productize
 ├── Build a Customer Dashboard
 ├── Branded Customer Login
@@ -206,10 +184,6 @@ Arm + Manipulation
 ├── Pick an Object
 ├── Place an Object
 └── Pick from Bin
-        ↓
-Fleet Management
-├── Configure Multiple Machines
-└── Monitor a Fleet
         ↓
 Productize
 ├── Build a Customer Dashboard
