@@ -31,10 +31,10 @@ This is the living navigation for the new Viam documentation structure. Click an
 *Task-oriented blocks — modular tutorials you compose*
 
 - [Foundation](./planning/block-definitions.md#foundation-blocks) — 7 blocks 🔴
-- [Vision & Detection](./planning/block-definitions.md#vision--detection-blocks) — 6 blocks 🔴
+- [Vision & Detection](./planning/block-definitions.md#vision-detection-blocks) — 6 blocks 🔴
 - [Stationary Vision](./planning/block-definitions.md#stationary-vision-blocks) — 4 blocks 🔴
 - [Mobile Base](./planning/block-definitions.md#mobile-base-blocks) — 9 blocks 🔴
-- [Arm + Manipulation](./planning/block-definitions.md#arm--manipulation-blocks) — 7 blocks 🔴
+- [Arm + Manipulation](./planning/block-definitions.md#arm-manipulation-blocks) — 7 blocks 🔴
 
 ---
 
