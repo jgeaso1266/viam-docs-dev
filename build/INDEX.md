@@ -62,19 +62,6 @@ Robots that grab things.
 - Pick from Bin
 - Visual Servoing
 
-### [Fleet Management](../planning/block-definitions.md#fleet-management-blocks) 🔴
-Beyond a single robot.
-- Configure Multiple Machines
-- Monitor a Fleet
-- Push Updates
-- Aggregate Fleet Data
-
-### [Productize](../planning/block-definitions.md#productize-blocks) 🔴
-Ship a product to your customers.
-- Build a Customer Dashboard
-- Branded Customer Login
-- Configure Billing
-
 ---
 
 ## How to Use Blocks
