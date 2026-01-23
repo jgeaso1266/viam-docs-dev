@@ -35,6 +35,8 @@ This is the living navigation for the new Viam documentation structure. Click an
 - [Stationary Vision](./planning/block-definitions.md#stationary-vision-blocks) — 4 blocks 🔴
 - [Mobile Base](./planning/block-definitions.md#mobile-base-blocks) — 9 blocks 🔴
 - [Arm + Manipulation](./planning/block-definitions.md#arm--manipulation-blocks) — 7 blocks 🔴
+- [Fleet Management](./planning/block-definitions.md#fleet-management-blocks) — 4 blocks 🔴
+- [Productize](./planning/block-definitions.md#productize-blocks) — 3 blocks 🔴
 
 ---
 
@@ -119,11 +121,11 @@ These are our working documents, not user-facing content:
 |---------|-------------|-----|-----|-----|
 | Understand | 3 | 1 | 1 | 1 |
 | Try | 3 | 2 | 1 | 0 |
-| Build | 33 | 33 | 0 | 0 |
+| Build | 40 | 40 | 0 | 0 |
 | Deploy | 5 | 5 | 0 | 0 |
 | Scale | 9 | 9 | 0 | 0 |
 | Maintain | 6 | 6 | 0 | 0 |
 | Reference | 4 | 4 | 0 | 0 |
 | Work Cells | 4 | 4 | 0 | 0 |
 | Planning | 10 | 3 | 4 | 3 |
-| **Total** | **77** | **68** | **6** | **3** |
+| **Total** | **84** | **75** | **6** | **3** |

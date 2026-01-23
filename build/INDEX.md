@@ -14,7 +14,7 @@ All blocks work in both simulation and real hardware.
 
 ## Block Categories
 
-### [Foundation](./foundation/INDEX.md) 🔴
+### [Foundation](../planning/block-definitions.md#foundation-blocks) 🔴
 Start here. Every project needs these basics.
 - Connect to Cloud
 - Add a Camera
@@ -24,7 +24,7 @@ Start here. Every project needs these basics.
 - Sync Data to Your Database
 - Start Writing Code
 
-### [Vision & Detection](./perception/INDEX.md) 🔴
+### [Vision & Detection](../planning/block-definitions.md#vision--detection-blocks) 🔴
 Understanding what the robot sees.
 - Add Computer Vision
 - Detect Objects (2D)
@@ -33,14 +33,14 @@ Understanding what the robot sees.
 - Measure Depth
 - Localize Objects in 3D
 
-### [Stationary Vision](./stationary-vision/INDEX.md) 🔴
+### [Stationary Vision](../planning/block-definitions.md#stationary-vision-blocks) 🔴
 Vision systems that don't move.
 - Trigger on Detection
 - Count Objects
 - Inspect for Defects
 - Monitor Over Time
 
-### [Mobile Base](./mobile-base/INDEX.md) 🔴
+### [Mobile Base](../planning/block-definitions.md#mobile-base-blocks) 🔴
 Robots that move.
 - Drive the Base
 - Estimate Position
@@ -52,7 +52,7 @@ Robots that move.
 - Navigate to Detected Object
 - Mobile Pick-and-Place
 
-### [Arm + Manipulation](./arm-manipulation/INDEX.md) 🔴
+### [Arm + Manipulation](../planning/block-definitions.md#arm--manipulation-blocks) 🔴
 Robots that grab things.
 - Move the Arm
 - Control Gripper
@@ -61,6 +61,19 @@ Robots that grab things.
 - Place an Object
 - Pick from Bin
 - Visual Servoing
+
+### [Fleet Management](../planning/block-definitions.md#fleet-management-blocks) 🔴
+Beyond a single robot.
+- Configure Multiple Machines
+- Monitor a Fleet
+- Push Updates
+- Aggregate Fleet Data
+
+### [Productize](../planning/block-definitions.md#productize-blocks) 🔴
+Ship a product to your customers.
+- Build a Customer Dashboard
+- Branded Customer Login
+- Configure Billing
 
 ---
 
