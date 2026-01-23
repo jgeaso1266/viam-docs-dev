@@ -16,7 +16,7 @@
 
 **The approach:** 
 1. Lead with "develop from anywhere"—show the IDE-to-robot workflow immediately
-2. Use simulation to let users experience the full lifecycle (all 5 stages) in miniature
+2. Use simulation to let users experience the full lifecycle (all 6 stages) in miniature
 3. Work cells are fragments—completing simulation means you have a reusable config
 4. Apply the same fragment to real hardware and it works
 
@@ -35,7 +35,7 @@
 2. Mobile Base — base + camera + lidar
 3. Arm + Vision — arm + camera + gripper
 
-Each simulation walks through all 5 lifecycle stages in miniature:
+Each simulation walks through all 6 lifecycle stages in miniature:
 - Stage 1: Configure components, write control code
 - Stage 2: Deploy to a "field" environment in simulation
 - Stage 3: Add a second robot, see fleet features

@@ -106,23 +106,35 @@ Problems listed are new or change significantly at this stage.
 
 ---
 
-### Stage 5: Ongoing Maintenance — Updates, Debugging, Iteration
+### Stage 5: Productize — Ship a Product to Your Customers
 
 | # | Problem | Viam | Universality | Source |
 |---|---------|------|--------------|--------|
-| 5.1 | Diagnosing issues remotely | Yes | Universal | Remote Access |
-| 5.2 | Accessing logs from field devices | Yes | Universal | Remote Access |
-| 5.3 | Reproducing reported issues | Partial | Universal | Data/ML |
-| 5.4 | Pushing hotfixes quickly | Yes | Universal | Fleet |
-| 5.5 | Hardware failures and replacement | Partial | Universal | Fleet |
-| 5.6 | Keeping system software up to date | Partial | Universal | Fleet |
-| 5.7 | Security patching | Partial | Universal | Fleet |
-| 5.8 | Performance degradation over time | Partial | Universal | Data/ML |
-| 5.9 | Component obsolescence | Partial | Universal | Hardware |
-| 5.10 | End-of-life and decommissioning | Partial | Universal | Fleet |
-| 5.11 | Continuous improvement of behavior | Partial | Universal | App Logic |
-| 5.12 | Model drift and retraining | Partial | Variable | Data/ML |
-| 5.13 | Scheduled maintenance tasks | Yes | Universal | Fleet |
+| 5.1 | Building customer-facing dashboards | Yes | Universal | Customer Delivery |
+| 5.2 | Customer authentication and access control | Yes | Universal | Customer Delivery |
+| 5.3 | White-labeling and branding | Yes | Universal | Customer Delivery |
+| 5.4 | Billing and metering | Yes | Universal | Customer Delivery |
+| 5.5 | Customer onboarding and provisioning | Partial | Universal | Customer Delivery |
+
+---
+
+### Stage 6: Ongoing Maintenance — Updates, Debugging, Iteration
+
+| # | Problem | Viam | Universality | Source |
+|---|---------|------|--------------|--------|
+| 6.1 | Diagnosing issues remotely | Yes | Universal | Remote Access |
+| 6.2 | Accessing logs from field devices | Yes | Universal | Remote Access |
+| 6.3 | Reproducing reported issues | Partial | Universal | Data/ML |
+| 6.4 | Pushing hotfixes quickly | Yes | Universal | Fleet |
+| 6.5 | Hardware failures and replacement | Partial | Universal | Fleet |
+| 6.6 | Keeping system software up to date | Partial | Universal | Fleet |
+| 6.7 | Security patching | Partial | Universal | Fleet |
+| 6.8 | Performance degradation over time | Partial | Universal | Data/ML |
+| 6.9 | Component obsolescence | Partial | Universal | Hardware |
+| 6.10 | End-of-life and decommissioning | Partial | Universal | Fleet |
+| 6.11 | Continuous improvement of behavior | Partial | Universal | App Logic |
+| 6.12 | Model drift and retraining | Partial | Variable | Data/ML |
+| 6.13 | Scheduled maintenance tasks | Yes | Universal | Fleet |
 
 ---
 
@@ -134,8 +146,9 @@ Problems listed are new or change significantly at this stage.
 | 2. First Deployment | 8 | 6 | 2 | 16 |
 | 3. Multiple Units | 10 | 2 | 1 | 13 |
 | 4. Fleet at Scale | 10 | 6 | 0 | 16 |
-| 5. Ongoing Maintenance | 5 | 8 | 0 | 13 |
-| **Total** | **46** | **27** | **6** | **79** |
+| 5. Productize | 4 | 1 | 0 | 5 |
+| 6. Ongoing Maintenance | 5 | 8 | 0 | 13 |
+| **Total** | **50** | **28** | **6** | **84** |
 
 ---
 

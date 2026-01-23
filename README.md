@@ -19,7 +19,7 @@ This is the living navigation for the new Viam documentation structure. Click an
 ---
 
 ## [Try](./try/INDEX.md) 🟡
-*Zero-friction simulation experiences — full journey through all 5 stages*
+*Zero-friction simulation experiences — full journey through all 6 stages*
 
 - [Stationary Vision Simulation](./try/stationary-vision/index.md) 🟡
 - [Mobile Base Simulation](./try/mobile-base.md) 🔴
@@ -50,7 +50,7 @@ This is the living navigation for the new Viam documentation structure. Click an
 ---
 
 ## Scale 🔴
-*Stages 3-4: Multiple Units and Fleet at Scale problems*
+*Stages 3-4: Multiple Units and Fleet at Scale*
 
 - Provisioning New Devices
 - Configuration Management
@@ -64,8 +64,17 @@ This is the living navigation for the new Viam documentation structure. Click an
 
 ---
 
+## [Productize](./planning/block-definitions.md#productize-blocks) 🔴
+*Stage 5: Ship a product to your customers*
+
+- [Build a Customer Dashboard](./planning/block-definitions.md#productize-blocks) 🔴
+- [Branded Customer Login](./planning/block-definitions.md#productize-blocks) 🔴
+- [Configure Billing](./planning/block-definitions.md#productize-blocks) 🔴
+
+---
+
 ## Maintain 🔴
-*Stage 5: Ongoing Maintenance problems*
+*Stage 6: Ongoing Maintenance*
 
 - Remote Debugging
 - Log Access
@@ -73,15 +82,6 @@ This is the living navigation for the new Viam documentation structure. Click an
 - Pushing Hotfixes
 - Model Updates and Retraining
 - Performance Degradation
-
----
-
-## [Productize](./planning/block-definitions.md#productize-blocks) 🔴
-*Ship a product to your customers*
-
-- [Build a Customer Dashboard](./planning/block-definitions.md#productize-blocks) 🔴
-- [Branded Customer Login](./planning/block-definitions.md#productize-blocks) 🔴
-- [Configure Billing](./planning/block-definitions.md#productize-blocks) 🔴
 
 ---
 
