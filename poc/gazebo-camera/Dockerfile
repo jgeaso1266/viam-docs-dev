@@ -66,9 +66,6 @@ COPY models/ /opt/models/
 # Set Gazebo resource path for custom models
 ENV GZ_SIM_RESOURCE_PATH=/opt/models
 
-# Copy Viam module
-COPY viam-gazebo-camera/ /opt/viam/modules/viam-gazebo-camera/
-
 # Copy web viewers and spawner
 COPY web_viewer.py /opt/web_viewer.py
 COPY web_viewer_fruit.py /opt/web_viewer_fruit.py
