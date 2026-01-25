@@ -1,6 +1,6 @@
-# Gazebo Camera Simulation Setup Guide
+# Gazebo Can Inspection Simulation Setup Guide
 
-This guide walks you through setting up a simulated camera in Gazebo Harmonic and connecting it to the Viam platform using Docker.
+This guide walks you through setting up a simulated can inspection station with camera in Gazebo Harmonic and connecting it to the Viam platform using Docker. The simulation includes a conveyor belt with cans (some dented) passing under an inspection camera.
 
 ## Prerequisites
 
@@ -53,7 +53,8 @@ docker logs gz-viam
 You should see:
 - Gazebo starting up
 - viam-server starting with your machine ID
-- "POC Running!" message
+- "Can Inspection Simulation Running!" message
+- Can spawner starting (spawns cans on conveyor belt)
 
 ## Step 5: Add the Camera Module
 
@@ -71,7 +72,7 @@ You should see:
 5. In the **Attributes** section, add:
    ```json
    {
-     "id": "/wrist_camera/image"
+     "id": "/inspection_camera"
    }
    ```
 6. Click **Save** in the top right
@@ -106,7 +107,7 @@ docker exec gz-viam cat /etc/viam.json
    ```
 
 2. Check that the camera topic matches your config:
-   - Available topics: `/wrist_camera/image`, `/overhead_camera`
+   - Available topic: `/inspection_camera`
 
 ### Module crashes with "bus error"
 
@@ -114,13 +115,11 @@ This can happen with certain viam-server versions on ARM64. The provided Docker 
 
 ## Available Camera Topics
 
-The simulation includes these camera topics:
+The simulation includes this camera topic:
 
 | Topic | Description |
 |-------|-------------|
-| `/wrist_camera/image` | RGB camera mounted on robot wrist |
-| `/wrist_camera/depth_image` | Depth camera on robot wrist |
-| `/overhead_camera` | Overhead view camera |
+| `/inspection_camera` | Overhead RGB camera viewing the conveyor belt |
 
 ## Managing the Container
 
