@@ -7,6 +7,10 @@ set -e
 # Export protobuf compatibility setting
 export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python
 
+# Start SSH server
+echo "Starting SSH server..."
+/usr/sbin/sshd
+
 # Start virtual display for headless rendering
 echo "Starting Xvfb virtual display..."
 Xvfb :1 -screen 0 1024x768x24 &
@@ -31,6 +35,12 @@ echo "Unpausing simulation..."
 gz service -s /world/fruit_inspection/control --reqtype gz.msgs.WorldControl --reptype gz.msgs.Boolean --timeout 2000 --req 'pause: false'
 sleep 1
 
+# Start can spawner (moves cans along conveyor)
+echo ""
+echo "Starting can spawner..."
+python3 /opt/can_spawner.py &
+SPAWNER_PID=$!
+
 # Start web viewer
 echo ""
 echo "Starting web viewer..."
@@ -43,12 +53,20 @@ echo "Can Inspection POC Running!"
 echo "=========================================="
 echo ""
 echo "  Web Viewer:  http://localhost:8080"
+echo "  SSH:         ssh -p 2222 viam@localhost"
+echo "               Password: viam"
 echo ""
 echo "  Camera topic: /inspection_camera"
 echo ""
 echo "  World: fruit_inspection (can inspection)"
-echo "  - Good cans: silver aluminum, undamaged"
-echo "  - Dented cans: visible dent marks"
+echo "  - Cans spawn continuously at input end"
+echo "  - ~10% of cans are dented (defective)"
+echo "  - Belt moves cans past inspection camera"
+echo ""
+echo "  To set up viam-server after SSH:"
+echo "    curl https://storage.googleapis.com/packages.viam.com/apps/viam-server/viam-server-stable-x86_64.AppImage -o viam-server"
+echo "    chmod +x viam-server"
+echo "    ./viam-server -config /path/to/your-config.json"
 echo ""
 echo "=========================================="
 echo ""

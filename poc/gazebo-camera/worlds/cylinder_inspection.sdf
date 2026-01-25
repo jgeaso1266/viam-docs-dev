@@ -11,7 +11,7 @@
   This world is designed for the Viam stationary vision tutorial.
 -->
 <sdf version="1.9">
-  <world name="fruit_inspection">
+  <world name="cylinder_inspection">
 
     <!-- ==================== PHYSICS ==================== -->
     <physics name="1ms" type="ignored">
@@ -469,43 +469,10 @@
       </link>
     </model>
 
-    <!-- ==================== SAMPLE CANS ==================== -->
-    <!-- Mix of good and dented cans on the conveyor -->
-
-    <!-- Good can 1 - at input end -->
-    <include>
-      <uri>model://can_good</uri>
-      <name>can_good_1</name>
-      <pose>-0.35 0 0.58 0 0 0.3</pose>
-    </include>
-
-    <!-- Dented can 1 - approaching inspection zone -->
-    <include>
-      <uri>model://can_dented</uri>
-      <name>can_dented_1</name>
-      <pose>-0.15 0 0.58 0 0 0.7</pose>
-    </include>
-
-    <!-- Good can 2 - in inspection zone -->
-    <include>
-      <uri>model://can_good</uri>
-      <name>can_good_2</name>
-      <pose>0.0 0 0.58 0 0 1.2</pose>
-    </include>
-
-    <!-- Good can 3 - past inspection zone -->
-    <include>
-      <uri>model://can_good</uri>
-      <name>can_good_3</name>
-      <pose>0.2 0 0.58 0 0 2.1</pose>
-    </include>
-
-    <!-- Dented can 2 - near output -->
-    <include>
-      <uri>model://can_dented</uri>
-      <name>can_dented_2</name>
-      <pose>0.35 0 0.58 0 0 0.5</pose>
-    </include>
+    <!-- ==================== DYNAMIC CANS ==================== -->
+    <!-- Cans are spawned dynamically by can_spawner.py -->
+    <!-- About 1 in 10 cans will be dented -->
+    <!-- The spawner moves cans along the belt and removes them at the end -->
 
   </world>
 </sdf>

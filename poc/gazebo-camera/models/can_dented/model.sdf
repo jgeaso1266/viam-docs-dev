@@ -10,14 +10,7 @@
     <static>false</static>
 
     <link name="body">
-      <inertial>
-        <mass>0.35</mass>
-        <inertia>
-          <ixx>0.00045</ixx>
-          <iyy>0.00045</iyy>
-          <izz>0.00020</izz>
-        </inertia>
-      </inertial>
+      <kinematic>true</kinematic>
 
       <!-- Main can body -->
       <visual name="can_body">

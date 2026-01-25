@@ -37,12 +37,18 @@ open http://localhost:8080
 ```
 
 The can inspection world includes:
-- **Conveyor belt** with cans moving past inspection zone
+- **Conveyor belt** with cans moving continuously (~5 seconds to cross)
 - **Overhead camera** (640x480, 30fps) looking down at conveyor
 - **Good cans** - silver aluminum, undamaged
-- **Dented cans** - visible dent/damage marks on top
+- **Dented cans** (~10% of cans) - visible dent/damage marks on top
+- **Automatic spawning** - new can every 4 seconds
 - **Air jet rejector** - pneumatic nozzle to blow defective cans off conveyor
 - **Reject bin** (red) and **output chute** (green)
+
+The conveyor belt is controlled by `can_spawner.py` which:
+- Spawns cans at the input end of the belt
+- Moves cans smoothly along the belt (kinematic position updates)
+- Removes cans when they reach the output end
 
 ---
 
