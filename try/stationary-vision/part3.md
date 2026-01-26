@@ -4,11 +4,11 @@
 
 ---
 
-**Goal:** Write inspection logic that detects defects and rejects them, then deploy it as a module.
+**Goal:** Write inspection logic that detects dented cans and rejects them, then deploy it as a module.
 
 **Skills:** Module-first development, Viam SDK, adding actuators, module deployment.
 
-Your vision pipeline detects defects and records the results. Now you'll write code to act on those detections—rejecting defective parts automatically.
+Your vision pipeline detects dented cans and records the results. Now you'll write code to act on those detections—rejecting defective cans automatically.
 
 You'll use the **module-first development pattern**: code that runs on your laptop during development, connecting to remote hardware over the network. When it works, you package it as a module and deploy it to the machine. Same code, different context.
 
@@ -377,7 +377,7 @@ func realMain() error {
 	// 1. Config with hardcoded dependency names
 	cfg := inspector.Config{
 		Camera:        "inspection-cam",
-		VisionService: "part-detector",
+		VisionService: "can-detector",
 		Rejector:      "rejector",
 	}
 
@@ -441,7 +441,7 @@ async def main():
     # 1. Config with hardcoded dependency names
     cfg = Config(
         camera="inspection-cam",
-        vision_service="part-detector",
+        vision_service="can-detector",
         rejector="rejector"
     )
 
@@ -505,11 +505,11 @@ Your code depends on a rejector motor. Add that hardware to your work cell.
 
 **Add the reject mechanism to your simulation:**
 
-Click the button below to add a part rejector:
+Click the button below to add a can rejector:
 
 [BUTTON: Add Reject Mechanism]
 
-The simulation now shows a pneumatic pusher mounted beside the conveyor. When activated, it pushes parts into a reject bin.
+The simulation now shows a pneumatic pusher mounted beside the conveyor. When activated, it pushes defective cans into a reject bin.
 
 [SCREENSHOT: Work cell with reject mechanism visible]
 
@@ -570,24 +570,24 @@ go run ./cmd/cli -host your-machine-main.abc123.viam.cloud -cmd inspect
 # or: python cli.py your-machine-main.abc123.viam.cloud inspect
 ```
 
-With a passing part:
+With a good can:
 ```
 Result: map[confidence:0.942 label:PASS rejected:false]
 ```
 
-With a failing part:
+With a dented can:
 ```
 Result: map[confidence:0.873 label:FAIL rejected:true]
 ```
 
-Watch the simulation—when a FAIL is detected, the rejector activates and pushes the part into the reject bin.
+Watch the simulation—when a FAIL is detected, the rejector activates and pushes the dented can into the reject bin.
 
-[SCREENSHOT: Simulation showing part being rejected]
+[SCREENSHOT: Simulation showing can being rejected]
 
 **You've closed the control loop:**
-1. **Sees** — Camera captures the part
+1. **Sees** — Camera captures the can
 2. **Thinks** — Vision service classifies it
-3. **Acts** — Rejector removes defective parts
+3. **Acts** — Rejector removes defective cans
 
 This is the sense-think-act cycle that defines robotic systems.
 
@@ -823,7 +823,7 @@ class Inspector(Generic):
   "module_id": "your-org:inspection-module",
   "visibility": "private",
   "url": "",
-  "description": "Part inspection with automatic rejection",
+  "description": "Can inspection with automatic rejection of defects",
   "models": [
     {
       "api": "rdk:service:generic",
@@ -873,7 +873,7 @@ In the service card that was created:
 ```json
 {
   "camera": "inspection-cam",
-  "vision_service": "part-detector",
+  "vision_service": "can-detector",
   "rejector": "rejector"
 }
 ```
@@ -884,7 +884,7 @@ In the service card that was created:
 
 1. Check the **Logs** tab for your machine
 2. You should see the inspector module starting up
-3. Go to the simulation and trigger a defective part—watch the rejector activate
+3. Watch the simulation—when a dented can passes under the camera, the rejector should activate
 
 The machine now runs your inspection logic autonomously. The same code that ran on your laptop now runs on the machine as part of viam-server.
 
@@ -894,7 +894,7 @@ You built a working inspection system:
 
 1. **Detect** — ML inference via the vision service
 2. **Inspect** — Decision-making based on detection results
-3. **Reject** — Actuation to remove defective parts
+3. **Reject** — Actuation to remove defective cans
 
 Your code ran on your laptop while the hardware ran on the remote machine. Then you packaged and deployed the same code as a module. **Same constructor, same `DoCommand`, different context.** That's module-first development.
 

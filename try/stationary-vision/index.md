@@ -51,10 +51,10 @@ By the end of this tutorial, you'll understand how to:
 
 ## Scenario
 
-You're building a **quality inspection station** for a manufacturing line. Parts move past a camera on a conveyor. Your system must:
+You're building a **quality inspection station** for a canning line. Cans move past a camera on a conveyor belt. Your system must:
 
-1. Detect when a part is present
-2. Classify it as PASS or FAIL
+1. Detect when a can is present
+2. Classify it as PASS or FAIL (identifying dented cans)
 3. Log results and trigger alerts on failures
 4. Scale to multiple inspection stations
 5. Ship as a product your customers can use
@@ -66,7 +66,7 @@ You're building a **quality inspection station** for a manufacturing line. Parts
 A working inspection system with:
 
 - A camera streaming live images
-- An ML model classifying parts as pass/fail
+- An ML model classifying cans as PASS/FAIL (detecting dents)
 - Business logic that triggers alerts on failures
 - A second station added to your fleet
 - A dashboard showing inspection results across stations
@@ -168,9 +168,9 @@ These all use the same patterns: configure components, add services, write logic
 
 | Element | Description |
 |---------|-------------|
-| Conveyor/staging area | Surface where parts appear |
-| Camera | Overhead RGB camera (640x480, 30fps) |
-| Sample parts | Mix of "good" and "defective" items |
+| Conveyor belt | Moving belt where cans travel |
+| Camera | Overhead RGB camera (640x480) |
+| Sample cans | Mix of good cans and dented cans (~10% defect rate) |
 | Lighting | Consistent industrial lighting |
 
 ### Viam Components
@@ -178,9 +178,9 @@ These all use the same patterns: configure components, add services, write logic
 | Component | Type | Notes |
 |-----------|------|-------|
 | `inspection-cam` | camera | Gazebo RGB camera |
-| `part-classifier` | mlmodel | TFLite model for PASS/FAIL classification |
-| `part-detector` | vision | ML model service connected to camera |
-| `rejector` | motor | Pneumatic pusher for rejecting parts |
+| `can-classifier` | mlmodel | TFLite model for PASS/FAIL classification (detects dents) |
+| `can-detector` | vision | ML model service connected to camera |
+| `rejector` | motor | Pneumatic pusher for rejecting defective cans |
 | `inspector` | generic (module) | Control logic service |
 | `offline-alert` | trigger | Email notification when machine goes offline |
 
@@ -188,7 +188,7 @@ These all use the same patterns: configure components, add services, write logic
 
 | Event | Trigger | Purpose |
 |-------|---------|---------|
-| Part appears | Timer or user action | New item to inspect |
+| Can appears | Automatic (every 4 seconds) | New can to inspect |
 
 ---
 

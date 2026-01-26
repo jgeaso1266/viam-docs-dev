@@ -6,135 +6,99 @@
 
 **Goal:** Get a working detection pipeline on one simulated camera.
 
-**Skills:** Installing viam-server, connecting a machine to Viam, component configuration, adding services, writing SDK code.
+**Skills:** Connecting a machine to Viam, component configuration, adding services.
 
-## 1.1 Launch the Simulation
+## Prerequisites
 
-Click the button below to launch your simulation environment:
+Before starting this tutorial, you need the can inspection simulation running. Follow the **[Gazebo Simulation Setup Guide](./gazebo-setup.md)** to:
 
-[BUTTON: Launch Simulation]
+1. Build the Docker image with Gazebo Harmonic
+2. Create a machine in Viam and get credentials
+3. Start the container with your Viam credentials
 
-After a few seconds, you'll see a split-screen view:
+Once you see "Can Inspection Simulation Running!" in the container logs and your machine shows **Online** in the Viam app, return here to continue.
 
-[SCREENSHOT: Simulation interface showing work cell on left, terminal on right]
+> **What you're working with:** The simulation runs Gazebo Harmonic inside a Docker container. It simulates a conveyor belt with cans (some dented) passing under an inspection camera. viam-server runs inside the container and connects to Viam's cloud, just like it would on a Raspberry Pi or any physical device. Everything you configure in the Viam app applies to the simulated hardware.
 
-**Left panel:** A 3D view of your work cell—a conveyor belt with an overhead camera. Parts will appear here during the tutorial.
+## 1.1 Understand viam-server
 
-**Right panel:** A terminal connected to the Linux machine running this simulation. This is the same terminal you'd use if you SSH'd into a Raspberry Pi or any other device.
+Every Viam-managed device runs **viam-server**—the software that connects your hardware to Viam's cloud. viam-server is the foundation of the platform:
 
-> **What you're looking at:** This isn't a sandbox or a toy. It's an actual Linux machine running in the cloud with simulated hardware attached. Everything you do here—installing software, configuring components, writing code—works exactly the same way on real hardware.
+- **Connects to the cloud** — Receives configuration updates, syncs data, enables remote access
+- **Manages hardware** — Loads drivers for cameras, motors, sensors, and other components
+- **Exposes APIs** — Provides a consistent interface for controlling any hardware
+- **Runs modules** — Executes custom logic you deploy to the machine
 
-## 1.2 Create a Machine in Viam
-
-Before the simulated machine can talk to Viam, you need to create a machine entry in the Viam app. This is where you'll configure components, view data, and manage your machine.
-
-**Create an account** (if you don't have one):
-
-1. Open [app.viam.com](https://app.viam.com) in a new browser tab
-2. Click **Sign Up** and create an account with your email or Google/GitHub
-
-[SCREENSHOT: Viam app sign-up page]
-
-**Create a new machine:**
-
-1. From the Viam app home screen, click **+ Add machine**
-2. Give your machine a name like `inspection-station-1`
-3. Click **Add machine**
-
-[SCREENSHOT: Add machine dialog with name field]
-
-You'll land on your machine's page. Notice the status indicator shows **Offline**—that's expected. The machine exists in Viam's cloud, but nothing is running on your simulated hardware yet.
-
-**Get the install command:**
-
-1. Click the **Setup** tab
-2. You'll see a `curl` command that looks like this:
+On real hardware, installing viam-server is simple—a single command:
 
 ```bash
 curl -fsSL https://app.viam.com/install | sh -s -- --apisecret <your-secret>
 ```
 
-3. Click the **Copy** button to copy this command
+This downloads viam-server, configures it with credentials for your machine, and starts it as a background service. You'd run this on a Raspberry Pi, Jetson, or any Linux device.
 
-[SCREENSHOT: Setup tab showing the install command with copy button highlighted]
+**For this tutorial, we've done this for you.** The Docker container already has viam-server installed and running with your credentials. When you started the container with your config file mounted, viam-server connected automatically.
 
-> **Keep this tab open.** You'll paste this command into the simulation terminal in the next step.
+## 1.2 Verify Your Machine is Online
 
-This command downloads and installs `viam-server`, then configures it with credentials that link it to this specific machine in your Viam account. Every Viam machine—whether it's a Raspberry Pi in your garage or an industrial robot in a factory—starts the same way.
+If you followed the [setup guide](./gazebo-setup.md), your machine should already be online.
 
-## 1.3 Install viam-server
-
-Now you'll install `viam-server` on the simulation machine. This is the software that runs on every Viam-managed device—it connects to the cloud, loads your configuration, and provides APIs for controlling components.
-
-**Run the install command:**
-
-1. Click in the terminal panel on the right side of your simulation
-2. Paste the install command you copied from the Viam app (Ctrl+V or Cmd+V)
-3. Press Enter
-
-You'll see output as the installer runs:
-
-```
-Downloading viam-server...
-Installing to /usr/local/bin/viam-server...
-Creating configuration directory...
-Starting viam-server...
-```
-
-[SCREENSHOT: Terminal showing successful viam-server installation]
-
-The installation takes about 30 seconds. When it completes, `viam-server` starts automatically as a background service.
-
-**Verify the connection:**
-
-Switch back to your Viam app browser tab. The status indicator should now show **Online** with a green dot.
+1. Open [app.viam.com](https://app.viam.com)
+2. Navigate to your machine (e.g., `inspection-station-1`)
+3. Verify the status indicator shows **Online** with a green dot
 
 [SCREENSHOT: Machine page showing Online status]
 
-This is the moment: the Linux machine you're looking at in the simulation is now connected to Viam's cloud. You can configure it, monitor it, and control it from anywhere in the world.
+This is the key moment: the Linux machine running in your Docker container is now connected to Viam's cloud. You can configure it, monitor it, and control it from anywhere in the world—exactly as you would with a physical device.
 
 > **Troubleshooting:**
-> - **Still showing Offline?** Wait 10-15 seconds and refresh the page. The connection can take a moment to establish.
-> - **Installation failed?** Make sure you copied the entire command, including the `--apisecret` flag and its value.
-> - **Permission denied?** The install script should handle this, but if you see permission errors, prefix the command with `sudo`.
+> - **Still showing Offline?** Check the Docker container is running: `docker logs gz-viam`
+> - **Container not running?** Restart it: `docker start gz-viam`
+> - **Need to recreate?** Follow the [setup guide](./gazebo-setup.md) again.
 
-This is the same process you'd follow on real hardware. SSH into a Raspberry Pi, run the install command, and it connects to Viam. The only difference here is that your "SSH" is a browser-based terminal.
-
-## 1.4 Configure the Camera
+## 1.3 Configure the Camera
 
 Your machine is online but empty—it doesn't know about any hardware yet. You'll now add the camera as a *component*.
 
-In Viam, a component is any piece of hardware: cameras, motors, arms, sensors, grippers. You configure components by declaring what they are, and Viam handles the drivers and communication.
+In Viam, a **component** is any piece of hardware: cameras, motors, arms, sensors, grippers. You configure components by declaring what they are, and Viam handles the drivers and communication.
+
+**The power of Viam's component model:** All cameras expose the same API—USB webcams, Raspberry Pi camera modules, IP cameras, simulated cameras. Your application code uses the same `GetImage()` method regardless of the underlying hardware. Swap hardware by changing configuration, not code.
+
+**Add the camera module:**
+
+1. Click the **+** button and select **Module**
+2. Search for `gz-camera` and select `viam:gz-camera`
+3. Click **Add module**
 
 **Add a camera component:**
 
-1. In the Viam app, click the **Config** tab
-2. Click **+ Add component**
-3. For **Type**, select `camera`
-4. For **Model**, select `webcam` (this is the *driver* model—the software that knows how to talk to this type of camera)
-
-   > The simulated camera presents itself as a standard webcam to the operating system—just like a USB camera would on a real machine.
-
-5. Name it `inspection-cam`
-6. Click **Create**
+1. Click the **+** button and select **Component**
+2. For **Type**, select `camera`
+3. For **Model**, select `viam:gz-camera:rgb-camera`
+4. Name it `inspection-cam`
+5. Click **Create**
 
 [SCREENSHOT: Add component dialog with camera settings]
 
-**Configure the camera source:**
+**Configure the camera:**
 
-After creating the component, you'll see a configuration panel. The `webcam` model needs to know which video device to use.
+After creating the component, you'll see a configuration panel.
 
-1. In the **Attributes** section, click the **video_path** dropdown
-2. Select the available video device (typically `/dev/video0` or similar)
-3. Click **Save config** in the top right
+1. In the **Attributes** section, add:
+   ```json
+   {
+     "id": "/inspection_camera"
+   }
+   ```
+2. Click **Save** in the top right
 
-[SCREENSHOT: Camera configuration panel with video_path selected]
+[SCREENSHOT: Camera configuration panel with id attribute]
 
 When you save, viam-server automatically reloads and applies the new configuration. You don't need to restart anything—the system picks up changes within seconds.
 
-> **What just happened:** You declared "this machine has a camera called `inspection-cam`" by editing configuration in a web UI. Behind the scenes, viam-server loaded the appropriate driver, connected to the video device, and made the camera available through Viam's camera API. You'd do exactly the same thing for a motor, an arm, or any other component—just select a different type and model.
+> **What just happened:** You declared "this machine has a camera called `inspection-cam`" by editing configuration in a web UI. Behind the scenes, viam-server loaded the camera module and made the camera available through Viam's standard camera API. The code you write in this tutorial will work identically with a $20 USB webcam or a $2,000 industrial camera—just change the model in your configuration.
 
-## 1.5 Test the Camera
+## 1.4 Test the Camera
 
 Let's verify the camera is working. Every component in Viam has a built-in test panel right in the configuration view.
 
@@ -156,7 +120,7 @@ Click **Get image** to capture a single frame. The image appears in the panel an
 
 This pattern applies to all components. Motors have test controls for setting velocity. Arms have controls for moving joints. You can test any component directly from its configuration panel.
 
-## 1.6 Add a Vision Service
+## 1.5 Add a Vision Service
 
 Now you'll add machine learning to your camera. In Viam, ML capabilities are provided by *services*—higher-level functionality that operates on components.
 
@@ -178,16 +142,16 @@ The ML model service loads a trained model and makes it available for inference.
 2. Click **+** next to your machine in the left sidebar
 3. Select **Service**, then **ML model**
 4. Search for `TFLite CPU` and select it
-5. Name it `part-classifier`
+5. Name it `can-classifier`
 6. Click **Create**
 
 [SCREENSHOT: Add service dialog for ML model]
 
 **Select a model from the registry:**
 
-1. In the `part-classifier` configuration panel, click **Select model**
+1. In the `can-classifier` configuration panel, click **Select model**
 2. Click the **Registry** tab
-3. Search for `part-quality-classifier` (a model we created for this tutorial that classifies parts as PASS or FAIL)
+3. Search for `can-quality-classifier` (a model we created for this tutorial that classifies cans as PASS or FAIL based on dent detection)
 4. Select it from the list
 5. Click **Save config**
 
@@ -202,15 +166,15 @@ Now add a vision service that connects your camera to the ML model service. The 
 1. Click **+** next to your machine
 2. Select **Service**, then **Vision**
 3. Search for `ML model` and select it
-4. Name it `part-detector`
+4. Name it `can-detector`
 5. Click **Create**
 
 **Link the vision service to the camera and model:**
 
-1. In the `part-detector` configuration panel, find the **Default Camera** dropdown
+1. In the `can-detector` configuration panel, find the **Default Camera** dropdown
 2. Select `inspection-cam`
 3. Find the **ML Model** dropdown
-4. Select `part-classifier` (the ML model service you just created)
+4. Select `can-classifier` (the ML model service you just created)
 5. Click **Save config**
 
 [SCREENSHOT: Vision service configuration linked to ML model]
@@ -218,18 +182,18 @@ Now add a vision service that connects your camera to the ML model service. The 
 **Test the vision service:**
 
 1. You should still be on the **Configure** tab
-2. Find the `part-detector` service you just created
+2. Find the `can-detector` service you just created
 3. Look for the **Test** section at the bottom of its configuration panel
 4. If not already selected, select `inspection-cam` as the camera source
 5. Click **Get detections**
 
-You should see the camera image with detection results—bounding boxes around detected parts with labels (PASS or FAIL) and confidence scores.
+You should see the camera image with detection results—bounding boxes around detected cans with labels (PASS or FAIL) and confidence scores.
 
 [SCREENSHOT: Vision service test panel showing detection results with bounding boxes]
 
 > **What you've built:** A complete ML inference pipeline. The vision service grabs an image from the camera, runs it through the TensorFlow Lite model, and returns structured detection results. This same pattern works for any ML task—object detection, classification, segmentation—you just swap the model.
 
-**Checkpoint:** You've configured a complete ML inference pipeline—camera, model, and vision service—entirely through the Viam app. The system can detect defects. Next, you'll set up continuous data capture so every detection is recorded and queryable.
+**Checkpoint:** You've configured a complete ML inference pipeline—camera, model, and vision service—entirely through the Viam app. The system can detect dented cans. Next, you'll set up continuous data capture so every detection is recorded and queryable.
 
 ---
 

@@ -1,5 +1,7 @@
 # Gazebo Can Inspection Simulation Setup Guide
 
+> **Prerequisite for the [Stationary Vision Tutorial](./index.md).** Complete this setup, then continue to [Part 1](./part1.md).
+
 This guide walks you through setting up a simulated can inspection station with camera in Gazebo Harmonic and connecting it to the Viam platform using Docker. The simulation includes a conveyor belt with cans (some dented) passing under an inspection camera.
 
 ## Prerequisites
@@ -56,32 +58,11 @@ You should see:
 - "Can Inspection Simulation Running!" message
 - Can spawner starting (spawns cans on conveyor belt)
 
-## Step 5: Add the Camera Module
+---
 
-1. In the Viam app, go to your machine's **CONFIGURE** tab
-2. Click the **+** button next to **Modules**
-3. Search for `gz-camera` and select `viam:gz-camera`
-4. Click **Add module**
+**Next:** Return to **[Part 1: Vision Pipeline](./part1.md)** to configure your camera and build the inspection system.
 
-## Step 6: Add a Camera Component
-
-1. Click the **+** button next to **Components**
-2. Select **Camera** then **Create**
-3. Name it `sim-camera`
-4. For **Model**, select `viam:gz-camera:rgb-camera`
-5. In the **Attributes** section, add:
-   ```json
-   {
-     "id": "/inspection_camera"
-   }
-   ```
-6. Click **Save** in the top right
-
-## Step 7: Test the Camera
-
-1. Go to the **CONTROL** tab
-2. Find the `sim-camera` component
-3. Click to expand it - you should see a live image from the simulated camera
+---
 
 ## Troubleshooting
 
