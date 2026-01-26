@@ -1,258 +1,182 @@
-# Part 5: Productize (~15 min)
+# Part 5: Scale (~10 min)
 
-[← Back to Overview](./index.md) | [← Part 4: Scale](./part4.md)
+[← Back to Overview](./index.md) | [← Part 4: Deploy as a Module](./part4.md)
 
 ---
 
-<!-- TODO: Add a section on alerting - query data for FAIL detections and send notifications programmatically -->
+**Goal:** Add a second inspection station.
 
-**Goal:** Build a customer-facing product.
+**Skills:** Configuration reuse with fragments, fleet basics.
 
-**Skills:** Building apps with Viam SDKs, white-label deployment.
+## 5.1 Create a Fragment
 
-## 5.1 Create a Dashboard
+You have one working inspection station. Now imagine you need 10 more—or 100. Manually copying configuration to each machine would be tedious and error-prone.
 
-You've built a working system—but right now, only you can see it through the Viam app. Your customers need their own interface showing inspection results.
+Viam solves this with *fragments*: reusable configuration blocks that can be applied to any machine. Think of a fragment as a template. Define your camera, vision service, data capture, and triggers once, then apply that template to as many machines as you need.
 
-Viam offers two approaches:
-1. **Built-in Teleop Dashboard** — No code, drag-and-drop widgets
-2. **Custom Web App** — Full control with TypeScript SDK
+**Export your machine configuration:**
 
-### Option A: Built-in Teleop Dashboard (No Code)
+1. Go to your `inspection-station-1` machine
+2. Click the **Configure** tab, then click **JSON** (top right) to see the raw configuration
+3. Copy the entire JSON configuration to your clipboard
 
-Viam's Teleop dashboard lets you create custom views without writing code.
+[SCREENSHOT: JSON config view with copy button]
 
-**Create a dashboard workspace:**
+**Create the fragment:**
 
-1. In the Viam app, go to **Fleet** → **Teleop** tab
-2. Click **+ Create workspace**
-3. Name it `Inspection Overview`
-4. Select the location containing your inspection stations
+1. In the Viam app, click **Fragments** in the left sidebar
+2. Click **+ Create fragment**
+3. Name it `inspection-station`
+4. Paste your configuration into the fragment editor
+5. Click **Save**
 
-**Add widgets:**
+[SCREENSHOT: Fragment editor with pasted configuration]
 
-Click **+ Add widget** and configure:
+## 5.2 Parameterize Machine-Specific Values
 
-1. **Camera Stream** — Select `inspection-cam` from any station to show live video
-2. **Time Series Graph** — Plot detection confidence over time from `can-detector`
-3. **Table Widget** — Display recent detection results with labels and timestamps
-4. **Stat Widget** — Show current pass/fail counts
+Your fragment now contains everything—but some values are specific to each machine. The camera's `video_path` might be `/dev/video0` on one machine and `/dev/video1` on another. Hardcoding these values would break the fragment's reusability.
 
-Drag widgets to arrange your layout. The dashboard updates in real-time.
+Viam fragments support *variables* for exactly this purpose.
 
-[SCREENSHOT: Teleop dashboard with inspection widgets]
+**Find the camera configuration in your fragment:**
 
-> **Quick wins:** The Teleop dashboard is great for internal monitoring and demos. For customer-facing products with your branding, use Option B.
+Look for the camera component in the JSON. It will look something like:
 
-### Option B: Custom Web App (TypeScript SDK)
-
-For full control over branding and features, build a custom dashboard with Viam's TypeScript SDK.
-
-**Set up a TypeScript project:**
-
-```bash
-mkdir inspection-dashboard && cd inspection-dashboard
-npm init -y
-npm install @viamrobotics/sdk vite
-```
-
-**Create `src/main.ts`:**
-
-```typescript
-import * as VIAM from "@viamrobotics/sdk";
-
-// Replace with your credentials (from Viam app → Organization → API Keys)
-const API_KEY_ID = "YOUR_API_KEY_ID";
-const API_KEY = "YOUR_API_KEY";
-const ORG_ID = "YOUR_ORG_ID";
-
-async function createClient(): Promise<VIAM.ViamClient> {
-  return await VIAM.createViamClient({
-    serviceHost: "https://app.viam.com:443",
-    credentials: {
-      type: "api-key",
-      authEntity: API_KEY_ID,
-      payload: API_KEY,
-    },
-  });
+```json
+{
+  "name": "inspection-cam",
+  "type": "camera",
+  "model": "webcam",
+  "attributes": {
+    "video_path": "/dev/video0"
+  }
 }
+```
 
-async function updateDashboard() {
-  const client = await createClient();
-  const dataClient = client.dataClient;
+**Replace the hardcoded value with a variable:**
 
-  // Query detection results from the last 24 hours
-  const results = await dataClient.tabularDataBySQL(
-    ORG_ID,
-    `SELECT * FROM readings
-     WHERE component_name = 'can-detector'
-     AND time_received > datetime('now', '-1 day')
-     ORDER BY time_received DESC
-     LIMIT 100`
-  );
+Change `video_path` to use the `$variable` syntax:
 
-  // Calculate stats
-  const total = results.length;
-  const fails = results.filter((r: any) =>
-    JSON.stringify(r).includes("FAIL")
-  ).length;
-  const passRate = total > 0 ? ((total - fails) / total * 100).toFixed(1) : 0;
-
-  // Update UI
-  document.getElementById("total-count")!.textContent = String(total);
-  document.getElementById("fail-count")!.textContent = String(fails);
-  document.getElementById("pass-rate")!.textContent = `${passRate}%`;
+```json
+{
+  "name": "inspection-cam",
+  "type": "camera",
+  "model": "webcam",
+  "attributes": {
+    "video_path": {
+      "$variable": {
+        "name": "camera_path"
+      }
+    }
+  }
 }
-
-// Update on load and every 30 seconds
-updateDashboard();
-setInterval(updateDashboard, 30000);
 ```
 
-**Create `index.html`:**
+Click **Save** to update the fragment.
 
-```html
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Inspection Dashboard</title>
-  <style>
-    body { font-family: system-ui; max-width: 800px; margin: 0 auto; padding: 20px; }
-    .stats { display: flex; gap: 20px; margin: 20px 0; }
-    .stat-card { background: #f5f5f5; padding: 20px; border-radius: 8px; flex: 1; }
-    .stat-value { font-size: 48px; font-weight: bold; }
-    .pass { color: #22c55e; }
-    .fail { color: #ef4444; }
-  </style>
-</head>
-<body>
-  <h1>Quality Inspection Dashboard</h1>
-  <div class="stats">
-    <div class="stat-card">
-      <div>Recent Inspections</div>
-      <div class="stat-value" id="total-count">--</div>
-    </div>
-    <div class="stat-card">
-      <div>Pass Rate</div>
-      <div class="stat-value pass" id="pass-rate">--%</div>
-    </div>
-    <div class="stat-card">
-      <div>Failures</div>
-      <div class="stat-value fail" id="fail-count">--</div>
-    </div>
-  </div>
-  <script type="module" src="/src/main.ts"></script>
-</body>
-</html>
+Now when you apply this fragment to a machine, you'll provide the actual `camera_path` value for that specific machine.
+
+> **What to parameterize:** Device paths (`/dev/video0`, `/dev/ttyUSB0`), IP addresses, serial numbers—anything that varies between physical machines. Configuration like detection thresholds, capture frequency, and module versions should stay in the fragment so they're consistent across your fleet.
+
+**Apply the fragment to your first machine:**
+
+Now that the fragment exists, update `inspection-station-1` to use it instead of inline configuration:
+
+1. Go to `inspection-station-1`'s **Configure** tab
+2. Switch to **JSON** view
+3. Delete all the component and service configurations (keep only the machine metadata)
+4. Switch back to **Builder** view
+5. Click **+** and select **Insert fragment**
+6. Select `inspection-station` and click **Add**
+7. Set the variable: `{"camera_path": "/dev/video0"}`
+8. Click **Save**
+
+The machine reloads with the same configuration, but now it's sourced from the fragment. Any future changes to the fragment will automatically apply to this machine.
+
+## 5.3 Add a Second Machine
+
+Let's spin up a second inspection station and apply the fragment.
+
+**Launch a second simulation:**
+
+Click the button below to launch a second work cell:
+
+[BUTTON: Launch Second Station]
+
+This opens another browser tab with an identical simulation environment—conveyor, camera, the works. But this machine doesn't have any Viam configuration yet.
+
+[SCREENSHOT: Second simulation tab]
+
+**Create the machine and install viam-server:**
+
+Follow the same steps from [Part 1](./part1.md):
+
+1. In the Viam app, click **+ Add machine**
+2. Name it `inspection-station-2`
+3. Copy the install command from the **Setup** tab
+4. Paste and run it in the second simulation's terminal
+5. Wait for the machine to come online
+
+**Apply the fragment with variable values:**
+
+1. On `inspection-station-2`, go to the **Configure** tab
+2. Click **+** and select **Insert fragment**
+3. Search for and select `inspection-station`
+4. Click **Add**
+
+The fragment appears in your configuration. Notice the **Variables** section—this is where you provide machine-specific values.
+
+**Set the camera path for this machine:**
+
+1. In the fragment's **Variables** section, add:
+
+```json
+{
+  "camera_path": "/dev/video0"
+}
 ```
 
-**Run it:**
+2. Click **Save** in the top right
 
-```bash
-npx vite
-```
+[SCREENSHOT: Fragment with variables configured]
 
-Open `http://localhost:5173` to see your dashboard.
+Within seconds, the machine reloads its configuration. It now has the camera (with the correct device path), vision service, inspector module, data capture, and alerting—all from the fragment, customized for this specific machine.
 
-[SCREENSHOT: Custom dashboard showing inspection stats]
+**Verify it works:**
 
-> **This is your product.** No Viam branding—your interface, your design. The same APIs can power a React app, mobile app, or enterprise dashboard.
+1. Go to the **Control** tab
+2. Check the camera feed
+3. Run a detection
 
-## 5.2 Set Up White-Label Auth
+Both stations are now running identical inspection logic.
 
-Your customers shouldn't log into Viam—they should log into *your* product. Viam supports white-label authentication so your branding appears throughout the experience.
+[SCREENSHOT: Fleet view showing both machines online]
 
-**Add your logo:**
+## 5.4 Fleet Management Capabilities
 
-Your logo appears on login screens and emails sent to your users:
+With fragments in place, you have the foundation for managing fleets at any scale. Here's what's possible:
 
-```bash
-# Get your organization ID from Viam app → Organization Settings
-viam organization logo set --org-id <YOUR_ORG_ID> --logo-path logo.png
-```
+**Push updates across your fleet:**
+- **Configuration changes** — Edit the fragment, and all machines using it receive the update automatically within seconds
+- **ML model updates** — Change which model the vision service uses; all machines switch to the new version
+- **Module updates** — Deploy new versions of your inspection logic across the fleet
+- **Capture settings** — Adjust data capture frequency, enable/disable components fleet-wide
 
-The logo must be PNG format, under 200KB.
+**Monitor and maintain remotely:**
+- **Fleet dashboard** — View all machines' status, last seen, and health from one screen
+- **Aggregated data** — Query inspection results across all stations ("How many FAILs across all machines this week?")
+- **Remote diagnostics** — View live camera feeds, check logs, and test components without physical access
+- **Alerts** — Get notified when any machine goes offline or exhibits anomalies
 
-**Enable custom authentication:**
+**Handle machine-specific variations:**
+- **Fragment variables** — Parameterize device paths, IP addresses, serial numbers—anything that differs between physical machines
+- **Per-machine overrides** — Add machine-specific configuration on top of fragments when needed
+- **Hardware flexibility** — Same inspection logic works whether a station uses USB cameras, CSI cameras, or IP cameras
 
-```bash
-viam organization auth-service enable --org-id <YOUR_ORG_ID>
-```
+This same pattern scales from 2 machines to 2,000. The fragment is your single source of truth; Viam handles the distribution.
 
-This enables OAuth/OIDC integration so users authenticate through your identity provider.
-
-**Set support email:**
-
-```bash
-viam organization support-email set --org-id <YOUR_ORG_ID> --email support@yourcompany.com
-```
-
-Now password recovery and verification emails come from your support address, not Viam's.
-
-[SCREENSHOT: Branded login screen with custom logo]
-
-With this configured:
-- Users see your logo on login
-- Emails come from your support address
-- Your branding, your experience
-
-> **Going further:** For full SSO integration with your identity provider (Okta, Auth0, etc.), see the [Authentication documentation](https://docs.viam.com/manage/manage/authentication/).
-
-**Create customer organizations:**
-
-For multi-tenant deployments, create separate organizations for each customer:
-
-1. Each customer gets their own organization
-2. They see only their machines
-3. You maintain access to all organizations as the provider
-
-This lets you ship a product where each customer has isolated access to their own inspection stations.
-
-## 5.3 (Optional) Configure Billing
-
-If you're selling inspection-as-a-service, you need to bill customers. Viam can meter usage and integrate with your billing system.
-
-**Usage metering:**
-
-Viam tracks:
-- Number of machines
-- Data captured and stored
-- API calls
-- ML inference operations
-
-You can query this data to build usage-based billing:
-
-```typescript
-// Example: Get machine usage for billing
-const usage = await dataClient.getUsageByOrganization({
-    organizationId: 'YOUR_ORG_ID',
-    startTime: billingPeriodStart,
-    endTime: billingPeriodEnd
-});
-
-// Calculate charges based on your pricing model
-const machineCharges = usage.machineCount * PRICE_PER_MACHINE;
-const dataCharges = usage.dataGB * PRICE_PER_GB;
-```
-
-**Billing integration:**
-
-For production billing, you'd integrate Viam's usage data with your billing system (Stripe, your own invoicing, etc.). The data is available through APIs, so you have full flexibility in how you present and charge for usage.
-
-> **Business model flexibility:** Charge per machine, per inspection, per GB of data, or a flat subscription. Viam provides the metering data; you decide the pricing.
-
-**Checkpoint:** You have a customer-ready product. You've gone from prototype to shippable product in one tutorial.
+**Checkpoint:** Two stations running identical inspection logic from a shared fragment. Update the fragment once, and all machines receive the change automatically.
 
 ---
 
-## You Did It!
-
-You've completed the entire Stationary Vision tutorial. Here's what you built:
-
-1. **Vision Pipeline** — Camera, ML model, and vision service
-2. **Data Capture** — Automatic recording and cloud sync
-3. **Control Logic** — Custom module that detects and rejects defects
-4. **Scale** — Fragment-based fleet management
-5. **Productize** — Customer dashboard and white-label auth
-
-**[← Back to Overview](./index.md)** to see what to build next.
+**[Continue to Part 6: Productize →](./part6.md)**

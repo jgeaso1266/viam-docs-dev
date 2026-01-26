@@ -80,9 +80,10 @@ A working inspection system with:
 |------|------|----------------|
 | [Part 1: Vision Pipeline](./part1.md) | ~15 min | Set up camera, ML model, and vision service |
 | [Part 2: Data Capture](./part2.md) | ~15 min | Configure automatic data sync and alerts |
-| [Part 3: Control Logic](./part3.md) | ~40 min | Write inspection module in Go, deploy to machine |
-| [Part 4: Scale](./part4.md) | ~10 min | Create fragment, add second machine |
-| [Part 5: Productize](./part5.md) | ~10 min | Build dashboard, white-label auth |
+| [Part 3: Build the Inspector](./part3.md) | ~20 min | Write inspection logic in Go, test from CLI |
+| [Part 4: Deploy as a Module](./part4.md) | ~20 min | Package and deploy to run on the machine |
+| [Part 5: Scale](./part5.md) | ~10 min | Create fragment, add second machine |
+| [Part 6: Productize](./part6.md) | ~10 min | Build dashboard, white-label auth |
 
 <details>
 <summary><strong>Full Section Outline</strong></summary>
@@ -101,28 +102,31 @@ A working inspection system with:
 - [2.3 View and Query Data](./part2.md#23-view-and-query-data)
 - [2.4 Summary](./part2.md#24-summary)
 
-**[Part 3: Control Logic](./part3.md)** (~40 min)
+**[Part 3: Build the Inspector](./part3.md)** (~20 min)
 - [3.1 Set Up Your Project](./part3.md#31-set-up-your-project)
 - [3.2 Connect to Your Machine](./part3.md#32-connect-to-your-machine)
-- [3.3 Build the Detector](./part3.md#33-build-the-detector)
+- [3.3 Build the Inspector](./part3.md#33-build-the-inspector)
 - [3.4 Configure the Rejector](./part3.md#34-configure-the-rejector)
 - [3.5 Add Rejection Logic](./part3.md#35-add-rejection-logic)
-- [3.6 Add the DoCommand Interface](./part3.md#36-add-the-docommand-interface)
-- [3.7 Structure as a Viam Resource](./part3.md#37-structure-as-a-viam-resource)
-- [3.8 Add Module Registration](./part3.md#38-add-module-registration)
-- [3.9 Deploy to the Machine](./part3.md#39-deploy-to-the-machine)
-- [3.10 Summary](./part3.md#310-summary)
+- [3.6 Summary](./part3.md#36-summary)
 
-**[Part 4: Scale](./part4.md)** (~10 min)
-- [4.1 Create a Fragment](./part4.md#41-create-a-fragment)
-- [4.2 Parameterize Machine-Specific Values](./part4.md#42-parameterize-machine-specific-values)
-- [4.3 Add a Second Machine](./part4.md#43-add-a-second-machine)
-- [4.4 Fleet Management Capabilities](./part4.md#44-fleet-management-capabilities)
+**[Part 4: Deploy as a Module](./part4.md)** (~20 min)
+- [4.1 Add the DoCommand Interface](./part4.md#41-add-the-docommand-interface)
+- [4.2 Structure as a Viam Resource](./part4.md#42-structure-as-a-viam-resource)
+- [4.3 Add Module Registration](./part4.md#43-add-module-registration)
+- [4.4 Deploy to the Machine](./part4.md#44-deploy-to-the-machine)
+- [4.5 Summary](./part4.md#45-summary)
 
-**[Part 5: Productize](./part5.md)** (~15 min)
-- [5.1 Create a Dashboard](./part5.md#51-create-a-dashboard)
-- [5.2 Set Up White-Label Auth](./part5.md#52-set-up-white-label-auth)
-- [5.3 (Optional) Configure Billing](./part5.md#53-optional-configure-billing)
+**[Part 5: Scale](./part5.md)** (~10 min)
+- [5.1 Create a Fragment](./part5.md#51-create-a-fragment)
+- [5.2 Parameterize Machine-Specific Values](./part5.md#52-parameterize-machine-specific-values)
+- [5.3 Add a Second Machine](./part5.md#53-add-a-second-machine)
+- [5.4 Fleet Management Capabilities](./part5.md#54-fleet-management-capabilities)
+
+**[Part 6: Productize](./part6.md)** (~15 min)
+- [6.1 Create a Dashboard](./part6.md#61-create-a-dashboard)
+- [6.2 Set Up White-Label Auth](./part6.md#62-set-up-white-label-auth)
+- [6.3 (Optional) Configure Billing](./part6.md#63-optional-configure-billing)
 
 </details>
 

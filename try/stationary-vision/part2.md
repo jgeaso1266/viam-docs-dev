@@ -68,7 +68,7 @@ Get notified if your inspection station goes offline. This is a simple trigger�
 
 That's it. If your inspection station loses connection for any reason—network issues, power loss, viam-server crash—you'll get an email.
 
-> **Other triggers:** You can also create triggers for "Part is online" (useful for knowing when a machine comes back) or "Data synced" (fires when data reaches the cloud). For detection-based alerts, see [Part 5](./part5.md).
+> **Other triggers:** You can also create triggers for "Part is online" (useful for knowing when a machine comes back) or "Data synced" (fires when data reaches the cloud). For detection-based alerts, see [Part 6](./part6.md).
 
 ## 2.3 View and Query Data
 
