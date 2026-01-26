@@ -84,6 +84,8 @@ import (
 	"go.viam.com/rdk/logging"
 )
 
+// main wraps realMain so we can use error returns instead of log.Fatal.
+// This pattern makes deferred cleanup (like machine.Close) work properly on errors.
 func main() {
 	if err := realMain(); err != nil {
 		panic(err)
@@ -91,9 +93,12 @@ func main() {
 }
 
 func realMain() error {
+	// Context carries cancellation signals and deadlines through the call chain
 	ctx := context.Background()
+	// Logger provides structured logging with levels (Info, Error, Debug)
 	logger := logging.NewLogger("cli")
 
+	// Parse command-line flags
 	host := flag.String("host", "", "Machine address")
 	flag.Parse()
 
@@ -101,14 +106,14 @@ func realMain() error {
 		return fmt.Errorf("need -host flag")
 	}
 
-	// Connect to the remote machine using CLI credentials
+	// Connect to the remote machine using credentials from `viam login`
 	machine, err := vmodutils.ConnectToHostFromCLIToken(ctx, *host, logger)
 	if err != nil {
 		return fmt.Errorf("failed to connect: %w", err)
 	}
-	defer machine.Close(ctx)
+	defer machine.Close(ctx) // Always close the connection when done
 
-	// List available resources
+	// List available resources to verify connection works
 	logger.Info("Connected! Available resources:")
 	for _, name := range machine.ResourceNames() {
 		logger.Infof("  %s", name)
@@ -139,9 +144,11 @@ Connected! Available resources:
 
 ---
 
-## 3.3 Build the Detector
+## 3.3 Build the Inspector
 
 Now write code that calls the vision service to detect cans.
+
+We'll call this `Inspector` from the start—even though it only does detection for now. By the end of Part 3, it will also reject defective cans. Naming it `Inspector` now avoids renaming later and reflects what we're building toward.
 
 **Create the config:**
 
@@ -154,19 +161,24 @@ import (
 	"context"
 	"fmt"
 
+	"go.viam.com/rdk/logging"
 	"go.viam.com/rdk/resource"
 	"go.viam.com/rdk/services/vision"
 )
 
 // Config declares which dependencies the inspector needs.
 // Each field names a resource that must exist on the machine.
+// When deployed as a module, these come from the JSON config.
+// When testing via CLI, we set them directly in code.
 type Config struct {
-	Camera        string `json:"camera"`
-	VisionService string `json:"vision_service"`
+	Camera        string `json:"camera"`         // Name of the camera component
+	VisionService string `json:"vision_service"` // Name of the vision service
 }
 
-// Validate checks the config and returns the names of dependencies.
-// Viam calls this during configuration to know what resources to provide.
+// Validate checks that required fields are present and returns dependency names.
+// Viam calls this during configuration to:
+// 1. Catch config errors early (before trying to start the service)
+// 2. Know which resources to inject into the constructor
 func (cfg *Config) Validate(path string) ([]string, error) {
 	if cfg.Camera == "" {
 		return nil, fmt.Errorf("camera is required")
@@ -179,56 +191,57 @@ func (cfg *Config) Validate(path string) ([]string, error) {
 }
 ```
 
-The `Validate` function serves two purposes:
-1. **Validation** — Ensures required fields are present
-2. **Dependency declaration** — Returns resource names so Viam knows what to inject
-
-When you later configure this service in the Viam app, Viam will read these dependency names and pass the corresponding resources to your constructor.
-
-**Add the detector struct and constructor:**
+**Add the Inspector struct and constructor:**
 
 ```go
-// Detector holds the dependencies needed for detection.
-type Detector struct {
+// Inspector handles detection and (eventually) rejection of defective cans.
+// For now it only does detection; we'll add rejection in section 3.5.
+type Inspector struct {
 	conf     *Config
+	logger   logging.Logger
 	detector vision.Service
 }
 
-// NewDetector creates a detector from a dependencies map.
-// This same function works whether called from CLI or module.
-func NewDetector(deps resource.Dependencies, conf *Config) (*Detector, error) {
-	// Extract the vision service from dependencies by name
+// NewInspector creates an inspector from a dependencies map.
+// This same constructor works whether called from CLI or module.
+func NewInspector(deps resource.Dependencies, conf *Config, logger logging.Logger) (*Inspector, error) {
+	// Extract the vision service from dependencies by name.
+	// FromDependencies looks up the resource and returns it as the correct type.
+	// If the resource doesn't exist or isn't a vision service, it returns an error.
 	detector, err := vision.FromDependencies(deps, conf.VisionService)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get vision service %q: %w", conf.VisionService, err)
 	}
 
-	return &Detector{
+	return &Inspector{
 		conf:     conf,
+		logger:   logger,
 		detector: detector,
 	}, nil
 }
 ```
 
-`vision.FromDependencies` looks up a resource by name in the dependencies map and returns it as the correct type. If the resource doesn't exist or isn't a vision service, it returns an error.
-
-**Add the detect method:**
+**Add the Detect method:**
 
 ```go
 // Detect runs the vision service and returns the best detection.
-func (d *Detector) Detect(ctx context.Context) (string, float64, error) {
-	// Call vision service with camera name
-	// The vision service captures an image and runs ML inference
-	detections, err := d.detector.DetectionsFromCamera(ctx, d.conf.Camera, nil)
+// Returns: label (e.g., "PASS" or "FAIL"), confidence (0.0-1.0), error
+func (i *Inspector) Detect(ctx context.Context) (string, float64, error) {
+	// Call vision service, passing camera name so it knows which camera to use.
+	// One vision service can work with multiple cameras.
+	// The third argument (nil) is for extra parameters we don't need.
+	detections, err := i.detector.DetectionsFromCamera(ctx, i.conf.Camera, nil)
 	if err != nil {
 		return "", 0, err
 	}
 
+	// Handle case where nothing was detected
 	if len(detections) == 0 {
 		return "NO_DETECTION", 0, nil
 	}
 
-	// Find the detection with highest confidence
+	// Find the detection with highest confidence score.
+	// When multiple objects are detected, we care about the most confident one.
 	best := detections[0]
 	for _, det := range detections[1:] {
 		if det.Score() > best.Score() {
@@ -239,8 +252,6 @@ func (d *Detector) Detect(ctx context.Context) (string, float64, error) {
 	return best.Label(), best.Score(), nil
 }
 ```
-
-`DetectionsFromCamera` takes a camera name because one vision service can work with multiple cameras. It returns a slice of detections, each with a label (like "PASS" or "FAIL") and a confidence score (0.0 to 1.0).
 
 **Update the CLI to test detection:**
 
@@ -257,7 +268,7 @@ import (
 	"github.com/erh/vmodutils"
 	"go.viam.com/rdk/logging"
 
-	"inspection-module"
+	inspector "inspection-module"
 )
 
 func main() {
@@ -277,39 +288,39 @@ func realMain() error {
 		return fmt.Errorf("need -host flag")
 	}
 
-	// Configuration - names must match your Viam config
+	// Configuration specifying which resources to use.
+	// These names must match what you configured in the Viam app.
 	conf := &inspector.Config{
 		Camera:        "inspection-cam",
 		VisionService: "can-detector",
 	}
 
-	// Validate config
 	if _, err := conf.Validate(""); err != nil {
 		return err
 	}
 
-	// Connect to the remote machine
 	machine, err := vmodutils.ConnectToHostFromCLIToken(ctx, *host, logger)
 	if err != nil {
 		return fmt.Errorf("failed to connect: %w", err)
 	}
 	defer machine.Close(ctx)
 
-	// Convert machine resources to a Dependencies map
-	// This is the same format the module system uses
+	// Convert machine resources to a Dependencies map.
+	// This gives us the same format the module system uses,
+	// so our constructor works identically in both contexts.
 	deps, err := vmodutils.MachineToDependencies(machine)
 	if err != nil {
 		return fmt.Errorf("failed to get dependencies: %w", err)
 	}
 
-	// Create the detector
-	det, err := inspector.NewDetector(deps, conf)
+	// Create the inspector using the same constructor the module will use
+	insp, err := inspector.NewInspector(deps, conf, logger)
 	if err != nil {
 		return err
 	}
 
 	// Run detection
-	label, confidence, err := det.Detect(ctx)
+	label, confidence, err := insp.Detect(ctx)
 	if err != nil {
 		return fmt.Errorf("detection failed: %w", err)
 	}
@@ -372,29 +383,37 @@ Before writing rejection code, add the rejector hardware to your machine.
 
 ## 3.5 Add Rejection Logic
 
-Now extend your code to trigger the rejector when a defective can is detected.
+Now extend the inspector to trigger the rejector when a defective can is detected.
 
-**Update the config:**
+**Update the imports in `inspector.go`:**
 
-In `inspector.go`, add the rejector to the config:
+Add the motor import:
 
 ```go
 import (
 	"context"
 	"fmt"
 
-	"go.viam.com/rdk/components/motor"
+	"go.viam.com/rdk/components/motor" // Add this
 	"go.viam.com/rdk/logging"
 	"go.viam.com/rdk/resource"
 	"go.viam.com/rdk/services/vision"
 )
+```
 
+**Add the Rejector field to Config:**
+
+```go
 type Config struct {
 	Camera        string `json:"camera"`
 	VisionService string `json:"vision_service"`
-	Rejector      string `json:"rejector"`
+	Rejector      string `json:"rejector"` // Add this
 }
+```
 
+**Update Validate to include the rejector:**
+
+```go
 func (cfg *Config) Validate(path string) ([]string, error) {
 	if cfg.Camera == "" {
 		return nil, fmt.Errorf("camera is required")
@@ -409,26 +428,29 @@ func (cfg *Config) Validate(path string) ([]string, error) {
 }
 ```
 
-**Create the full Inspector:**
-
-Replace the `Detector` struct with a full `Inspector` that includes the rejector:
+**Add the rejector field to Inspector:**
 
 ```go
-// Inspector handles detection and rejection of defective cans.
 type Inspector struct {
 	conf     *Config
 	logger   logging.Logger
 	detector vision.Service
-	rejector motor.Motor
+	rejector motor.Motor // Add this
 }
+```
 
-// NewInspector creates an inspector from a dependencies map.
+**Update NewInspector to get the rejector:**
+
+Add this after getting the detector:
+
+```go
 func NewInspector(deps resource.Dependencies, conf *Config, logger logging.Logger) (*Inspector, error) {
 	detector, err := vision.FromDependencies(deps, conf.VisionService)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get vision service %q: %w", conf.VisionService, err)
 	}
 
+	// Add this block:
 	rejector, err := motor.FromDependencies(deps, conf.Rejector)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get rejector %q: %w", conf.Rejector, err)
@@ -438,67 +460,40 @@ func NewInspector(deps resource.Dependencies, conf *Config, logger logging.Logge
 		conf:     conf,
 		logger:   logger,
 		detector: detector,
-		rejector: rejector,
+		rejector: rejector, // Add this
 	}, nil
 }
 ```
 
-**Add the detect method** (same as before, now on Inspector):
+**Add the reject and Inspect methods:**
 
 ```go
-func (i *Inspector) Detect(ctx context.Context) (string, float64, error) {
-	detections, err := i.detector.DetectionsFromCamera(ctx, i.conf.Camera, nil)
-	if err != nil {
-		return "", 0, err
-	}
-
-	if len(detections) == 0 {
-		return "NO_DETECTION", 0, nil
-	}
-
-	best := detections[0]
-	for _, det := range detections[1:] {
-		if det.Score() > best.Score() {
-			best = det
-		}
-	}
-
-	return best.Label(), best.Score(), nil
-}
-```
-
-**Add the rejection method:**
-
-```go
+// reject activates the rejector motor to push a defective can off the belt.
 func (i *Inspector) reject(ctx context.Context) error {
-	// GoFor(rpm, revolutions, extra)
-	// - 100 RPM: motor speed
-	// - 1 revolution: how far to move (pushes the can off)
-	// - nil: no extra parameters
+	// GoFor runs the motor at a given speed for a given number of revolutions.
+	// Arguments: rpm (speed), revolutions (distance), extra (nil = no extra params)
+	// Tune these values based on your actuator - a pneumatic pusher might use
+	// different parameters than a servo arm.
 	if err := i.rejector.GoFor(ctx, 100, 1, nil); err != nil {
 		return err
 	}
 	i.logger.Info("Defective can rejected")
 	return nil
 }
-```
 
-`GoFor` is the motor API for "run at this speed for this many revolutions." In a real system, you'd tune these values based on your actuator—a pneumatic pusher might use different parameters than a servo arm.
-
-**Add the inspect method that combines detection and rejection:**
-
-```go
 // Inspect runs detection and rejects defective cans.
-// Returns the label, confidence, and whether the can was rejected.
+// Returns: label, confidence, whether the can was rejected, error
 func (i *Inspector) Inspect(ctx context.Context) (string, float64, bool, error) {
 	label, confidence, err := i.Detect(ctx)
 	if err != nil {
 		return "", 0, false, err
 	}
 
-	// Reject if FAIL with high confidence
-	// The 0.7 threshold avoids rejecting on uncertain detections
-	// Tune this based on your tolerance for false positives vs. missed defects
+	// Decide whether to reject based on label and confidence.
+	// The 0.7 threshold avoids rejecting on uncertain detections.
+	// Lower values: catch more defects, risk more false positives
+	// Higher values: fewer false positives, might miss some defects
+	// Tune based on cost of each error type in your application.
 	shouldReject := label == "FAIL" && confidence > 0.7
 
 	if shouldReject {
@@ -512,89 +507,52 @@ func (i *Inspector) Inspect(ctx context.Context) (string, float64, bool, error) 
 }
 ```
 
-The 0.7 confidence threshold is a policy decision. Lower values catch more defects but risk false positives (rejecting good cans). Higher values are more conservative but might miss some defects. In production, you'd tune this based on the cost of each error type.
+**Update the CLI to support both commands:**
 
-**Update the CLI:**
+Add the `-cmd` flag and update the config and command handling. In `cmd/cli/main.go`:
+
+Add the flag after the `host` flag:
 
 ```go
-package main
+host := flag.String("host", "", "Machine address")
+cmd := flag.String("cmd", "detect", "Command: detect or inspect") // Add this
+flag.Parse()
+```
 
-import (
-	"context"
-	"flag"
-	"fmt"
+Add `Rejector` to the config:
 
-	"github.com/erh/vmodutils"
-	"go.viam.com/rdk/logging"
-
-	"inspection-module"
-)
-
-func main() {
-	if err := realMain(); err != nil {
-		panic(err)
-	}
+```go
+conf := &inspector.Config{
+	Camera:        "inspection-cam",
+	VisionService: "can-detector",
+	Rejector:      "rejector", // Add this
 }
+```
 
-func realMain() error {
-	ctx := context.Background()
-	logger := logging.NewLogger("cli")
+Replace the detection code at the end of `realMain()` with a switch:
 
-	host := flag.String("host", "", "Machine address")
-	cmd := flag.String("cmd", "detect", "Command: detect or inspect")
-	flag.Parse()
-
-	if *host == "" {
-		return fmt.Errorf("need -host flag")
-	}
-
-	conf := &inspector.Config{
-		Camera:        "inspection-cam",
-		VisionService: "can-detector",
-		Rejector:      "rejector",
-	}
-
-	if _, err := conf.Validate(""); err != nil {
-		return err
-	}
-
-	machine, err := vmodutils.ConnectToHostFromCLIToken(ctx, *host, logger)
-	if err != nil {
-		return fmt.Errorf("failed to connect: %w", err)
-	}
-	defer machine.Close(ctx)
-
-	deps, err := vmodutils.MachineToDependencies(machine)
-	if err != nil {
-		return fmt.Errorf("failed to get dependencies: %w", err)
-	}
-
-	insp, err := inspector.NewInspector(deps, conf, logger)
+```go
+// Handle the requested command
+switch *cmd {
+case "detect":
+	label, confidence, err := insp.Detect(ctx)
 	if err != nil {
 		return err
 	}
+	logger.Infof("Detection: %s (%.1f%%)", label, confidence*100)
 
-	switch *cmd {
-	case "detect":
-		label, confidence, err := insp.Detect(ctx)
-		if err != nil {
-			return err
-		}
-		logger.Infof("Detection: %s (%.1f%%)", label, confidence*100)
-
-	case "inspect":
-		label, confidence, rejected, err := insp.Inspect(ctx)
-		if err != nil {
-			return err
-		}
-		logger.Infof("Inspection: %s (%.1f%%), rejected=%v", label, confidence*100, rejected)
-
-	default:
-		return fmt.Errorf("unknown command: %s (use 'detect' or 'inspect')", *cmd)
+case "inspect":
+	label, confidence, rejected, err := insp.Inspect(ctx)
+	if err != nil {
+		return err
 	}
+	logger.Infof("Inspection: %s (%.1f%%), rejected=%v", label, confidence*100, rejected)
 
-	return nil
+default:
+	return fmt.Errorf("unknown command: %s (use 'detect' or 'inspect')", *cmd)
 }
+
+return nil
 ```
 
 **Test both commands:**
@@ -630,28 +588,43 @@ Before turning this into a module, you need to expose your methods through Viam'
 
 **Why DoCommand?** It provides flexibility without defining a custom API. Any client can send commands like `{"detect": true}` or `{"inspect": true}` without needing generated client code. This is ideal for application-specific logic like our inspector.
 
-**Add the DoCommand method to `inspector.go`:**
+**Add the mapstructure import:**
 
 ```go
 import (
 	// ... existing imports ...
 	"github.com/mitchellh/mapstructure"
 )
+```
 
-// Command represents the commands the inspector accepts.
+Run `go get github.com/mitchellh/mapstructure` if needed.
+
+**Add the Command struct and DoCommand method to `inspector.go`:**
+
+```go
+// Command represents the commands the inspector accepts via DoCommand.
+// Using a struct with mapstructure tags lets us safely decode the
+// map[string]interface{} that DoCommand receives.
 type Command struct {
 	Detect  bool `mapstructure:"detect"`
 	Inspect bool `mapstructure:"inspect"`
 }
 
-// DoCommand handles incoming commands.
+// DoCommand handles incoming commands from clients.
 // This is the generic service interface - all operations go through here.
+// Using a single entry point with command maps is more flexible than
+// defining separate RPC methods for each operation.
 func (i *Inspector) DoCommand(ctx context.Context, req map[string]interface{}) (map[string]interface{}, error) {
+	// Decode the request map into our typed Command struct.
+	// mapstructure handles type coercion (e.g., JSON numbers to bools).
 	var cmd Command
 	if err := mapstructure.Decode(req, &cmd); err != nil {
 		return nil, fmt.Errorf("failed to decode command: %w", err)
 	}
 
+	// Dispatch based on which command flag is set.
+	// We use a switch on bools rather than a string command name
+	// because it's more flexible - could support multiple flags at once.
 	switch {
 	case cmd.Detect:
 		label, confidence, err := i.Detect(ctx)
@@ -680,15 +653,14 @@ func (i *Inspector) DoCommand(ctx context.Context, req map[string]interface{}) (
 }
 ```
 
-The `mapstructure` library decodes `map[string]interface{}` into typed structs. This is safer than manual type assertions and handles type coercion gracefully.
-
 **Update the CLI to use DoCommand:**
 
-This verifies the interface works the same way it will when called remotely:
+This verifies the interface works the same way it will when called remotely. Replace the switch statement in `cmd/cli/main.go`:
 
 ```go
 switch *cmd {
 case "detect":
+	// Call through DoCommand to verify the interface works
 	result, err := insp.DoCommand(ctx, map[string]interface{}{"detect": true})
 	if err != nil {
 		return err
@@ -728,11 +700,12 @@ To run as a module, your inspector must implement Viam's `resource.Resource` int
 ```go
 // Inspector implements resource.Resource for the generic service API.
 type Inspector struct {
-	// AlwaysRebuild tells Viam to recreate this service when config changes,
-	// rather than trying to reconfigure it in place.
+	// AlwaysRebuild is an embedded struct that tells Viam to destroy and
+	// recreate this service when config changes, rather than trying to
+	// update it in place. This is simpler than implementing Reconfigure().
 	resource.AlwaysRebuild
 
-	name     resource.Name
+	name     resource.Name // Add this field
 	conf     *Config
 	logger   logging.Logger
 	detector vision.Service
@@ -740,15 +713,13 @@ type Inspector struct {
 }
 ```
 
-`resource.AlwaysRebuild` is an embedded struct that implements the `Reconfigure` method by returning an error, telling Viam to destroy and recreate the resource when configuration changes. This is simpler than implementing incremental reconfiguration.
-
-**Update the constructor signature:**
+**Update the constructor to accept a resource name:**
 
 ```go
 // NewInspector creates an inspector. This constructor is used by both CLI and module.
 func NewInspector(
 	deps resource.Dependencies,
-	name resource.Name,
+	name resource.Name, // Add this parameter
 	conf *Config,
 	logger logging.Logger,
 ) (*Inspector, error) {
@@ -763,7 +734,7 @@ func NewInspector(
 	}
 
 	return &Inspector{
-		name:     name,
+		name:     name, // Add this
 		conf:     conf,
 		logger:   logger,
 		detector: detector,
@@ -781,25 +752,31 @@ func (i *Inspector) Name() resource.Name {
 }
 
 // Close cleans up the resource. Required by resource.Resource.
+// Our inspector doesn't hold any resources that need cleanup -
+// the vision service and motor are managed by Viam.
 func (i *Inspector) Close(ctx context.Context) error {
-	// No cleanup needed - dependencies are managed by Viam
 	return nil
 }
 ```
 
-**Update the CLI for the new constructor:**
+**Update the CLI for the new constructor signature:**
+
+Add the import:
 
 ```go
 import (
 	// ... existing imports ...
 	"go.viam.com/rdk/services/generic"
 )
-
-// In realMain():
-insp, err := inspector.NewInspector(deps, generic.Named("inspector"), conf, logger)
 ```
 
-`generic.Named("inspector")` creates a resource name for the generic service API with the name "inspector".
+Update the NewInspector call:
+
+```go
+// generic.Named creates a resource name for the generic service API.
+// The string "inspector" is just a local name for logging/debugging.
+insp, err := inspector.NewInspector(deps, generic.Named("inspector"), conf, logger)
+```
 
 **Test it:**
 
@@ -815,57 +792,65 @@ Still works. You've restructured the code without changing behavior.
 
 Now add the code that lets viam-server discover and instantiate your inspector.
 
-**Add the Model variable and init function to `inspector.go`:**
+**Add the generic import to `inspector.go`:**
 
 ```go
-// Model is the full model triplet: namespace:family:model
-// - "acme" is your organization namespace (replace with yours)
-// - "inspection" is the model family (grouping related models)
+import (
+	// ... existing imports ...
+	"go.viam.com/rdk/services/generic"
+)
+```
+
+**Add the Model variable and init function:**
+
+```go
+// Model is the full model triplet that identifies this service type.
+// Format: namespace:family:model
+// - "acme" is your organization namespace (replace with yours from Viam app)
+// - "inspection" is the model family (groups related models)
 // - "inspector" is the specific model name
 var Model = resource.NewModel("acme", "inspection", "inspector")
 
 func init() {
-	// Register this model so viam-server can instantiate it from config.
-	// This runs automatically when the module binary starts.
+	// Register this model with Viam's resource registry.
+	// This runs automatically when the module binary starts (due to Go's init semantics).
+	// The registration tells viam-server how to create instances of this service.
 	resource.RegisterService(generic.API, Model,
+		// Registration is a generic type parameterized by:
+		// - resource.Resource: the interface our service implements
+		// - *Config: the config type for type-safe config parsing
 		resource.Registration[resource.Resource, *Config]{
 			Constructor: createInspector,
 		},
 	)
 }
 
-// createInspector is called by viam-server when this service is configured.
-// It receives raw config and must extract the typed Config.
+// createInspector is the constructor that viam-server calls.
+// It receives raw config (from JSON) and must extract our typed Config.
 func createInspector(
 	ctx context.Context,
 	deps resource.Dependencies,
 	rawConf resource.Config,
 	logger logging.Logger,
 ) (resource.Resource, error) {
+	// NativeConfig extracts our typed *Config from the raw config.
+	// This uses the JSON tags we defined on Config fields.
 	conf, err := resource.NativeConfig[*Config](rawConf)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse config: %w", err)
 	}
+	// Delegate to our shared constructor
 	return NewInspector(deps, rawConf.ResourceName(), conf, logger)
 }
 ```
 
-The registration has two parts:
-- **`init()`** — Runs when the module loads, registering the model with Viam's registry
-- **`createInspector`** — Constructor that viam-server calls; extracts typed config and delegates to `NewInspector`
-
-This two-constructor pattern keeps `NewInspector` usable from both CLI (where you have typed config) and module (where config comes as raw JSON).
-
-**Add the import for generic:**
-
-```go
-import (
-	// ... other imports ...
-	"go.viam.com/rdk/services/generic"
-)
-```
-
 **Create the module entry point:**
+
+Create the directory and file:
+
+```bash
+mkdir -p cmd/module
+```
 
 Create `cmd/module/main.go`:
 
@@ -877,18 +862,20 @@ import (
 	"go.viam.com/rdk/resource"
 	"go.viam.com/rdk/services/generic"
 
-	// Import inspector package to trigger init() registration
+	// This blank import runs the inspector package's init() function,
+	// which registers our model with Viam's resource registry.
+	// Without this import, viam-server wouldn't know our model exists.
 	inspector "inspection-module"
 )
 
 func main() {
+	// ModularMain starts the module and handles communication with viam-server.
+	// We pass our API and Model so the module knows what it provides.
 	module.ModularMain(
 		resource.APIModel{API: generic.API, Model: inspector.Model},
 	)
 }
 ```
-
-`module.ModularMain` starts the module process and handles communication with viam-server. The `resource.APIModel` tells it which model this module provides.
 
 **Build the module:**
 
