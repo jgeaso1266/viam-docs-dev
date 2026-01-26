@@ -6,7 +6,7 @@ Continuously spawns cans at the input end of the conveyor belt.
 Moves kinematic cans along the belt using position updates.
 Removes cans when they reach the output end.
 
-About 50% of cans are dented (defective).
+About 10% of cans are dented (defective).
 
 Uses gz-transport Python bindings for efficient pose updates.
 Includes backoff/recovery logic when Gazebo becomes overloaded.
@@ -29,7 +29,7 @@ SPAWN_X = -0.92  # X position where cans spawn (input end)
 DELETE_X = 1.00  # X position where cans are deleted (output end)
 BELT_Y = 0.0  # Y position (center of belt)
 BELT_Z = 0.60  # Z position (slightly above belt to drop)
-DENT_PROBABILITY = 0.5  # 50% chance of dented can
+DENT_PROBABILITY = 0.1  # 10% chance of dented can
 CHECK_INTERVAL = 0.033  # seconds between position updates (~30Hz, matches camera)
 BELT_SPEED = 0.06  # meters per second (slow, smooth movement)
 
