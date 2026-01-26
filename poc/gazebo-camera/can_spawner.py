@@ -15,14 +15,14 @@ import subprocess
 import threading
 
 # Configuration
-SPAWN_INTERVAL = 4.0  # seconds between spawns
+SPAWN_INTERVAL = 1.0  # seconds between spawns
 SPAWN_X = -0.92  # X position where cans spawn (input end)
 DELETE_X = 1.00  # X position where cans are deleted (output end)
 BELT_Y = 0.0  # Y position (center of belt)
 BELT_Z = 0.60  # Z position (slightly above belt to drop)
 DENT_PROBABILITY = 0.1  # 10% chance of dented can
-CHECK_INTERVAL = 0.3  # seconds between position updates
-BELT_SPEED = 0.18  # meters per second (approx 5 seconds to cross belt)
+CHECK_INTERVAL = 0.033  # seconds between position updates (~30Hz, matches camera)
+BELT_SPEED = 0.18  # meters per second
 
 # Track spawned cans
 cans = {}  # name -> {'dented': bool, 'x_pos': float, 'y_offset': float}
@@ -127,13 +127,18 @@ def can_manager():
     """Thread that manages cans - moves them along belt and removes old ones."""
     global cans
 
+    last_time = time.time()
     while True:
+        current_time = time.time()
+        elapsed = current_time - last_time
+        last_time = current_time
+
         with lock:
             to_delete = []
 
             for name, data in list(cans.items()):
-                # Move can forward
-                data['x_pos'] += BELT_SPEED * CHECK_INTERVAL
+                # Move can forward based on actual elapsed time
+                data['x_pos'] += BELT_SPEED * elapsed
                 set_can_position(name, data['x_pos'], data['y_offset'])
 
                 # Check if reached end
