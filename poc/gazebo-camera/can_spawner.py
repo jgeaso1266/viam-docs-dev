@@ -16,8 +16,8 @@ import threading
 
 # Configuration
 SPAWN_INTERVAL = 4.0  # seconds between spawns
-SPAWN_X = -0.42  # X position where cans spawn (input end)
-DELETE_X = 0.50  # X position where cans are deleted (output end)
+SPAWN_X = -0.92  # X position where cans spawn (input end)
+DELETE_X = 1.00  # X position where cans are deleted (output end)
 BELT_Y = 0.0  # Y position (center of belt)
 BELT_Z = 0.60  # Z position (slightly above belt to drop)
 DENT_PROBABILITY = 0.1  # 10% chance of dented can
