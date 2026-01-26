@@ -301,10 +301,10 @@
     <!-- Elevated view of the entire work cell, positioned so cans enter frame already on belt -->
     <model name="overview_camera">
       <static>true</static>
-      <!-- Position: near input end, further right, elevated -->
-      <!-- Orientation: looking toward center of action (inspection zone, rejector, output) -->
-      <!-- Roll=0, Pitch=0.5 (tilt down ~29°), Yaw=0.85 (~49° toward center) -->
-      <pose>-0.35 -0.7 1.1 0 0.5 0.85</pose>
+      <!-- Position: side view, centered on inspection/rejection zone -->
+      <!-- Orientation: looking toward belt from the side -->
+      <!-- Roll=0, Pitch=0.5 (tilt down ~29°), Yaw=1.57 (90°, facing +y toward belt) -->
+      <pose>0.1 -0.8 1.0 0 0.5 1.57</pose>
 
       <link name="camera_body">
         <visual name="camera_housing">
