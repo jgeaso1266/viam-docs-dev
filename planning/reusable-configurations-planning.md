@@ -296,14 +296,6 @@ Based on research findings, here is the refined outline. Changes from the initia
 - Map to lifecycle problems: 3.1, 3.2, 3.3, 3.5 (provisioning, management, variance, updates)
 - What happens without centralized configuration (cautionary framing)
 
-## If You Know Terraform, Helm, or Kustomize
-[NEW SECTION - addresses target user's software background]
-
-- Fragments are Viam's answer to the same problems these tools solve
-- Quick comparison table: Terraform modules, Helm charts, Kustomize bases
-- Key similarity: DRY principle, overlays/customization, version control
-- Key difference: Fragments are for physical machines, not cloud resources
-
 ## Core Capabilities
 [Renamed from "What Fragments Enable" - more concrete]
 
@@ -369,11 +361,24 @@ Based on research findings, here is the refined outline. Changes from the initia
 - Creating your first fragment from a working machine
 
 ## Fragments in Your Workflow
-[Kept but condensed - focuses on mental model, not procedure]
+[Expanded - now includes Fragments vs. Modules comparison]
 
 - Where fragments fit: between module code and individual machine
-- The separation: Code handles logic, fragments handle hardware specifics
 - Team patterns: Who owns the fragment? How do changes get reviewed?
+
+### Fragments vs. Modules
+[NEW - addresses common point of confusion]
+
+| Aspect | Fragments | Modules |
+|--------|-----------|---------|
+| **What it is** | Reusable configuration (JSON) | Reusable code (Go/Python) |
+| **Contains** | Component definitions, service configs, parameters | Custom logic, drivers, algorithms, new resource types |
+| **Answers** | "What hardware and how is it configured?" | "What can my hardware do beyond built-in capabilities?" |
+| **Changes require** | Config update in Viam app (no rebuild) | Code changes, rebuild, republish to registry |
+
+- Example from chess demo: Module contains chess logic; fragment contains arm IP, camera serial, gripper offsets
+- Decision framework: Hardware settings → fragment variables; Custom behavior → module
+- Key insight: Same module can work with different fragments (same logic, different hardware)
 
 ## Limitations and Boundaries
 [NEW SECTION - sets accurate expectations]
@@ -392,13 +397,13 @@ Based on research findings, here is the refined outline. Changes from the initia
 
 | Change | Rationale |
 |--------|-----------|
-| Added "If You Know Terraform/Helm/Kustomize" section | Target user has software background; leverage existing mental models |
 | Removed "How Fragments Work (Conceptual)" as separate section | Woven throughout other sections to avoid abstract explanation |
 | Added research-backed examples to Fragment Patterns | Ground concepts in real Viam examples |
 | Added "Limitations and Boundaries" section | Set accurate expectations; discovered in research |
 | Condensed "Versioning and Rollouts" into "Core Capabilities" | Avoid separate section for one capability |
 | Added "When Does One Become Many?" subsection | Addresses key lifecycle transition point |
 | Added explicit "What's Next" links | Per content guidelines, link to Build blocks for "how" |
+| Added "Fragments vs. Modules" subsection | Clarifies when to use each Viam concept; avoids confusion |
 
 ---
 
@@ -413,11 +418,11 @@ Based on research findings, here is the refined outline. Changes from the initia
 3. ~~Should we include JSON examples, or keep it purely conceptual?~~
    **Decision:** Include 1-2 minimal JSON snippets to make concepts concrete, but annotate them conceptually ("notice the variable here") rather than procedurally ("copy this into your config"). Link to Build blocks for full examples.
 
-4. **NEW:** How should we handle the Kustomize analogy depth?
-   **Open:** Kustomize base+overlay pattern maps very well to fragment+overwrites. Should we develop this analogy in depth, or keep it brief? Risk of over-explaining for users who don't know Kustomize.
+4. ~~How should we handle the Kustomize analogy depth?~~
+   **Decision:** Remove the dedicated analogies section entirely. The comparisons to Terraform/Helm/Kustomize are imperfect and risk confusing readers who expect exact feature parity. A brief mention in passing is sufficient.
 
-5. **NEW:** Should we include a "Fragments vs. Modules" comparison?
-   **Open:** Chess demo shows fragments + modules working together. Users may be confused about when to put logic in a module vs. configuration in a fragment. May warrant a subsection or callout box.
+5. ~~Should we include a "Fragments vs. Modules" comparison?~~
+   **Decision:** Yes. Added as subsection under "Fragments in Your Workflow." This comparison is valuable because both are Viam concepts users will encounter together, and the chess demo explicitly demonstrates the pattern.
 
 ---
 
