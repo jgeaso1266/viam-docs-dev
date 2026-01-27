@@ -23,7 +23,7 @@
 - [ ] **Screenshots** - Add screenshots where indicated by `[SCREENSHOT: ...]` placeholders
   - Part 1: Machine online status, camera config, test panel, vision service test
   - Part 2: Data capture config, trigger config, data tab, query page
-  - Part 3: Code sample tab (machine address)
+  - Part 3: Code sample tab (machine address), motor test panel (rejector)
   - Part 5: JSON config, fragment editor, fleet view
   - Part 6: Teleop dashboard, custom dashboard, branded login
 
@@ -43,10 +43,10 @@
   - Currently has a TODO comment in the file
   - Query data for FAILs, send notifications
 
-- [ ] **Troubleshooting expansion** - Add common errors and solutions
-  - Module won't start
-  - Camera topic not found
-  - Dependencies not found
+- [ ] **Troubleshooting expansion** - Expand troubleshooting to other parts
+  - Part 4: Module won't start, dependencies not found
+  - Part 5: Fragment variables not resolving
+  - Part 6: API key permissions, data query errors
 
 - [ ] **Code repository** - Create standalone repo with complete working code
   - `inspection-module/` with Go code
@@ -62,6 +62,9 @@
 - [x] **Add milestones to Part 3** - Added Milestone 1 (Detection) and Milestone 2 (Full Loop)
 - [x] **Renumber Parts 4-5 to Parts 5-6** - Scale and Productize moved up
 - [x] **Update index.md** - Adjusted time estimates, section outline, part numbers
+- [x] **Part 3 prerequisites** - Added Go version check and Viam CLI installation instructions
+- [x] **Part 3 troubleshooting** - Added collapsible troubleshooting sections for common errors
+- [x] **Part 3 screenshot placeholders** - Added placeholders for Code sample tab and motor test panel
 
 ---
 

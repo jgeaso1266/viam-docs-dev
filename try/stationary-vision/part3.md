@@ -22,6 +22,42 @@ You'll use the **module-first development pattern**: write code on your laptop, 
 
 ---
 
+## Prerequisites
+
+Before starting, verify you have the required tools installed.
+
+**Check Go version:**
+
+```bash
+go version
+```
+
+You need Go 1.21 or later. If Go isn't installed or is outdated, download it from [go.dev/dl](https://go.dev/dl/).
+
+**Install the Viam CLI:**
+
+The Viam CLI is used for authentication and module deployment. Install it:
+
+```bash
+# macOS (Homebrew)
+brew tap viamrobotics/brews
+brew install viam
+
+# Linux (binary)
+sudo curl -o /usr/local/bin/viam https://storage.googleapis.com/packages.viam.com/apps/viam-cli/viam-cli-stable-linux-amd64
+sudo chmod +x /usr/local/bin/viam
+```
+
+Verify it's installed:
+
+```bash
+viam version
+```
+
+> **Note:** The Viam CLI (`viam`) is different from `viam-server`. The CLI runs on your development machine; `viam-server` runs on your robot/machine.
+
+---
+
 ## 3.1 Set Up Your Project
 
 Create a Go project with a CLI for testing.
@@ -57,6 +93,8 @@ Before writing inspection logic, verify you can connect to your machine from Go 
 1. In the Viam app, go to your machine's page
 2. Click **Code sample** in the top right
 3. Copy the machine address (looks like `your-machine-main.abc123.viam.cloud`)
+
+[SCREENSHOT: Code sample tab showing machine address]
 
 **Authenticate the CLI:**
 
@@ -140,7 +178,25 @@ Connected! Available resources:
 
 > **What just happened:** Your laptop connected to the machine running in Docker (or on physical hardware) over the network. The `vmodutils.ConnectToHostFromCLIToken` function reads your Viam CLI credentials and establishes a secure connection. You now have a `machine` object that can access any component or service on that machine.
 
-**Checkpoint:** If you see your resources listed, you're ready to write inspection logic. If not, verify your machine is online in the Viam app and that you've run `viam login`.
+**Checkpoint:** If you see your resources listed, you're ready to write inspection logic.
+
+<details>
+<summary><strong>Troubleshooting: Connection failures</strong></summary>
+
+**"failed to connect" or timeout errors:**
+- Verify your machine is online in the Viam app (green dot next to machine name)
+- Check that you've run `viam login` and authenticated successfully
+- Confirm the host address is correct (copy it fresh from the Code sample tab)
+
+**"unauthorized" or "invalid credentials" errors:**
+- Run `viam logout` then `viam login` to refresh your credentials
+- Ensure you're logged into the correct Viam organization
+
+**No resources listed:**
+- The machine is connected but may not have components configured yet
+- Go back to Part 1 and verify the camera and vision service are configured
+
+</details>
 
 ---
 
@@ -353,6 +409,23 @@ Run it several times—you'll see different results as different cans pass under
 
 > **What just happened:** Your laptop called the vision service running on the remote machine. The vision service grabbed an image from the camera, ran it through the ML model, and returned detection results. You're running ML inference on remote hardware from local code.
 
+<details>
+<summary><strong>Troubleshooting: Detection failures</strong></summary>
+
+**"failed to get vision service" error:**
+- Verify `can-detector` exists in your machine config (Part 1, section 1.6)
+- Check the exact name matches—it's case-sensitive
+
+**"NO_DETECTION" result:**
+- This is normal if no can is in view—wait for one to appear
+- Check the camera is working in the Viam app's Test panel
+
+**Import errors or "package not found":**
+- Run `go mod tidy` to fetch missing dependencies
+- Ensure you're in the `inspection-module` directory
+
+</details>
+
 ---
 
 ### Milestone 1: Detection Working
@@ -386,6 +459,8 @@ Before writing rejection code, add the rejector hardware to your machine.
 1. Find the `rejector` motor in your config
 2. Click **Test** at the bottom of its card
 3. Try the **Run** controls to verify it responds
+
+[SCREENSHOT: Motor test panel showing rejector controls]
 
 ---
 
@@ -586,6 +661,24 @@ Defective can rejected
 ```
 
 > **What just happened:** You closed the control loop. Your code detects a defect, decides to reject based on confidence threshold, and actuates the motor. This is the sense-think-act cycle running from your laptop against remote hardware.
+
+<details>
+<summary><strong>Troubleshooting: Rejection failures</strong></summary>
+
+**"failed to get rejector" error:**
+- Verify the `rejector` motor exists in your machine config (section 3.4)
+- Check the name matches exactly—it's case-sensitive
+
+**Motor doesn't respond:**
+- Test the motor in the Viam app's Test panel first
+- For real hardware: check wiring and motor driver configuration
+- For `fake` motor: this is expected—it simulates motion without physical output
+
+**"rejected=true" but no physical action:**
+- If using the `fake` motor model, this is expected behavior
+- The fake motor accepts commands but doesn't control real hardware
+
+</details>
 
 ---
 
