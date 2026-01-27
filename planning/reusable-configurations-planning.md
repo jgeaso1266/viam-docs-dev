@@ -1,7 +1,7 @@
 # Planning: "Reusable Configurations" Document
 
 **Target location:** `understand/reusable-configurations.md`
-**Status:** Research Complete, Outline Refined
+**Status:** Draft Complete
 **Last updated:** 2026-01-27
 
 ---
