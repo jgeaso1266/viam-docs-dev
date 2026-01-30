@@ -185,22 +185,7 @@
         </material>
       </visual>
 
-      <collision name="collision">
-        <geometry>
-          <cylinder>
-            <radius>0.033</radius>
-            <length>0.12</length>
-          </cylinder>
-        </geometry>
-        <surface>
-          <friction>
-            <ode>
-              <mu>0.5</mu>
-              <mu2>0.5</mu2>
-            </ode>
-          </friction>
-        </surface>
-      </collision>
+      <!-- Collision removed: kinematic cans don't need physics collision -->
     </link>
   </model>
 </sdf>
