@@ -66,20 +66,17 @@ COPY models/ /opt/models/
 # Set Gazebo resource path for custom models
 ENV GZ_SIM_RESOURCE_PATH=/opt/models
 
-# Copy web viewers, spawner, and training capture script
+# Copy web viewer, spawner, and training capture script
 COPY web_viewer.py /opt/web_viewer.py
-COPY web_viewer_fruit.py /opt/web_viewer_fruit.py
 COPY can_spawner.py /opt/can_spawner.py
 COPY capture_training_data.py /opt/capture_training_data.py
 
-# Copy startup scripts
+# Copy startup script
 COPY entrypoint.sh /entrypoint.sh
-COPY entrypoint_fruit.sh /entrypoint_fruit.sh
-RUN chmod +x /entrypoint.sh /entrypoint_fruit.sh
+RUN chmod +x /entrypoint.sh
 
-# Copy Viam configs
+# Copy Viam config
 COPY viam-config.json /opt/viam-config.json
-COPY viam-config-fruit.json /opt/viam-config-fruit.json
 
 # Expose ports: web viewer (8081), viam-server web (8080), SSH (22), viam-server gRPC (8443)
 EXPOSE 8081 8080 22 8443

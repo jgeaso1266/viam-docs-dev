@@ -25,22 +25,22 @@ This simulation models an industrial quality inspection station where cans move 
 │                      Docker Container                            │
 │                                                                  │
 │  ┌──────────────┐    ┌──────────────┐    ┌──────────────────┐  │
-│  │   gz-sim     │    │ can_spawner  │    │  web_viewer_     │  │
-│  │              │    │    .py       │    │    fruit.py      │  │
+│  │   gz-sim     │    │ can_spawner  │    │   web_viewer     │  │
+│  │              │    │    .py       │    │      .py         │  │
 │  │  - Physics   │    │              │    │                  │  │
 │  │  - Rendering │    │  - Spawns    │    │  - Subscribes    │  │
-│  │  - Sensors   │    │    cans      │    │    to camera     │  │
+│  │  - Sensors   │    │    can pool  │    │    to cameras    │  │
 │  │              │    │  - Moves     │    │  - Serves HTTP   │  │
-│  │              │    │    cans      │    │    on :8080      │  │
-│  │              │    │  - Deletes   │    │                  │  │
-│  │              │    │    cans      │    │                  │  │
+│  │              │    │    cans      │    │    on :8081      │  │
+│  │              │    │  - Recycles  │    │                  │  │
+│  │              │    │    at end    │    │                  │  │
 │  └──────┬───────┘    └──────┬───────┘    └────────┬─────────┘  │
 │         │                   │                      │            │
 │         └───────── gz-transport ──────────────────┘            │
 │                    (topics & services)                          │
 └─────────────────────────────────────────────────────────────────┘
                               │
-                              ▼ Port 8080
+                              ▼ Port 8081
                     ┌──────────────────┐
                     │  User's Browser  │
                     │  (live camera)   │
@@ -50,9 +50,9 @@ This simulation models an industrial quality inspection station where cans move 
 **Data flow:**
 
 1. `gz-sim` runs the physics simulation and renders camera images
-2. `can_spawner.py` creates/moves/deletes cans via gz service calls
-3. `web_viewer_fruit.py` subscribes to the camera topic and streams JPEG frames
-4. Browser displays MJPEG stream at `http://localhost:8080`
+2. `can_spawner.py` manages a fixed pool of cans, moving them via gz-transport
+3. `web_viewer.py` subscribes to camera topics and streams JPEG frames
+4. Browser displays MJPEG stream at `http://localhost:8081`
 
 ---
 
@@ -130,21 +130,23 @@ Damaged can with visible defects on top surface (designed for overhead camera vi
 All configurable values are defined at the top of `can_spawner.py`:
 
 ```python
-SPAWN_INTERVAL = 4.0    # seconds between spawns
-SPAWN_X = -0.42         # X position where cans spawn (input end)
-DELETE_X = 0.50         # X position where cans are deleted (output end)
-BELT_Y = 0.0            # Y position (center of belt)
-BELT_Z = 0.60           # Z position (spawn height, drops to belt)
-DENT_PROBABILITY = 0.1  # 10% chance of dented can
-CHECK_INTERVAL = 0.3    # seconds between position updates
-BELT_SPEED = 0.18       # meters per second
+# Belt geometry
+BELT_START_X = -0.92  # X position where cans enter (start of belt)
+BELT_END_X = 1.00     # X position where cans recycle (end of belt)
+BELT_Y = 0.0          # Y position (center of belt)
+CAN_Z = 0.54          # Z position (height on belt)
+
+# Pool settings
+POOL_SIZE = 6         # Number of cans in the pool
+DENT_COUNT = 1        # Number of dented cans in the pool
+CAN_SPACING = 0.40    # Meters between can centers
+
+# Movement settings
+BELT_SPEED = 0.10     # Meters per second
+UPDATE_INTERVAL = 0.05  # Seconds between position updates (20 Hz)
 ```
 
-**Derived values:**
-
-- Transit time: `(DELETE_X - SPAWN_X) / BELT_SPEED` ≈ 5.1 seconds
-- Max cans on belt: `transit_time / SPAWN_INTERVAL` ≈ 1-2 cans
-- Position updates per transit: `transit_time / CHECK_INTERVAL` ≈ 17 updates
+**Object pooling:** Instead of continuously spawning and deleting cans, the spawner creates a fixed pool of 6 cans at startup. When a can reaches the end of the belt, it teleports back to the start. This eliminates spawn/delete overhead and prevents resource exhaustion from orphaned entities.
 
 ---
 
@@ -152,15 +154,15 @@ BELT_SPEED = 0.18       # meters per second
 
 | File | Purpose |
 |------|---------|
-| `worlds/fruit_inspection.sdf` | Gazebo world file defining scene geometry, lighting, camera sensor |
+| `worlds/cylinder_inspection.sdf` | Gazebo world file defining scene geometry, lighting, cameras |
 | `models/can_good/model.sdf` | Good can model definition |
 | `models/can_good/model.config` | Model metadata |
 | `models/can_dented/model.sdf` | Dented can model definition |
 | `models/can_dented/model.config` | Model metadata |
-| `can_spawner.py` | Python script that spawns, moves, and deletes cans |
-| `web_viewer_fruit.py` | Flask app that streams camera feed to browser |
-| `entrypoint_fruit.sh` | Container startup script |
-| `viam-config-fruit.json` | Viam configuration for this scenario |
+| `can_spawner.py` | Python script that manages can pool and movement |
+| `web_viewer.py` | Flask app that streams camera feeds to browser |
+| `entrypoint.sh` | Container startup script |
+| `viam-config.json` | Viam configuration for this scenario |
 | `Dockerfile` | Container build definition |
 
 ---
@@ -170,21 +172,22 @@ BELT_SPEED = 0.18       # meters per second
 ```bash
 # Build the container
 cd poc/gazebo-camera
-docker build -t gazebo-camera-poc .
+docker build -t gz-harmonic-viam .
 
 # Run the can inspection simulation
-docker run -d --name can-inspection -p 8080:8080 \
-  --entrypoint /entrypoint_fruit.sh \
-  gazebo-camera-poc
+docker run -d --name gz-viam \
+  -p 8080:8080 -p 8081:8081 -p 8443:8443 \
+  -v ~/viam/config/stationary-vision-viam.json:/etc/viam.json \
+  gz-harmonic-viam
 
 # View in browser
-open http://localhost:8080
+open http://localhost:8081
 
 # Watch logs
-docker logs -f can-inspection
+docker logs -f gz-viam
 
 # Stop simulation
-docker stop can-inspection && docker rm can-inspection
+docker stop gz-viam && docker rm gz-viam
 ```
 
 **Startup sequence:**
@@ -200,7 +203,7 @@ docker stop can-inspection && docker rm can-inspection
 
 ## World File Structure
 
-The world file (`worlds/fruit_inspection.sdf`) contains:
+The world file (`worlds/cylinder_inspection.sdf`) contains:
 
 | Element | Description |
 |---------|-------------|
@@ -224,16 +227,11 @@ The spawner interacts with Gazebo via these services:
 
 | Service | Purpose |
 |---------|---------|
-| `/world/fruit_inspection/create` | Spawn new can model |
-| `/world/fruit_inspection/remove` | Delete can model |
-| `/world/fruit_inspection/set_pose/blocking` | Update can position |
-| `/world/fruit_inspection/control` | Unpause simulation |
+| `/world/cylinder_inspection/create` | Spawn can models (at startup only) |
+| `/world/cylinder_inspection/set_pose` | Update can positions (via gz-transport) |
+| `/world/cylinder_inspection/control` | Unpause simulation |
 
-**Example spawn request:**
-```
-sdf_filename: "model://can_good", name: "can_0001",
-pose: {position: {x: -0.42, y: 0.0, z: 0.60}}
-```
+**Note:** With object pooling, cans are only spawned once at startup. The `/world/cylinder_inspection/remove` service is no longer used during normal operation.
 
 ---
 

@@ -9,83 +9,62 @@
 
 ---
 
-## Scenarios
-
-This POC includes two simulation scenarios:
-
-| Scenario | World File | Purpose |
-|----------|------------|---------|
-| **Work Cell** | `work_cell.sdf` | xArm6 arm with pick targets (original POC) |
-| **Can Inspection** | `fruit_inspection.sdf` | Stationary vision tutorial - can quality grading |
-
----
-
 ## Quick Start: Can Inspection
 
 ```bash
 # 1. Build the Docker image
 cd poc/gazebo-camera
-docker build -t gazebo-viam-poc .
+docker build -t gz-harmonic-viam .
 
-# 2. Run the can inspection scenario
-docker run -it --rm -p 8080:8080 \
-  --entrypoint /entrypoint_fruit.sh \
-  gazebo-viam-poc
+# 2. Run the can inspection simulation
+docker run --name gz-viam -d \
+  -p 8080:8080 -p 8081:8081 -p 8443:8443 \
+  -v ~/viam/config/stationary-vision-viam.json:/etc/viam.json \
+  gz-harmonic-viam
 
 # 3. Open web viewer in browser
-open http://localhost:8080
+open http://localhost:8081
 ```
 
-The can inspection world includes:
-- **Conveyor belt** with cans moving continuously (~5 seconds to cross)
+The can inspection world (`cylinder_inspection.sdf`) includes:
+- **Conveyor belt** with cans moving continuously
 - **Overhead camera** (640x480, 30fps) looking down at conveyor
+- **Overview camera** - elevated side view of the work cell
 - **Good cans** - silver aluminum, undamaged
-- **Dented cans** (~10% of cans) - visible dent/damage marks on top
-- **Automatic spawning** - new can every 4 seconds
-- **Air jet rejector** - pneumatic nozzle to blow defective cans off conveyor
+- **Dented cans** (~1 in 6) - visible dent/damage marks on top
+- **Air jet rejector** - pneumatic nozzle (visual only)
 - **Reject bin** (red) and **output chute** (green)
 
-The conveyor belt is controlled by `can_spawner.py` which:
-- Spawns cans at the input end of the belt
+The conveyor belt is controlled by `can_spawner.py` which uses object pooling:
+- Spawns a fixed pool of 6 cans at startup
 - Moves cans smoothly along the belt (kinematic position updates)
-- Removes cans when they reach the output end
-
----
-
-## Quick Start: Work Cell (Original)
-
-```bash
-# 1. Build the Docker image
-cd poc/gazebo-camera
-docker build -t gazebo-viam-poc .
-
-# 2. Run the work cell scenario (default)
-docker run -it --rm -p 8080:8080 -p 8443:8443 gazebo-viam-poc
-
-# 3. Open web viewer in browser
-open http://localhost:8080
-
-# 4. In another terminal, list available camera topics
-docker exec -it <container_id> gz topic -l | grep camera
-```
+- Recycles cans back to start when they reach the end (no spawn/delete overhead)
 
 ---
 
 ## Project Structure
 
 ```
-docs-dev/poc/gazebo-camera/    # This directory
+docs-dev/poc/gazebo-camera/
 ├── README.md                   # This file
-├── Dockerfile                  # Container with Gazebo + GzWeb
+├── Dockerfile                  # Container with Gazebo Harmonic
 ├── entrypoint.sh              # Startup script
-└── worlds/
-    └── camera_world.sdf       # Gazebo world with camera
-
-viam-gazebo-camera/            # Separate repo: /Users/shannon.bradshaw/viam/viam-gazebo-camera
-├── main.py                    # Viam module
-├── meta.json                  # Module metadata
-├── requirements.txt           # Python dependencies
-└── README.md                  # Module documentation
+├── can_spawner.py             # Object pool conveyor controller
+├── web_viewer.py              # Flask MJPEG server for cameras
+├── capture_training_data.py   # ML training data capture script
+├── worlds/
+│   └── cylinder_inspection.sdf  # Can inspection world
+├── models/
+│   ├── can_good/              # Undamaged can model
+│   └── can_dented/            # Damaged can model
+└── unused/                    # Reserved for future projects
+    ├── worlds/
+    │   ├── work_cell.sdf      # xArm6 robot work cell
+    │   └── camera_world.sdf   # Basic test world
+    └── models/
+        ├── xarm6/             # Robot arm model
+        ├── apple_good/        # Apple model (future)
+        └── apple_bruised/     # Bruised apple (future)
 ```
 
 ---
