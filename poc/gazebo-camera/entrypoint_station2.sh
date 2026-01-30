@@ -2,18 +2,18 @@
 set -e
 
 # =============================================================================
-# Station 1 Entrypoint (default)
-# Runs the primary inspection station.
+# Station 2 Entrypoint
+# Runs the second inspection station with different camera topics and colors.
 # =============================================================================
 
 # Export protobuf compatibility setting
 export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python
 
-# Station 1 configuration (defaults, but explicit for clarity)
-export GZ_WORLD_NAME="cylinder_inspection"
-export GZ_STATION_NAME="Station 1"
-export GZ_OVERVIEW_TOPIC="/overview_camera"
-export GZ_INSPECTION_TOPIC="/inspection_camera"
+# Station 2 configuration
+export GZ_WORLD_NAME="cylinder_inspection_2"
+export GZ_STATION_NAME="Station 2"
+export GZ_OVERVIEW_TOPIC="/station_2_overview"
+export GZ_INSPECTION_TOPIC="/station_2_camera"
 
 # Start virtual display for headless rendering
 echo "Starting Xvfb virtual display..."
@@ -21,8 +21,8 @@ Xvfb :1 -screen 0 1024x768x24 &
 export DISPLAY=:1
 sleep 2
 
-echo "Starting Gazebo Sim with rendering..."
-gz sim -s /opt/worlds/cylinder_inspection.sdf &
+echo "Starting Gazebo Sim (Station 2)..."
+gz sim -s /opt/worlds/cylinder_inspection_2.sdf &
 GZ_PID=$!
 
 # Wait for Gazebo to initialize
@@ -36,7 +36,7 @@ gz topic -l
 # Unpause simulation
 echo ""
 echo "Unpausing simulation..."
-gz service -s /world/cylinder_inspection/control --reqtype gz.msgs.WorldControl --reptype gz.msgs.Boolean --timeout 2000 --req 'pause: false'
+gz service -s /world/cylinder_inspection_2/control --reqtype gz.msgs.WorldControl --reptype gz.msgs.Boolean --timeout 2000 --req 'pause: false'
 sleep 1
 
 # Start can spawner to spawn cans on the conveyor
@@ -66,14 +66,14 @@ fi
 
 echo ""
 echo "=========================================="
-echo "Can Inspection Station 1 Running!"
+echo "Can Inspection Station 2 Running!"
 echo "=========================================="
 echo ""
 echo "  Web Viewer:  http://localhost:8081"
 echo ""
 echo "  Camera topics:"
-echo "    - /inspection_camera (inspection)"
-echo "    - /overview_camera"
+echo "    - /station_2_camera (inspection)"
+echo "    - /station_2_overview"
 echo ""
 if [ -f /etc/viam.json ]; then
 echo "  viam-server: running (use Viam app to configure)"

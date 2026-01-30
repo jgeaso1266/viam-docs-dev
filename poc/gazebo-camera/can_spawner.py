@@ -11,6 +11,7 @@ from accumulating in Gazebo when delete operations fail.
 Uses gz-transport Python bindings for efficient pose updates.
 """
 
+import os
 import time
 import random
 import subprocess
@@ -42,7 +43,8 @@ BELT_SPEED = 0.10            # Meters per second
 UPDATE_INTERVAL = 0.05       # Seconds between position updates (20 Hz)
 
 # Gazebo world name (used in service paths)
-WORLD_NAME = "cylinder_inspection"
+# Can be overridden via GZ_WORLD_NAME environment variable
+WORLD_NAME = os.environ.get("GZ_WORLD_NAME", "cylinder_inspection")
 
 # =============================================================================
 # Can Pool
@@ -178,6 +180,7 @@ def main():
     log("=" * 50)
     log("Can Spawner (Object Pool Version)")
     log("=" * 50)
+    log(f"  World: {WORLD_NAME}")
     log(f"  Pool size: {POOL_SIZE} cans ({DENT_COUNT} dented)")
     log(f"  Belt speed: {BELT_SPEED} m/s")
     log(f"  Can spacing: {CAN_SPACING} m")

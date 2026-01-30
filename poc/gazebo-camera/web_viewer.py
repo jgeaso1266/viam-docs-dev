@@ -3,11 +3,14 @@
 Web viewer for Gazebo cameras.
 Serves MJPEG streams for camera topics.
 
-To add a camera, just add an entry to the CAMERAS dict below.
-The HTML and subscriptions are generated dynamically.
+Camera topics can be configured via environment variables:
+  GZ_OVERVIEW_TOPIC  - defaults to /overview_camera
+  GZ_INSPECTION_TOPIC - defaults to /inspection_camera
+  GZ_STATION_NAME - optional station name for display (e.g., "Station 2")
 """
 
 import io
+import os
 import time
 import threading
 from flask import Flask, Response
@@ -20,16 +23,20 @@ app = Flask(__name__)
 
 # =============================================================================
 # CAMERA CONFIGURATION
-# Add cameras here - everything else is generated automatically.
+# Topics can be overridden via environment variables.
 # =============================================================================
+STATION_NAME = os.environ.get("GZ_STATION_NAME", "")
+OVERVIEW_TOPIC = os.environ.get("GZ_OVERVIEW_TOPIC", "/overview_camera")
+INSPECTION_TOPIC = os.environ.get("GZ_INSPECTION_TOPIC", "/inspection_camera")
+
 CAMERAS = {
     "overview": {
-        "topic": "/overview_camera",
+        "topic": OVERVIEW_TOPIC,
         "label": "Overview Camera",
         "description": "Elevated view of the entire work cell"
     },
     "inspection": {
-        "topic": "/inspection_camera",
+        "topic": INSPECTION_TOPIC,
         "label": "Inspection Camera",
         "description": "Overhead view for defect detection (640x480)"
     },
@@ -85,10 +92,13 @@ def generate_html():
         </div>'''
         camera_cards.append(card)
 
+    title = f"Can Inspection - {STATION_NAME}" if STATION_NAME else "Can Inspection Station"
+    heading = f"Can Inspection {STATION_NAME}" if STATION_NAME else "Can Inspection Station"
+
     return f'''<!DOCTYPE html>
 <html>
 <head>
-    <title>Can Inspection Viewer</title>
+    <title>{title}</title>
     <style>
         body {{
             background: #1a1a1a;
@@ -150,7 +160,7 @@ def generate_html():
     </style>
 </head>
 <body>
-    <h1>Can Inspection Station</h1>
+    <h1>{heading}</h1>
     <p class="subtitle">Simulated conveyor belt inspection system</p>
     <div class="camera-grid">
         {"".join(camera_cards)}

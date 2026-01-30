@@ -71,9 +71,10 @@ COPY web_viewer.py /opt/web_viewer.py
 COPY can_spawner.py /opt/can_spawner.py
 COPY capture_training_data.py /opt/capture_training_data.py
 
-# Copy startup script
+# Copy startup scripts
 COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+COPY entrypoint_station2.sh /entrypoint_station2.sh
+RUN chmod +x /entrypoint.sh /entrypoint_station2.sh
 
 # Copy Viam config
 COPY viam-config.json /opt/viam-config.json
