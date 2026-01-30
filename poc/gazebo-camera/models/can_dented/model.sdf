@@ -185,7 +185,14 @@
         </material>
       </visual>
 
-      <!-- Collision removed: kinematic cans don't need physics collision -->
+      <collision name="collision">
+        <geometry>
+          <cylinder>
+            <radius>0.033</radius>
+            <length>0.12</length>
+          </cylinder>
+        </geometry>
+      </collision>
     </link>
   </model>
 </sdf>
