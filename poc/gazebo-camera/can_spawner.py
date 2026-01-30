@@ -31,7 +31,8 @@ BELT_Y = 0.0          # Y position (center of belt)
 CAN_Z = 0.54          # Z position (height on belt)
 
 # Pool settings
-POOL_SIZE = 6                # Number of cans in the pool
+# Belt is 1.92m long. With spacing of 0.40m, max cans = floor(1.92/0.40) + 1 = 5
+POOL_SIZE = 5                # Number of cans in the pool
 DENT_COUNT = 1               # Number of dented cans in the pool (rest are good)
 CAN_SPACING = 0.40           # Meters between can centers
 Y_VARIATION = 0.03           # Random Y offset range for visual variety
