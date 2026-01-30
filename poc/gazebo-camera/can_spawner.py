@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
 """
-Can Spawner for Conveyor Belt Simulation
+Can Spawner for Conveyor Belt Simulation (Object Pool Version)
 
-Continuously spawns cans at the input end of the conveyor belt.
-Moves kinematic cans along the belt using position updates.
-Removes cans when they reach the output end.
+Spawns a fixed pool of cans at startup and recycles them continuously.
+When a can reaches the end of the belt, it teleports back to the start.
 
-About 10% of cans are dented (defective).
+This design eliminates spawn/delete overhead and prevents orphaned cans
+from accumulating in Gazebo when delete operations fail.
 
 Uses gz-transport Python bindings for efficient pose updates.
-Includes backoff/recovery logic when Gazebo becomes overloaded.
 """
 
 import time
@@ -20,257 +19,193 @@ import threading
 from gz.transport13 import Node
 from gz.msgs10.pose_pb2 import Pose
 from gz.msgs10.boolean_pb2 import Boolean
-from gz.msgs10.entity_pb2 import Entity
-from gz.msgs10.entity_factory_pb2 import EntityFactory
 
+# =============================================================================
 # Configuration
-SPAWN_INTERVAL = 2.0  # seconds between spawns
-SPAWN_X = -0.92  # X position where cans spawn (input end)
-DELETE_X = 1.00  # X position where cans are deleted (output end)
-BELT_Y = 0.0  # Y position (center of belt)
-BELT_Z = 0.60  # Z position (slightly above belt to drop)
-DENT_PROBABILITY = 0.1  # 10% chance of dented can
-CHECK_INTERVAL = 0.033  # seconds between position updates (~30Hz, matches camera)
-BELT_SPEED = 0.06  # meters per second (slow, smooth movement)
+# =============================================================================
 
-# Error tracking for backoff/recovery
-ERROR_THRESHOLD = 5  # consecutive failures before pausing spawns
-MAX_CANS = 20  # maximum cans on belt at once (safety limit)
+# Belt geometry
+BELT_START_X = -0.92  # X position where cans enter (start of belt)
+BELT_END_X = 1.00     # X position where cans recycle (end of belt)
+BELT_Y = 0.0          # Y position (center of belt)
+CAN_Z = 0.54          # Z position (height on belt)
 
-# Track spawned cans
-cans = {}  # name -> {'dented': bool, 'spawn_time': float, 'y_offset': float}
-can_counter = 0
-lock = threading.Lock()
+# Pool settings
+POOL_SIZE = 6                # Number of cans in the pool
+DENT_COUNT = 1               # Number of dented cans in the pool (rest are good)
+CAN_SPACING = 0.40           # Meters between can centers
+Y_VARIATION = 0.03           # Random Y offset range for visual variety
 
-# Error tracking (shared between threads)
-consecutive_errors = 0
-spawning_paused = False
-error_lock = threading.Lock()
+# Movement settings
+BELT_SPEED = 0.10            # Meters per second
+UPDATE_INTERVAL = 0.05       # Seconds between position updates (20 Hz)
 
-# gz-transport node (initialized in main)
-node = None
+# Gazebo world name (used in service paths)
+WORLD_NAME = "cylinder_inspection"
+
+# =============================================================================
+# Can Pool
+# =============================================================================
+
+class Can:
+    """Represents a single can in the pool."""
+
+    def __init__(self, name: str, dented: bool, x_pos: float):
+        self.name = name
+        self.dented = dented
+        self.x_pos = x_pos
+        self.y_offset = random.uniform(-Y_VARIATION, Y_VARIATION)
+
+    def advance(self, distance: float) -> bool:
+        """
+        Move the can forward by the given distance.
+        Returns True if the can recycled (reached end of belt).
+        """
+        self.x_pos += distance
+
+        if self.x_pos > BELT_END_X:
+            # Recycle: teleport back to start
+            self.x_pos = BELT_START_X
+            self.y_offset = random.uniform(-Y_VARIATION, Y_VARIATION)
+            return True
+
+        return False
 
 
-def log(msg):
+class CanPool:
+    """Manages a fixed pool of cans on the conveyor belt."""
+
+    def __init__(self):
+        self.cans: list[Can] = []
+        self.node = Node()
+        self.lock = threading.Lock()
+
+    def initialize(self):
+        """Spawn all cans in the pool, evenly spaced along the belt."""
+        log("Initializing can pool...")
+
+        # Calculate belt length
+        belt_length = BELT_END_X - BELT_START_X
+
+        # Create cans with even spacing
+        for i in range(POOL_SIZE):
+            is_dented = i < DENT_COUNT
+            model_type = "can_dented" if is_dented else "can_good"
+            name = f"pool_can_{i:02d}"
+
+            # Space cans evenly, starting from belt start
+            x_pos = BELT_START_X + (i * CAN_SPACING)
+
+            # Spawn in Gazebo
+            if self._spawn_can(name, model_type, x_pos):
+                can = Can(name, is_dented, x_pos)
+                self.cans.append(can)
+                log(f"  Spawned {name} ({'DENTED' if is_dented else 'good'}) at x={x_pos:.2f}")
+            else:
+                log(f"  FAILED to spawn {name}")
+
+        log(f"Pool initialized: {len(self.cans)} cans ({DENT_COUNT} dented, {POOL_SIZE - DENT_COUNT} good)")
+
+    def _spawn_can(self, name: str, model_type: str, x_pos: float) -> bool:
+        """Spawn a can in Gazebo."""
+        y_offset = random.uniform(-Y_VARIATION, Y_VARIATION)
+
+        req = (
+            f'sdf_filename: "model://{model_type}", '
+            f'name: "{name}", '
+            f'pose: {{position: {{x: {x_pos}, y: {BELT_Y + y_offset}, z: {CAN_Z + 0.06}}}}}'
+        )
+
+        cmd = [
+            "gz", "service", "-s", f"/world/{WORLD_NAME}/create",
+            "--reqtype", "gz.msgs.EntityFactory",
+            "--reptype", "gz.msgs.Boolean",
+            "--timeout", "5000",
+            "--req", req
+        ]
+
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+            return result.returncode == 0 and "true" in result.stdout.lower()
+        except Exception as e:
+            log(f"Spawn error: {e}")
+            return False
+
+    def update_positions(self, delta_time: float):
+        """Move all cans forward and update their positions in Gazebo."""
+        distance = BELT_SPEED * delta_time
+
+        with self.lock:
+            for can in self.cans:
+                recycled = can.advance(distance)
+                if recycled:
+                    log(f"{can.name} recycled")
+
+                self._set_can_position(can)
+
+    def _set_can_position(self, can: Can):
+        """Update a can's position in Gazebo using gz-transport."""
+        pose = Pose()
+        pose.name = can.name
+        pose.position.x = can.x_pos
+        pose.position.y = BELT_Y + can.y_offset
+        pose.position.z = CAN_Z
+
+        try:
+            self.node.request(
+                f"/world/{WORLD_NAME}/set_pose",
+                pose,
+                Pose,
+                Boolean,
+                100  # timeout in ms
+            )
+        except Exception:
+            pass  # Position updates are best-effort
+
+
+# =============================================================================
+# Main
+# =============================================================================
+
+def log(msg: str):
     """Print with flush for immediate output."""
     print(msg, flush=True)
 
 
-def run_gz_command(cmd, timeout=5):
-    """Run a gz command and return success status (fallback for spawn/delete)."""
-    try:
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
-        return result.returncode == 0, result.stdout, result.stderr
-    except subprocess.TimeoutExpired:
-        return False, "", "Timeout"
-    except Exception as e:
-        return False, "", str(e)
-
-
-def spawn_can(name: str, dented: bool, y_offset: float):
-    """Spawn a can at the input end of the conveyor."""
-    model_type = "can_dented" if dented else "can_good"
-
-    req = f'sdf_filename: "model://{model_type}", name: "{name}", pose: {{position: {{x: {SPAWN_X}, y: {BELT_Y + y_offset}, z: {BELT_Z}}}}}'
-
-    cmd = [
-        "gz", "service", "-s", "/world/cylinder_inspection/create",
-        "--reqtype", "gz.msgs.EntityFactory",
-        "--reptype", "gz.msgs.Boolean",
-        "--timeout", "2000",
-        "--req", req
-    ]
-
-    success, stdout, stderr = run_gz_command(cmd)
-    if success and "true" in stdout.lower():
-        log(f"Spawned {name} ({'DENTED' if dented else 'good'})")
-        return True
-    else:
-        log(f"Failed to spawn {name}: {stderr}")
-        return False
-
-
-def delete_can(name: str):
-    """Delete a can from the simulation."""
-    cmd = [
-        "gz", "service", "-s", "/world/cylinder_inspection/remove",
-        "--reqtype", "gz.msgs.Entity",
-        "--reptype", "gz.msgs.Boolean",
-        "--timeout", "1000",
-        "--req", f'name: "{name}", type: 2'
-    ]
-
-    success, _, _ = run_gz_command(cmd)
-    if success:
-        log(f"Deleted {name}")
-        return True
-    return False
-
-
-def set_can_position(name: str, x: float, y_offset: float):
-    """Set the can position using gz-transport (much faster than subprocess)."""
-    global node, consecutive_errors, spawning_paused
-
-    z = 0.54  # Height on belt
-
-    # Create pose message
-    pose = Pose()
-    pose.name = name
-    pose.position.x = x
-    pose.position.y = BELT_Y + y_offset
-    pose.position.z = z
-
-    # Call service with correct signature: (service, request, request_type, response_type, timeout)
-    try:
-        success, response = node.request(
-            "/world/cylinder_inspection/set_pose",
-            pose,
-            Pose,
-            Boolean,
-            100  # timeout in ms
-        )
-
-        with error_lock:
-            if success:
-                # Reset error count on success
-                if consecutive_errors > 0:
-                    consecutive_errors = 0
-                    if spawning_paused:
-                        spawning_paused = False
-                        log("Gazebo recovered - resuming spawning")
-            else:
-                consecutive_errors += 1
-                if consecutive_errors >= ERROR_THRESHOLD and not spawning_paused:
-                    spawning_paused = True
-                    log(f"Too many errors ({consecutive_errors}) - pausing spawning")
-
-        return success
-    except Exception as e:
-        with error_lock:
-            consecutive_errors += 1
-            if consecutive_errors >= ERROR_THRESHOLD and not spawning_paused:
-                spawning_paused = True
-                log(f"Too many errors ({consecutive_errors}) - pausing spawning")
-        return False
-
-
-def can_manager():
-    """Thread that manages cans - moves them along belt and removes old ones."""
-    global cans
-
-    # Stale can timeout (if a can is tracked for way too long, remove it)
-    STALE_TIMEOUT = 120.0  # 2 minutes max
-
-    while True:
-        current_time = time.time()
-
-        with lock:
-            to_delete = []
-
-            for name, data in list(cans.items()):
-                elapsed_since_spawn = current_time - data['spawn_time']
-
-                # Safety: remove stale cans from tracking (even if delete fails)
-                if elapsed_since_spawn > STALE_TIMEOUT:
-                    log(f"Removing stale can {name} from tracking")
-                    to_delete.append(name)
-                    continue
-
-                # Calculate position based on time since spawn (absolute, not incremental)
-                x_pos = SPAWN_X + (BELT_SPEED * elapsed_since_spawn)
-                set_can_position(name, x_pos, data['y_offset'])
-
-                # Check if reached end
-                if x_pos > DELETE_X:
-                    to_delete.append(name)
-
-            # Delete cans that reached the end
-            for name in to_delete:
-                delete_can(name)  # Try to delete from Gazebo
-                del cans[name]   # Always remove from tracking
-
-        time.sleep(CHECK_INTERVAL)
-
-
-def spawner():
-    """Thread that spawns new cans periodically."""
-    global can_counter, cans, spawning_paused
-
-    while True:
-        # Check if spawning is paused due to errors
-        with error_lock:
-            paused = spawning_paused
-
-        # Check if we've hit the max can limit
-        with lock:
-            can_count = len(cans)
-
-        if paused:
-            # Still paused - wait and check again
-            time.sleep(SPAWN_INTERVAL)
-            continue
-
-        if can_count >= MAX_CANS:
-            # Too many cans on belt - wait for some to clear
-            time.sleep(SPAWN_INTERVAL)
-            continue
-
-        # Determine if this can is dented
-        dented = random.random() < DENT_PROBABILITY
-
-        # Generate unique name
-        can_counter += 1
-        name = f"can_{can_counter:04d}"
-
-        # Random slight Y offset for variety
-        y_offset = random.uniform(-0.03, 0.03)
-
-        # Spawn the can
-        if spawn_can(name, dented, y_offset):
-            with lock:
-                cans[name] = {
-                    'dented': dented,
-                    'spawn_time': time.time(),
-                    'y_offset': y_offset
-                }
-
-        time.sleep(SPAWN_INTERVAL)
-
-
 def main():
     """Main entry point."""
-    global node
-
     log("=" * 50)
-    log("Can Spawner Starting")
+    log("Can Spawner (Object Pool Version)")
     log("=" * 50)
-    log(f"  Spawn interval: {SPAWN_INTERVAL}s")
+    log(f"  Pool size: {POOL_SIZE} cans ({DENT_COUNT} dented)")
     log(f"  Belt speed: {BELT_SPEED} m/s")
-    log(f"  Dent probability: {DENT_PROBABILITY * 100}%")
+    log(f"  Can spacing: {CAN_SPACING} m")
+    log(f"  Update rate: {1/UPDATE_INTERVAL:.0f} Hz")
     log("=" * 50)
 
     # Wait for Gazebo to be ready
     log("Waiting for Gazebo...")
     time.sleep(5)
 
-    # Initialize gz-transport node
-    log("Initializing gz-transport...")
-    node = Node()
+    # Initialize the can pool
+    pool = CanPool()
+    pool.initialize()
 
-    # Start can manager thread (moves cans and deletes at end)
-    manager_thread = threading.Thread(target=can_manager, daemon=True)
-    manager_thread.start()
-    log("Can manager started")
+    log("Starting conveyor movement...")
 
-    # Start spawner thread
-    spawner_thread = threading.Thread(target=spawner, daemon=True)
-    spawner_thread.start()
-    log("Spawner started")
+    # Main loop: continuously update can positions
+    last_time = time.time()
 
-    # Keep main thread alive
     try:
         while True:
-            time.sleep(1)
+            current_time = time.time()
+            delta_time = current_time - last_time
+            last_time = current_time
+
+            pool.update_positions(delta_time)
+
+            time.sleep(UPDATE_INTERVAL)
+
     except KeyboardInterrupt:
         log("\nShutting down...")
 
