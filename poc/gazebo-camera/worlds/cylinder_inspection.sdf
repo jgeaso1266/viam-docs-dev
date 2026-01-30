@@ -14,10 +14,11 @@
   <world name="cylinder_inspection">
 
     <!-- ==================== PHYSICS ==================== -->
-    <physics name="1ms" type="ignored">
-      <max_step_size>0.001</max_step_size>
+    <!-- Reduced from 1000Hz to 100Hz - sufficient for visual inspection demo -->
+    <physics name="10ms" type="ignored">
+      <max_step_size>0.01</max_step_size>
       <real_time_factor>1.0</real_time_factor>
-      <real_time_update_rate>1000</real_time_update_rate>
+      <real_time_update_rate>100</real_time_update_rate>
     </physics>
 
     <!-- Required plugins -->
