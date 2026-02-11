@@ -3,7 +3,7 @@
 
 **Learning Outcome:** "I can add hardware without writing drivers or dealing with dependencies"
 
-**Demo Setup:** Chess robot (xArm 7, gripper, Intel RealSense D435 camera)
+**Demo Setup:** Chess robot (xArm 7, gripper, Intel RealSense D435 camera + Orbbec Astra camera for swap)
 
 ---
 
@@ -20,51 +20,66 @@
 
 ---
 
-### [00:08-00:28] Demo: Configuration (20 seconds)
+### [00:08-00:23] Demo: Initial Configuration (15 seconds)
 
 *Visual:*
 - Quick cuts, tight editing:
-  - Plug in camera
-  - Add camera config, save
-  - Camera feed appears
-  - Plug in arm
-  - Add arm config, save
-  - Arm moves in UI
-  - Attach gripper
-  - Add gripper config, save
-  - Gripper works in UI
+  - Plug in Intel RealSense camera → add config → camera feed appears
+  - Plug in arm → add config → arm moves in UI
+  - Attach gripper → add config → gripper works in UI
 
 *Presenter (voiceover over the montage):*
 "Three pieces of hardware. Three config blocks. Camera, arm, gripper."
 
 ---
 
-### [00:28-00:45] Demo: Robot Working (17 seconds)
+### [00:23-00:30] Demo: Robot Working (7 seconds)
 
 *Visual:*
-- Chess robot in action:
+- Chess robot in action with RealSense camera:
   - Camera viewing board
-  - Arm moves to piece
-  - Gripper grabs
-  - Arm moves piece
-  - Gripper releases
-  - Piece is now in new position
+  - Arm moves to piece, gripper grabs
+  - Arm moves piece to new position
 
 *No narration - let the robot working speak for itself*
 
 ---
 
-### [00:45-00:60] Payoff (15 seconds)
+### [00:30-00:42] Demo: Camera Swap (12 seconds)
+
+*Visual:*
+- Unplug Intel RealSense camera
+- Plug in Orbbec Astra camera
+- Update config (change model from "intel-realsense" to "orbbec-astra")
+- Camera feed appears immediately with new camera
+
+*Presenter (voiceover):*
+"Swap the camera. Update the config. Same code, different hardware."
+
+---
+
+### [00:42-00:48] Demo: Robot Still Working (6 seconds)
+
+*Visual:*
+- Chess robot in action with Orbbec camera:
+  - Same chess-playing behavior
+  - Different camera, same result
+
+*No narration - the point is clear*
+
+---
+
+### [00:48-00:60] Payoff (12 seconds)
 
 *Visual:*
 - Back to presenter on camera
-- Robot still visible in background
+- Robot with Orbbec camera still visible in background
 
 *Presenter:*
-"No driver installation. No compilation. Just configuration. The same pattern you use for databases and APIs works for hardware."
+"No driver installation. No code changes. Just configuration. Your code works with any hardware that speaks the same API."
 
 *Final beat - presenter gestures to robot:*
-"That's it."
+"That's hardware abstraction."
 
 ---
 
@@ -74,35 +89,44 @@
 
 **Pacing:**
 - Presenter should be enthusiastic but not over-the-top
-- Demo section (08-28s) should be fast-paced montage - we don't need to see every keystroke
-- Robot working section (28-45s) is the proof point - no narration needed
-- Closing drives home the familiarity angle
+- Initial config demo (08-23s) should be fast-paced montage - we don't need to see every keystroke
+- First robot working (23-30s) proves the initial setup works
+- Camera swap (30-42s) should be quick and smooth - the ease is the point
+- Second robot working (42-48s) proves hardware abstraction - same behavior, different camera
+- Closing drives home the abstraction benefit
 
 **The narrative arc:**
-Setup seems complex → Actually it's just config → Proof it works → This is just like what you already do
+Setup seems complex → Actually it's just config → Proof it works → Swap hardware with just config change → Still works → This is hardware abstraction
 
 **Key message:**
-Hardware configuration uses the same config-driven pattern software engineers already know and trust. No special tooling, no driver hunting, just configuration.
+Hardware abstraction through configuration. Change hardware without changing code. No driver hunting, no code rewrites, just configuration updates.
 
 ---
 
 ## B-Roll Needed
 
 - Clean shots of xArm 7 in action
-- RealSense camera closeup
+- Intel RealSense D435 camera closeup
+- Orbbec Astra camera closeup
+- Camera swap moment (unplugging RealSense, plugging in Orbbec)
 - Gripper grabbing chess piece
 - Wide shot of full Chess setup
-- Tight shots of USB cables being plugged in
+- Tight shots of USB cables being plugged in/out
+- Side-by-side shots showing both cameras work identically
 
 ## Screen Recordings Needed
 
 - Viam app UI (component list, camera feed, control panel)
-- Config file editing (clean, well-formatted JSON)
+- Initial config editing - adding Intel RealSense camera (clean, well-formatted JSON)
 - Components appearing in UI after config save
-- Testing components from browser UI
+- Camera swap config change - changing model from "intel-realsense" to "orbbec-astra"
+- Camera feed updating immediately after config change
+- Testing components from browser UI (with both cameras)
 
 ## Graphics/Overlays
 
 - Config blocks should be clearly visible and readable
+- Highlight the model change in config: "intel-realsense" → "orbbec-astra"
 - Smooth transitions between shots
 - Minimal, clean aesthetic
+- Optional: Small label showing which camera is active during each demo
