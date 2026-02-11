@@ -23,8 +23,10 @@ See [Content Guidelines](./content-guidelines.md) for detailed authoring guidanc
 | Capture and Sync Data | Camera + compute + cloud | Data pipeline, storage, sync | 1.12, 2.13, 2.14 |
 | Basic Filtering | Camera + compute | Time-based sampling, sensor thresholds | 2.13, 2.14 |
 | Configure Data Pipelines | Cloud + data | Windowed roll-ups, aggregations, derived metrics, cost-efficient querying | 2.13, 2.14, 3.10 |
+| Query Tabular Data | Cloud + data | DoCommand capture, SQL/MQL queries, aggregations | 1.12, 2.13 |
 | Sync Data to Your Database | Cloud + external MongoDB | Direct capture to your cluster, egress patterns, "Viam as ingestion layer" architecture | 2.13, 3.10 |
-| Start Writing Code | Laptop + robot | Run code remotely against hardware | 1.3, 1.21 |
+| Write a Module | Laptop + robot | Module scaffolding, dependency injection, DoCommand, remote testing | 1.3, 1.21 |
+| Deploy a Module | Module registry | Cross-compile, package, upload, versioning | 1.21, 3.10 |
 
 ---
 
@@ -96,7 +98,8 @@ See [Content Guidelines](./content-guidelines.md) for detailed authoring guidanc
 
 | Block | Components | What You Learn | Problems Addressed |
 |-------|------------|----------------|-------------------|
-| Build a Customer Dashboard | TypeScript SDK | Web apps, real-time data display | 4.9 |
+| Build a Teleop Dashboard | Cloud + data | Workspaces, widgets, MQL pipelines, internal monitoring | 4.9 |
+| Build a Customer-Facing Web App | TypeScript SDK | Custom interfaces, customer-facing web apps | 4.9 |
 | Branded Customer Login | Auth config | Customer login with your branding | 4.9 |
 | Configure Billing | Billing config | Per-machine/per-data pricing, metering | 4.8 |
 
@@ -112,7 +115,8 @@ Foundation
 ├── Add a Camera
 ├── Capture and Sync Data
 ├── Basic Filtering
-└── Start Writing Code
+├── Write a Module
+└── Deploy a Module
         ↓
 Vision & Detection
 ├── Add Computer Vision
@@ -125,7 +129,8 @@ Stationary Vision
 └── Inspect for Defects
         ↓
 Productize
-├── Build a Customer Dashboard
+├── Build a Teleop Dashboard
+├── Build a Customer-Facing Web App
 ├── Branded Customer Login
 └── Configure Billing
 ```
@@ -138,7 +143,8 @@ Foundation
 ├── Add a Camera
 ├── Capture and Sync Data
 ├── Basic Filtering
-└── Start Writing Code
+├── Write a Module
+└── Deploy a Module
         ↓
 Vision & Detection
 ├── Add Computer Vision
@@ -156,7 +162,8 @@ Mobile Base
 └── Navigate to Detected Object
         ↓
 Productize
-├── Build a Customer Dashboard
+├── Build a Teleop Dashboard
+├── Build a Customer-Facing Web App
 ├── Branded Customer Login
 └── Configure Billing
 ```
@@ -169,7 +176,8 @@ Foundation
 ├── Add a Camera
 ├── Capture and Sync Data
 ├── Basic Filtering
-└── Start Writing Code
+├── Write a Module
+└── Deploy a Module
         ↓
 Vision & Detection
 ├── Add Computer Vision
@@ -186,7 +194,8 @@ Arm + Manipulation
 └── Pick from Bin
         ↓
 Productize
-├── Build a Customer Dashboard
+├── Build a Teleop Dashboard
+├── Build a Customer-Facing Web App
 ├── Branded Customer Login
 └── Configure Billing
 ```
