@@ -33,9 +33,15 @@ From `what-is-viam.md`:
 **Key Principles:**
 - Lead with value and possibilities, not problems
 - Focus on learning outcomes
-- Show actual working systems from Build on Viam projects
+- Use existing projects (Chess, Vino) where appropriate
+- **Build purpose-built demos** for capabilities not well-covered by existing projects
 - Keep it positive - avoid "the old way" comparisons (audience hasn't done robotics before)
 - 60 seconds max per video
+
+**Demo Strategy:**
+- **Existing Projects:** Use Chess and Vino for capabilities they demonstrate well
+- **Purpose-Built Demos:** Create focused, simple demos for complex capabilities
+- **Connected Narrative:** Link related capabilities (e.g., data capture → ML training)
 
 **Content Structure per Video:**
 - Learning outcome (what viewer should understand)
@@ -65,63 +71,98 @@ From `~/viam/build-on-viam/projects/`:
 ### Project Status
 Most projects are "New" status - **hackathon is Feb 24-26, 2026**
 
-## Capability-to-Project Mapping
+## Demo Strategy by Capability
 
-| Capability | Best Project(s) | Project Status | Confidence |
-|------------|----------------|----------------|------------|
-| **1. Hardware Integration** | Chess, Inventory Tracker | Chess: existing<br>Inventory: new | ✅ High - Chess works |
-| **2. Remote Operation** | Chess, Greenhouse | Chess: existing<br>Greenhouse: new | ✅ High - Chess works |
-| **3. Data Capture** | Inventory Tracker, Greenhouse | Both new | ⚠️ Medium - Need Phase 1 working |
-| **4. Train/Deploy Models** | Inventory Tracker | New, ML is Phase 2 | ❌ Low - ML may not be ready |
-| **5. Remote Development** | Chess, Barista | Chess: existing<br>Barista: new | ✅ High - Chess works |
-| **6. Software Deployment** | Chess, Retro Roomba | Chess: existing<br>Roomba: unknown | ⚠️ Medium - Need module updates |
-| **7. Scale Easily** | Inventory Tracker, Greenhouse | Both new, fleet is core concept | ❌ Low - Need multiple stations built |
-| **8. Productize Apps** | Vino, Barista | Vino: existing (app is backlog)<br>Barista: new | ❌ Low - Apps not implemented |
+| Capability | Demo Approach | Requirements | Confidence |
+|------------|---------------|--------------|------------|
+| **1. Hardware Integration** | Use Chess (existing) | Chess robot | ✅ Very High |
+| **2. Remote Operation** | Use Chess or Vino (existing) | Chess or Vino robot | ✅ Very High |
+| **3. Data Capture** | **Purpose-built**: Pi + camera | Pi, camera, ethernet cable | ✅ High |
+| **4. Train/Deploy Models** | **Purpose-built**: Object detection (uses data from #3) | Same as #3 + training service | ✅ High |
+| **5. Remote Development** | Use Chess (existing) | Chess robot | ✅ Very High |
+| **6. Software Deployment** | Use Chess module OR **purpose-built**: LED blinker | Chess or Pi + LED | ✅ High |
+| **7. Scale Easily** | **Purpose-built**: 2-3 identical sensor stations | 2-3 Pis + cameras | ✅ High |
+| **8. Productize Apps** | **Purpose-built**: TypeScript web app | Build simple app, connect to Chess/Vino | ⚠️ Medium |
 
 ### Confidence Levels Explained
 
-✅ **High**: Project exists and works, can film today
-⚠️ **Medium**: Project planned, may be ready post-hackathon
-❌ **Low**: Depends on features that may not be implemented
+✅ **Very High**: Exists today, ready to film
+✅ **High**: Can build quickly, minimal dependencies
+⚠️ **Medium**: Buildable but requires effort or coordination
+❌ **Low**: Major blockers or unknowns
 
-## Key Gaps & Risks
+## Purpose-Built Demo Details
 
-### 1. ML Pipeline (Capability #4)
-**Problem:** Most ML features are backlog items across projects
-- Inventory Tracker: Item recognition is Phase 2 (Phase 1 is capture-only)
-- Barista: ML is for quality assessment (backlog)
-- Chess: Piece recognition (backlog)
-- Greenhouse: Ripeness detection (backlog)
+### Capabilities #3 + #4: Connected Data Pipeline Demo
 
-**Options:**
-- Wait for Inventory Tracker Phase 2 to be implemented
-- Use a different existing Viam example with ML
-- Film with placeholder/staged ML demo
-- Skip this capability video for initial release
+**Setup: Object Detection Station**
+- Hardware: Raspberry Pi + USB camera
+- Two objects: Coffee mug and water bottle
+- Goal: Build detector that identifies which object is in frame
 
-### 2. Fleet Management (Capability #7)
-**Problem:** Requires multiple instances of the same project
-- Inventory Tracker: Designed for multiple stations but need physical hardware
-- Greenhouse: Multiple grow stations concept but need hardware
+**Capability #3: Capture Data from Edge to Cloud**
+- Configure camera data capture (3 lines of JSON)
+- Capture images of mug and bottle alternating
+- Images sync to cloud in real-time
+- **Resilience demo**: Unplug ethernet → keep capturing → reconnect → auto-sync
+- Result: 30+ images ready for training
 
-**Options:**
-- Wait for multiple stations to be built
-- Film with 2+ stations if available post-hackathon
-- Use simulated/virtualized fleet demo
-- Use fragments without showing actual fleet deployment
+**Capability #4: Train and Deploy Models**
+- Open Viam app, view captured images
+- Annotate: tag mug/bottle
+- Click "Train Model" → training in cloud
+- Model appears in registry as v1.0
+- Deploy to Pi → real-time detection
+- Train v2 with more data → deploy update → improved accuracy
 
-### 3. Customer Apps (Capability #8)
-**Problem:** Requires customer-facing app to be built
-- Vino: Has Streamdeck physical controls (existing), but TypeScript web app is backlog
-- Barista: Tablet interface concept, not yet built
-- All projects: Most are internal demos, not customer products
+**Why connected:** Shows complete workflow: capture → label → train → deploy
 
-**Options:**
-- Wait for Vino or Barista customer app to be implemented
-- Build minimal example app specifically for video
-- Use mock-ups/wireframes with SDK code examples
-- Find existing Viam customer app example outside Build on Viam projects
-- Skip for initial release
+---
+
+### Capability #6: Manage Software Deployments
+
+**Option A: Use Chess Module (Recommended)**
+- Chess module already exists and is published
+- Push module update to registry
+- Show Chess robot pulling update
+- Modify config parameter (e.g., Stockfish skill level)
+- Robot adjusts behavior in seconds without restart
+
+**Option B: Purpose-Built LED Blinker**
+- Simple module: LED that changes blink pattern based on config
+- Push v1.0 → robot updates
+- Change pattern in config → live reconfiguration
+- Simpler but less impressive than Chess
+
+---
+
+### Capability #7: Scale Easily
+
+**Purpose-Built: Fleet of Sensor Stations**
+- 2-3 identical Raspberry Pis with cameras
+- Create fragment from one working station
+- Apply fragment to others → watch them provision
+- Update fragment (change capture frequency)
+- All stations update simultaneously
+
+**Hardware needed:** 2-3 Raspberry Pis, cameras, network
+
+**Alternative:** Show fragments concept with existing projects (Chess + Vino), even though they're different
+
+---
+
+### Capability #8: Productize with Viam Apps
+
+**Purpose-Built: Simple Web Dashboard**
+- Build minimal TypeScript app: "Robot Monitor"
+- 15-20 lines of SDK code
+- Features: login, camera feed, trigger button
+- Connect to Chess or Vino
+- **Critical moment:** Show code side-by-side with working app
+
+**Key Questions:**
+- What customer delivery features exist? (white-label auth, billing)
+- Should we focus only on SDK → app, or show full customer delivery stack?
 
 ### 4. Project Readiness Timeline
 **Critical Question:** When are videos being produced?
@@ -150,45 +191,62 @@ Most projects are "New" status - **hackathon is Feb 24-26, 2026**
 5. **Customer Apps**: Will any customer-facing app be built, or should we mock it?
 6. **Authenticity vs Speed**: Is it acceptable to stage/mock demos, or must everything be real?
 
-## Recommendations (Pending Answers)
+## Recommended Approach: Mix of Existing + Purpose-Built
 
-### Conservative Approach (High Confidence)
-Use only what exists and works today:
-- **1-2, 5-6**: Use Chess (existing, working)
-- **3**: Use any project with sensors/cameras (even if new)
-- **4, 7-8**: Stage demos or use external examples
-- **Timeline**: Can film immediately
+### Ready Today (Can Film Immediately)
+- **#1 Hardware Integration**: Chess (existing)
+- **#2 Remote Operation**: Chess or Vino (existing)
+- **#5 Remote Development**: Chess (existing)
 
-### Moderate Approach (Post-Hackathon)
-Wait for hackathon MVPs:
-- **1-2, 5**: Chess or Barista
-- **3**: Inventory Tracker or Greenhouse
-- **4**: Inventory Tracker if Phase 2 ready, else stage
-- **6**: Chess module updates
-- **7-8**: Mock/stage or wait for implementation
-- **Timeline**: March 2026
+### Build Purpose-Built Demos (Week 1)
+- **#3 Data Capture**: Pi + camera setup
+- **#4 Train/Deploy Models**: Use data from #3
+- **#6 Software Deployment**: Chess module update (preferred) OR LED blinker
 
-### Aggressive Approach (Wait for Features)
-Wait for backlog items to be implemented:
-- All 8 capabilities shown with real, working projects
-- High production value, authentic demos
-- **Timeline**: April-May 2026 or later
+### Build Purpose-Built Demos (Week 2)
+- **#7 Scale Easily**: 2-3 Pi sensor stations
+- **#8 Productize Apps**: Simple TypeScript web app
+
+**Hard Constraint: 2 weeks to production-ready**
 
 ## Next Steps
 
-1. **Clarify Timeline**: When are videos needed? What's the deadline?
-2. **Assess Project Status**: After hackathon, which projects are demo-ready?
-3. **Identify Gaps**: For capabilities we can't demo, decide: stage, mock, skip, or wait?
-4. **Create Detailed Scripts**: Once projects are selected, write shot-by-shot scripts
-5. **Production Planning**: Filming locations, equipment, who's filming
+### Critical Questions (Need Answers ASAP)
+1. **Customer Delivery Features**: What actually exists today for Capability #8? (white-label auth, billing, or just focus on SDKs?)
+
+### 2-Week Execution Plan
+
+**Week 1: Build Core Demos**
+- Day 1-2: Set up Pi + camera for data capture demo (#3)
+- Day 2-3: Capture data, test ML training workflow (#4)
+- Day 3-4: Prepare Chess module update (#6)
+- Day 4-5: Start TypeScript web app (#8)
+
+**Week 2: Build Fleet Demo + Finalize**
+- Day 1-3: Set up 2-3 Pi stations for fleet demo (#7)
+- Day 3-4: Complete TypeScript web app (#8)
+- Day 4-5: Test all demos, prepare for filming
+
+**Production**: All demos ready for filming by end of Week 2
+
+## Production Decisions
+
+**Format:** ✅ Confirmed
+- 60 seconds per video
+- On-camera presenter: Shannon Bradshaw, Head of Education
+- Mix of presenter talking head and screen recordings/B-roll
+- No narration over demos - presenter provides context
+
+**Timeline:** ✅ Confirmed
+- 2 weeks to production-ready
+
+**Budget:** ✅ Confirmed
+- No budget constraints
 
 ## Open Questions
 
 - Who is producing these videos? (Internal team, agency, contractor?)
 - What's the distribution channel? (Website, YouTube, social, sales deck?)
-- Are we doing live-action filming or screen recordings?
-- Do we need voice-over or on-camera presenters?
-- What's the budget and production timeline?
 
 ---
 
@@ -196,17 +254,26 @@ Wait for backlog items to be implemented:
 
 ### 1. Get Hardware Running in Minutes
 
+**Status:** ✅ Script complete - see `capability-1-script.md`
+
 **Learning outcome:** "I can add hardware without writing drivers or dealing with dependencies"
 
+**Demo approach:** Presenter-led with Chess robot
+
 **What to show:**
-- Add hardware in JSON config (3 lines: model, connection)
-- Hardware appears in interface immediately
-- Swap to different hardware brand - change model name, everything still works
-- Show code accessing hardware - same API works with any brand
+- Presenter introduces challenge (driver hunting, SDK installation)
+- Fast-paced montage: Plug in camera → add config → camera works
+- Continue pattern: Arm and gripper, same process
+- Robot playing chess (proof it all works)
+- Presenter emphasizes: "Same pattern you use for databases and APIs"
 
-**The value:** Write once, work with any hardware
+**The value:** Hardware setup feels like software config you already know - no special tooling required
 
-**Critical moment:** Swap camera brands mid-demo, code keeps running without changes
+**Key message:** Config-driven architecture that software engineers already trust works for hardware too
+
+**Critical moment:** Robot working after just adding config - no driver installation, no compilation, just configuration
+
+**Format:** 60 seconds, presenter on camera with robot demonstrations
 
 ---
 
