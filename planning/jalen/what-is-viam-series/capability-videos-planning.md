@@ -80,7 +80,7 @@ Most projects are "New" status - **hackathon is Feb 24-26, 2026**
 | **3. Data Capture** | **Purpose-built**: Pi + camera | Pi, camera, ethernet cable | ✅ High |
 | **4. Train/Deploy Models** | **Purpose-built**: Object detection (uses data from #3) | Same as #3 + training service | ✅ High |
 | **5. Remote Development** | Use Chess (existing) | Chess robot | ✅ Very High |
-| **6. Software Deployment** | Use Chess module OR **purpose-built**: LED blinker | Chess or Pi + LED | ✅ High |
+| **6. Software Deployment** | Use Chess module (existing) | Chess robot | ✅ Very High |
 | **7. Scale Easily** | **Purpose-built**: 2-3 identical sensor stations | 2-3 Pis + cameras | ✅ High |
 | **8. Productize Apps** | **Purpose-built**: TypeScript web app | Build simple app, connect to Chess/Vino | ⚠️ Medium |
 
@@ -262,22 +262,25 @@ Most projects are "New" status - **hackathon is Feb 24-26, 2026**
 
 **What to show:**
 - Presenter introduces challenge (driver hunting, SDK installation)
-- Fast-paced montage: Plug in camera → add config → camera works
+- Fast-paced montage: Plug in Intel RealSense camera → add config → camera works
 - Continue pattern: Arm and gripper, same process
 - Robot playing chess (proof it all works)
-- Presenter emphasizes: "Same pattern you use for databases and APIs"
+- Camera swap: Replace RealSense with Orbbec Astra → update config → still works
+- Hardware abstraction: Same code, different hardware
 
 **The value:** Hardware setup feels like software config you already know - no special tooling required
 
-**Key message:** Config-driven architecture that software engineers already trust works for hardware too
+**Key message:** Hardware abstraction through configuration. Change hardware without changing code.
 
-**Critical moment:** Robot working after just adding config - no driver installation, no compilation, just configuration
+**Critical moment:** Camera swap showing same code works with different hardware - hardware abstraction is real
 
 **Format:** 60 seconds, presenter on camera with robot demonstrations
 
 ---
 
 ### 2. Operate from Anywhere
+
+**Status:** 🔄 Script in review - see `capability-2-script.md`
 
 **Learning outcome:** "I can access and control my robot remotely without networking configuration"
 
@@ -295,6 +298,8 @@ Most projects are "New" status - **hackathon is Feb 24-26, 2026**
 
 ### 3. Capture Data from Edge to Cloud
 
+**Status:** 🔄 Script in review - see `capability-3-script.md`
+
 **Learning outcome:** "Data collection is configuration, not code I have to write"
 
 **What to show:**
@@ -310,6 +315,8 @@ Most projects are "New" status - **hackathon is Feb 24-26, 2026**
 ---
 
 ### 4. Train and Deploy Models
+
+**Status:** 🔄 Script in review - see `capability-4-script.md`
 
 **Learning outcome:** "ML deployment uses the same workflow as code deployment"
 
@@ -329,6 +336,8 @@ Most projects are "New" status - **hackathon is Feb 24-26, 2026**
 
 ### 5. Develop Code Remotely
 
+**Status:** 🔄 Script in review - see `capability-5-script.md`
+
 **Learning outcome:** "I can develop against robot hardware like it's a cloud API"
 
 **What to show:**
@@ -345,6 +354,8 @@ Most projects are "New" status - **hackathon is Feb 24-26, 2026**
 ---
 
 ### 6. Manage Software Deployments
+
+**Status:** 🔄 Script in review - see `capability-6-script.md`
 
 **Learning outcome:** "Code deployment has version control and lifecycle management built-in"
 
