@@ -394,6 +394,8 @@ Most projects are "New" status - **hackathon is Feb 24-26, 2026**
 
 ### 8. Productize with Viam Apps
 
+**Status:** 🔄 Script in review - see `capability-8-script.md`
+
 **Learning outcome:** "Customer-facing infrastructure is provided, I just build the product"
 
 **What to show:**
