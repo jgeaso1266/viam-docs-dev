@@ -280,7 +280,7 @@ Most projects are "New" status - **hackathon is Feb 24-26, 2026**
 
 ### 2. Operate from Anywhere
 
-**Status:** 🔄 Script in review - see `capability-2-script.md`
+**Status:** ✅ Script approved - see `capability-2-script.md`
 
 **Learning outcome:** "I can access and control my robot remotely without networking configuration"
 
@@ -298,7 +298,7 @@ Most projects are "New" status - **hackathon is Feb 24-26, 2026**
 
 ### 3. Capture Data from Edge to Cloud
 
-**Status:** 🔄 Script in review - see `capability-3-script.md`
+**Status:** ✅ Script approved - see `capability-3-script.md`
 
 **Learning outcome:** "Data collection is configuration, not code I have to write"
 
@@ -316,7 +316,7 @@ Most projects are "New" status - **hackathon is Feb 24-26, 2026**
 
 ### 4. Train and Deploy Models
 
-**Status:** 🔄 Script in review - see `capability-4-script.md`
+**Status:** ✅ Script approved - see `capability-4-script.md`
 
 **Learning outcome:** "ML deployment uses the same workflow as code deployment"
 
@@ -336,7 +336,7 @@ Most projects are "New" status - **hackathon is Feb 24-26, 2026**
 
 ### 5. Develop Code Remotely
 
-**Status:** 🔄 Script in review - see `capability-5-script.md`
+**Status:** ✅ Script approved - see `capability-5-script.md`
 
 **Learning outcome:** "I can develop against robot hardware like it's a cloud API"
 
@@ -355,7 +355,7 @@ Most projects are "New" status - **hackathon is Feb 24-26, 2026**
 
 ### 6. Manage Software Deployments
 
-**Status:** 🔄 Script in review - see `capability-6-script.md`
+**Status:** ✅ Script approved - see `capability-6-script.md`
 
 **Learning outcome:** "Code deployment has version control and lifecycle management built-in"
 
@@ -373,6 +373,8 @@ Most projects are "New" status - **hackathon is Feb 24-26, 2026**
 ---
 
 ### 7. Scale Easily
+
+**Status:** 🔄 Script in review - see `capability-7-script.md`
 
 **Learning outcome:** "One robot's config becomes 100 robots' config with zero scripting"
 
