@@ -8,24 +8,48 @@
 
 Blocks are self-contained tutorials (~15-30 minutes each) that teach a specific capability. They're designed to be composed—complete the ones relevant to your project, skip the ones that aren't.
 
+Each block can be completed standalone. Prerequisites list what you should know or have configured, but each block provides the starting state you need so you can jump in directly.
+
 All blocks work in both simulation and real hardware.
 
 ---
 
 ## Block Categories
 
-### [Foundation](../planning/block-definitions.md#foundation-blocks) 🔴
-Start here. Every project needs these basics.
-- Connect to Cloud
-- Add a Camera
-- Capture and Sync Data
-- Basic Filtering
+### [Foundation](foundation/) ✓
+*Start here. Every project needs these basics.*
+- [Connect to Cloud](foundation/connect-to-cloud.md)
+- [Add a Camera](foundation/add-a-camera.md)
+- [Capture and Sync Data](foundation/capture-and-sync-data.md)
+
+### [Data](data/)
+*Work with captured data.*
+- Query Data
+- Filter at the Edge
+- Visualize Data
 - Configure Data Pipelines
 - Sync Data to Your Database
-- Start Writing Code
 
-### [Vision & Detection](../planning/block-definitions.md#vision--detection-blocks) 🔴
-Understanding what the robot sees.
+### [Train](train/)
+*Go from raw data to trained models.*
+- Create a Dataset
+- Train a Model
+
+### [Development](development/)
+*Write and ship code.*
+- Write an Inline Module
+- Write a Module
+- Deploy a Module
+
+### [Work Cell Layout](work-cell-layout/)
+*Configure the 3D space your robot operates in.*
+- Define Your Frame System
+- Configure Robot Kinematics
+- Calibrate Camera to Robot
+- Define Obstacles
+
+### [Vision & Detection](vision-detection/)
+*Build understanding of the environment.*
 - Add Computer Vision
 - Detect Objects (2D)
 - Classify Objects
@@ -33,15 +57,15 @@ Understanding what the robot sees.
 - Measure Depth
 - Localize Objects in 3D
 
-### [Stationary Vision](../planning/block-definitions.md#stationary-vision-blocks) 🔴
-Vision systems that don't move.
+### [Stationary Vision](stationary-vision/)
+*Vision systems that don't move.*
 - Trigger on Detection
 - Count Objects
 - Inspect for Defects
 - Monitor Over Time
 
-### [Mobile Base](../planning/block-definitions.md#mobile-base-blocks) 🔴
-Robots that move.
+### [Mobile Base](mobile-base/)
+*Robots that move.*
 - Drive the Base
 - Estimate Position
 - Build a Map
@@ -52,8 +76,8 @@ Robots that move.
 - Navigate to Detected Object
 - Mobile Pick-and-Place
 
-### [Arm + Manipulation](../planning/block-definitions.md#arm--manipulation-blocks) 🔴
-Robots that grab things.
+### [Arm + Manipulation](arm-manipulation/)
+*Robots that grab things.*
 - Move the Arm
 - Control Gripper
 - Move to Pose
@@ -62,13 +86,20 @@ Robots that grab things.
 - Pick from Bin
 - Visual Servoing
 
+### [Productize](productize/)
+*Ship a product to your customers.*
+- Build a Teleop Dashboard
+- Build a Customer-Facing Web App
+- Branded Customer Login
+- Configure Billing
+
 ---
 
 ## How to Use Blocks
 
 **If you know what you need:** Jump directly to the relevant block.
 
-**If you're following a work cell guide:** The guide will tell you which blocks to complete in order.
+**If you're following a work cell guide:** The guide tells you which blocks to complete in order.
 
 **If you're exploring:** Start with Foundation, then pick a track (Stationary Vision, Mobile Base, or Arm + Manipulation) based on your hardware.
 
@@ -76,7 +107,7 @@ Robots that grab things.
 
 ## Prerequisites
 
-Each block lists its prerequisites. Some blocks can be done in any order; others build on previous blocks.
+Each block lists its prerequisites. Some blocks can be done in any order; others build on previous blocks. Every block provides a starting state (configuration fragment, starter code, or sample data) so you can begin without completing all prior blocks.
 
 ---
 

@@ -14,19 +14,63 @@ See [Content Guidelines](./content-guidelines.md) for detailed authoring guidanc
 
 ## Foundation Blocks
 
-*Apply to all work cells. Everyone starts here.*
+*Universal prerequisites. Everyone starts here.*
 
 | Block | Components | What You Learn | Problems Addressed |
 |-------|------------|----------------|-------------------|
 | Connect to Cloud | Compute board | Platform basics, remote access, WebRTC | 1.1, 1.6, 2.9 |
 | Add a Camera | Camera + compute | Component configuration, viewing feeds | 1.1, 1.2, 1.9 |
 | Capture and Sync Data | Camera + compute + cloud | Data pipeline, storage, sync | 1.12, 2.13, 2.14 |
-| Basic Filtering | Camera + compute | Time-based sampling, sensor thresholds | 2.13, 2.14 |
+
+---
+
+## Data Blocks
+
+*Work with captured data.*
+
+| Block | Components | What You Learn | Problems Addressed |
+|-------|------------|----------------|-------------------|
+| Query Data | Cloud + data | SQL/MQL queries, navigating nested JSON, filtering and aggregation | 1.12, 2.13 |
+| Filter at the Edge | Camera + compute | Time-based sampling, sensor thresholds, filtered camera modules, conditional sync | 2.13, 2.14 |
+| Visualize Data | Cloud + third-party tools | Connect Grafana, Tableau, or custom dashboards to Viam data | 2.13, 3.10 |
 | Configure Data Pipelines | Cloud + data | Windowed roll-ups, aggregations, derived metrics, cost-efficient querying | 2.13, 2.14, 3.10 |
-| Query Tabular Data | Cloud + data | DoCommand capture, SQL/MQL queries, aggregations | 1.12, 2.13 |
 | Sync Data to Your Database | Cloud + external MongoDB | Direct capture to your cluster, egress patterns, "Viam as ingestion layer" architecture | 2.13, 3.10 |
+
+---
+
+## Train Blocks
+
+*Go from raw data to trained models.*
+
+| Block | Components | What You Learn | Problems Addressed |
+|-------|------------|----------------|-------------------|
+| Create a Dataset | Cloud + captured data | Tag images, draw bounding boxes, manage dataset versions | 1.13, 2.13 |
+| Train a Model | Cloud + dataset | Select model architecture, start training, evaluate results, deploy to machines | 1.13 |
+
+---
+
+## Development Blocks
+
+*Write and ship code.*
+
+| Block | Components | What You Learn | Problems Addressed |
+|-------|------------|----------------|-------------------|
+| Write an Inline Module | Browser + machine | Browser-based module editing, cloud builds, validate/new/do_command pattern, scheduled jobs | 1.3, 1.21 |
 | Write a Module | Laptop + robot | Module scaffolding, dependency injection, DoCommand, remote testing | 1.3, 1.21 |
 | Deploy a Module | Module registry | Cross-compile, package, upload, versioning | 1.21, 3.10 |
+
+---
+
+## Work Cell Layout Blocks
+
+*Configure the 3D space your robot operates in.*
+
+| Block | Components | What You Learn | Problems Addressed |
+|-------|------------|----------------|-------------------|
+| Define Your Frame System | Robot + compute | World frame, parent-child hierarchy, static transforms, spatial visualization | 1.4, 1.17 |
+| Configure Robot Kinematics | Arm/gantry + compute | URDF import, joint limits, tool center point, kinematic model | 1.3, 1.17 |
+| Calibrate Camera to Robot | Camera + arm + calibration target | Camera intrinsics, eye-in-hand vs eye-to-hand, verifying 3D accuracy | 1.9, 1.19 |
+| Define Obstacles | Robot + workspace fixtures | Static geometry (box/sphere/capsule), keep-out zones, world state store, collision avoidance | 1.7, 1.20 |
 
 ---
 
@@ -113,8 +157,14 @@ See [Content Guidelines](./content-guidelines.md) for detailed authoring guidanc
 Foundation
 ├── Connect to Cloud
 ├── Add a Camera
-├── Capture and Sync Data
-├── Basic Filtering
+└── Capture and Sync Data
+        ↓
+Data
+├── Query Data
+└── Filter at the Edge
+        ↓
+Development
+├── Write an Inline Module
 ├── Write a Module
 └── Deploy a Module
         ↓
@@ -141,8 +191,14 @@ Productize
 Foundation
 ├── Connect to Cloud
 ├── Add a Camera
-├── Capture and Sync Data
-├── Basic Filtering
+└── Capture and Sync Data
+        ↓
+Data
+├── Query Data
+└── Filter at the Edge
+        ↓
+Development
+├── Write an Inline Module
 ├── Write a Module
 └── Deploy a Module
         ↓
@@ -174,10 +230,22 @@ Productize
 Foundation
 ├── Connect to Cloud
 ├── Add a Camera
-├── Capture and Sync Data
-├── Basic Filtering
+└── Capture and Sync Data
+        ↓
+Data
+├── Query Data
+└── Filter at the Edge
+        ↓
+Development
+├── Write an Inline Module
 ├── Write a Module
 └── Deploy a Module
+        ↓
+Work Cell Layout
+├── Define Your Frame System
+├── Configure Robot Kinematics
+├── Calibrate Camera to Robot
+└── Define Obstacles
         ↓
 Vision & Detection
 ├── Add Computer Vision
