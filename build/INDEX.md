@@ -24,8 +24,8 @@ All blocks work in both simulation and real hardware.
 
 ### [Data](data/)
 *Work with captured data.*
-- Query Data
-- Filter at the Edge
+- [Query Data](data/query-data.md)
+- [Filter at the Edge](data/filter-at-the-edge.md)
 - Visualize Data
 - Configure Data Pipelines
 - Sync Data to Your Database
