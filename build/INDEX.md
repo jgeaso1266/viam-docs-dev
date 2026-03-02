@@ -26,9 +26,9 @@ All blocks work in both simulation and real hardware.
 *Work with captured data.*
 - [Query Data](data/query-data.md)
 - [Filter at the Edge](data/filter-at-the-edge.md)
-- Visualize Data
-- Configure Data Pipelines
-- Sync Data to Your Database
+- [Visualize Data](data/visualize-data.md)
+- [Configure Data Pipelines](data/configure-data-pipelines.md)
+- [Sync Data to Your Database](data/sync-data-to-your-database.md)
 
 ### [Train](train/)
 *Go from raw data to trained models.*
