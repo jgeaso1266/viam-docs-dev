@@ -22,7 +22,7 @@ All blocks work in both simulation and real hardware.
 - [Add a Camera](foundation/add-a-camera.md)
 - [Capture and Sync Data](foundation/capture-and-sync-data.md)
 
-### [Data](data/)
+### [Data](data/) ✓
 *Work with captured data.*
 - [Query Data](data/query-data.md)
 - [Filter at the Edge](data/filter-at-the-edge.md)
@@ -30,16 +30,16 @@ All blocks work in both simulation and real hardware.
 - [Configure Data Pipelines](data/configure-data-pipelines.md)
 - [Sync Data to Your Database](data/sync-data-to-your-database.md)
 
-### [Train](train/)
+### [Train](train/) ✓
 *Go from raw data to trained models.*
-- Create a Dataset
-- Train a Model
+- [Create a Dataset](train/create-a-dataset.md)
+- [Train a Model](train/train-a-model.md)
 
-### [Development](development/)
+### [Development](development/) ✓
 *Write and ship code.*
-- Write an Inline Module
-- Write a Module
-- Deploy a Module
+- [Write an Inline Module](development/write-an-inline-module.md)
+- [Write a Module](development/write-a-module.md)
+- [Deploy a Module](development/deploy-a-module.md)
 
 ### [Work Cell Layout](work-cell-layout/)
 *Configure the 3D space your robot operates in.*
@@ -48,14 +48,14 @@ All blocks work in both simulation and real hardware.
 - Calibrate Camera to Robot
 - Define Obstacles
 
-### [Vision & Detection](vision-detection/)
+### [Vision & Detection](vision-detection/) ✓
 *Build understanding of the environment.*
-- Add Computer Vision
-- Detect Objects (2D)
-- Classify Objects
-- Track Objects Across Frames
-- Measure Depth
-- Localize Objects in 3D
+- [Add Computer Vision](vision-detection/add-computer-vision.md)
+- [Detect Objects (2D)](vision-detection/detect-objects-2d.md)
+- [Classify Objects](vision-detection/classify-objects.md)
+- [Track Objects Across Frames](vision-detection/track-objects-across-frames.md)
+- [Measure Depth](vision-detection/measure-depth.md)
+- [Localize Objects in 3D](vision-detection/localize-objects-in-3d.md)
 
 ### [Stationary Vision](stationary-vision/)
 *Vision systems that don't move.*
