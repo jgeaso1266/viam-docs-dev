@@ -41,12 +41,12 @@ All blocks work in both simulation and real hardware.
 - [Write a Module](development/write-a-module.md)
 - [Deploy a Module](development/deploy-a-module.md)
 
-### [Work Cell Layout](work-cell-layout/)
+### [Work Cell Layout](work-cell-layout/) ✓
 *Configure the 3D space your robot operates in.*
-- Define Your Frame System
-- Configure Robot Kinematics
-- Calibrate Camera to Robot
-- Define Obstacles
+- [Define Your Frame System](work-cell-layout/define-your-frame-system.md)
+- [Configure Robot Kinematics](work-cell-layout/configure-robot-kinematics.md)
+- [Calibrate Camera to Robot](work-cell-layout/calibrate-camera-to-robot.md)
+- [Define Obstacles](work-cell-layout/define-obstacles.md)
 
 ### [Vision & Detection](vision-detection/) ✓
 *Build understanding of the environment.*
