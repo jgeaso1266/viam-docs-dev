@@ -1,10 +1,12 @@
 # Migration Plan: docs-dev → viam-docs
 
-**Status:** Approved
-**Date:** 2026-03-03
+**Status:** Phases 1-4 Complete, Restructured
+**Date:** 2026-03-03 (updated 2026-03-04)
 
 Migrate the 23 completed blocks (and future blocks) from `docs-dev/build/` into the
-Hugo-based `viam-docs/docs/build/` site.
+Hugo-based `viam-docs/docs/` site. All 23 blocks have been ported and the site has
+been restructured: block categories promoted from `build/` subsections to top-level
+sections, and Foundation split into "Get Started", "Hardware", and "Data".
 
 ---
 
@@ -17,6 +19,8 @@ Hugo-based `viam-docs/docs/build/` site.
 | 3 | Missing stubs | **Write stop-data-capture only** — draft `stop-data-capture.md` for `build/foundation/`. Delete the `start-writing-code.md` stub; the three development blocks replace it. |
 | 4 | Conversion approach | **Manual** — convert each block by hand during the port. No automation script. |
 | 5 | Source page cleanup | **Separate follow-up PRs** — land the blocks first, then clean up source pages section-by-section in follow-up PRs per the IA-REORG-PLAN. |
+| 6 | Top-level promotion | **Promoted** — block categories promoted from `build/` subsections to top-level sections (e.g., `docs/build/data/` → `docs/data/`). Eliminates the extra `build/` nesting level. |
+| 7 | Foundation split | **Split** — Foundation renamed to "Get Started" (single page overview), "Add a Camera" moved to new "Hardware" section, data-related pages moved to "Data" section. |
 
 ---
 
@@ -123,7 +127,7 @@ Update relative markdown links to Hugo absolute paths:
 
 **viam-docs:**
 ```markdown
-[Capture and Sync Data](/build/foundation/capture-and-sync-data/)
+[Capture and Sync Data](/data/capture-and-sync-data/)
 ```
 
 ### Section Index Pages
@@ -144,11 +148,11 @@ description: "Work with captured data."
 Work with captured data.
 
 {{< cards >}}
-{{% card link="/build/data/query-data/" %}}
-{{% card link="/build/data/filter-at-the-edge/" %}}
-{{% card link="/build/data/visualize-data/" %}}
-{{% card link="/build/data/configure-data-pipelines/" %}}
-{{% card link="/build/data/sync-data-to-your-database/" %}}
+{{% card link="/data/query-data/" %}}
+{{% card link="/data/filter-at-the-edge/" %}}
+{{% card link="/data/visualize-data/" %}}
+{{% card link="/data/configure-data-pipelines/" %}}
+{{% card link="/data/sync-data-to-your-database/" %}}
 {{< /cards >}}
 ```
 
@@ -158,31 +162,31 @@ Work with captured data.
 
 ### Files to port (23 blocks)
 
-| docs-dev path | viam-docs target path | Replaces stub? |
+| docs-dev path | viam-docs target path (final) | Replaces stub? |
 |---|---|---|
-| `build/foundation/connect-to-cloud.md` | `docs/build/foundation/connect-to-cloud.md` | Yes |
-| `build/foundation/add-a-camera.md` | `docs/build/foundation/add-a-camera.md` | Yes |
-| `build/foundation/capture-and-sync-data.md` | `docs/build/foundation/capture-and-sync-data.md` | Yes |
-| `build/data/query-data.md` | `docs/build/data/query-data.md` | No (new) |
-| `build/data/filter-at-the-edge.md` | `docs/build/data/filter-at-the-edge.md` | No (new) |
-| `build/data/visualize-data.md` | `docs/build/data/visualize-data.md` | No (new) |
-| `build/data/configure-data-pipelines.md` | `docs/build/data/configure-data-pipelines.md` | No (new) |
-| `build/data/sync-data-to-your-database.md` | `docs/build/data/sync-data-to-your-database.md` | No (new) |
-| `build/train/create-a-dataset.md` | `docs/build/train/create-a-dataset.md` | No (new) |
-| `build/train/train-a-model.md` | `docs/build/train/train-a-model.md` | No (new) |
-| `build/development/write-an-inline-module.md` | `docs/build/development/write-an-inline-module.md` | No (new) |
-| `build/development/write-a-module.md` | `docs/build/development/write-a-module.md` | No (new) |
-| `build/development/deploy-a-module.md` | `docs/build/development/deploy-a-module.md` | No (new) |
-| `build/work-cell-layout/define-your-frame-system.md` | `docs/build/work-cell-layout/define-your-frame-system.md` | No (new) |
-| `build/work-cell-layout/configure-robot-kinematics.md` | `docs/build/work-cell-layout/configure-robot-kinematics.md` | No (new) |
-| `build/work-cell-layout/calibrate-camera-to-robot.md` | `docs/build/work-cell-layout/calibrate-camera-to-robot.md` | No (new) |
-| `build/work-cell-layout/define-obstacles.md` | `docs/build/work-cell-layout/define-obstacles.md` | No (new) |
-| `build/vision-detection/add-computer-vision.md` | `docs/build/vision-detection/add-computer-vision.md` | No (new) |
-| `build/vision-detection/detect-objects-2d.md` | `docs/build/vision-detection/detect-objects-2d.md` | No (new) |
-| `build/vision-detection/classify-objects.md` | `docs/build/vision-detection/classify-objects.md` | No (new) |
-| `build/vision-detection/track-objects-across-frames.md` | `docs/build/vision-detection/track-objects-across-frames.md` | No (new) |
-| `build/vision-detection/measure-depth.md` | `docs/build/vision-detection/measure-depth.md` | No (new) |
-| `build/vision-detection/localize-objects-in-3d.md` | `docs/build/vision-detection/localize-objects-in-3d.md` | No (new) |
+| `build/foundation/connect-to-cloud.md` | `docs/get-started/initialize-a-viam-machine.md` | Yes (renamed) |
+| `build/foundation/add-a-camera.md` | `docs/hardware/add-a-camera.md` | Yes (moved to Hardware) |
+| `build/foundation/capture-and-sync-data.md` | `docs/data/capture-and-sync-data.md` | Yes (moved to Data) |
+| `build/data/query-data.md` | `docs/data/query-data.md` | No (new) |
+| `build/data/filter-at-the-edge.md` | `docs/data/filter-at-the-edge.md` | No (new) |
+| `build/data/visualize-data.md` | `docs/data/visualize-data.md` | No (new) |
+| `build/data/configure-data-pipelines.md` | `docs/data/configure-data-pipelines.md` | No (new) |
+| `build/data/sync-data-to-your-database.md` | `docs/data/sync-data-to-your-database.md` | No (new) |
+| `build/train/create-a-dataset.md` | `docs/train/create-a-dataset.md` | No (new) |
+| `build/train/train-a-model.md` | `docs/train/train-a-model.md` | No (new) |
+| `build/development/write-an-inline-module.md` | `docs/development/write-an-inline-module.md` | No (new) |
+| `build/development/write-a-module.md` | `docs/development/write-a-module.md` | No (new) |
+| `build/development/deploy-a-module.md` | `docs/development/deploy-a-module.md` | No (new) |
+| `build/work-cell-layout/define-your-frame-system.md` | `docs/work-cell-layout/define-your-frame-system.md` | No (new) |
+| `build/work-cell-layout/configure-robot-kinematics.md` | `docs/work-cell-layout/configure-robot-kinematics.md` | No (new) |
+| `build/work-cell-layout/calibrate-camera-to-robot.md` | `docs/work-cell-layout/calibrate-camera-to-robot.md` | No (new) |
+| `build/work-cell-layout/define-obstacles.md` | `docs/work-cell-layout/define-obstacles.md` | No (new) |
+| `build/vision-detection/add-computer-vision.md` | `docs/vision-detection/add-computer-vision.md` | No (new) |
+| `build/vision-detection/detect-objects-2d.md` | `docs/vision-detection/detect-objects-2d.md` | No (new) |
+| `build/vision-detection/classify-objects.md` | `docs/vision-detection/classify-objects.md` | No (new) |
+| `build/vision-detection/track-objects-across-frames.md` | `docs/vision-detection/track-objects-across-frames.md` | No (new) |
+| `build/vision-detection/measure-depth.md` | `docs/vision-detection/measure-depth.md` | No (new) |
+| `build/vision-detection/localize-objects-in-3d.md` | `docs/vision-detection/localize-objects-in-3d.md` | No (new) |
 
 ### Stubs to handle in viam-docs
 
@@ -201,18 +205,20 @@ Work with captured data.
 
 | File | Purpose |
 |---|---|
-| `docs/build/data/_index.md` | Data category landing page |
-| `docs/build/train/_index.md` | Train category landing page |
-| `docs/build/development/_index.md` | Development category landing page |
-| `docs/build/work-cell-layout/_index.md` | Work Cell Layout category landing page |
-| `docs/build/vision-detection/_index.md` | Vision & Detection category landing page |
-| `docs/build/foundation/stop-data-capture.md` | New block (to be written) |
+| `docs/get-started/_index.md` | Get Started section (single page, formerly Foundation) |
+| `docs/hardware/_index.md` | Hardware category landing page |
+| `docs/data/_index.md` | Data category landing page |
+| `docs/train/_index.md` | Train category landing page |
+| `docs/development/_index.md` | Development category landing page |
+| `docs/work-cell-layout/_index.md` | Work Cell Layout category landing page |
+| `docs/vision-detection/_index.md` | Vision & Detection category landing page |
+| `docs/data/stop-data-capture.md` | New block (formerly in foundation) |
 
 ---
 
 ## Execution Phases
 
-### Phase 1: Foundation (1 PR)
+### Phase 1: Foundation -- COMPLETE (committed)
 
 **Scope:** 3 blocks + 1 new block + structural cleanup
 
@@ -220,7 +226,7 @@ Work with captured data.
    - `connect-to-cloud.md`
    - `add-a-camera.md`
    - `capture-and-sync-data.md`
-2. Write `stop-data-capture.md` content (small — 3 toggle procedures).
+2. Write `stop-data-capture.md` content (small -- 3 toggle procedures).
 3. Update `build/foundation/_index.md`:
    - Remove cards for pages moving to other categories.
    - Keep cards for the 4 foundation pages.
@@ -229,7 +235,7 @@ Work with captured data.
 
 **Files touched:** 6 (3 replaced, 1 written, 2 index files updated)
 
-### Phase 2: Data (1 PR)
+### Phase 2: Data -- COMPLETE (committed)
 
 **Scope:** 5 blocks + directory setup + stub cleanup
 
@@ -251,7 +257,7 @@ Work with captured data.
 
 **Files touched:** 12 (5 new blocks, 1 new index, 4 deleted, 2 indexes updated)
 
-### Phase 3: Train + Development (1 PR)
+### Phase 3: Train + Development -- COMPLETE (committed)
 
 **Scope:** 5 blocks + 2 directory setups
 
@@ -268,7 +274,7 @@ Work with captured data.
 
 **Files touched:** 8 (5 new blocks, 2 new indexes, 1 index updated)
 
-### Phase 4: Work Cell Layout + Vision & Detection (1 PR)
+### Phase 4: Work Cell Layout + Vision & Detection -- COMPLETE (committed)
 
 **Scope:** 10 blocks + 2 directory setups
 
@@ -290,6 +296,18 @@ Work with captured data.
 
 **Files touched:** 13 (10 new blocks, 2 new indexes, 1 index updated)
 
+### Post-Phase Restructure -- COMPLETE (committed)
+
+**Scope:** Promote categories to top-level, split Foundation
+
+1. Promoted all block categories from `docs/build/<category>/` to `docs/<category>/`.
+2. Split Foundation:
+   - Renamed to "Get Started" (single overview page).
+   - Moved `add-a-camera.md` to new `docs/hardware/` section.
+   - Moved `capture-and-sync-data.md` and `stop-data-capture.md` to `docs/data/`.
+3. Updated all internal links and card references to use new top-level paths.
+4. Updated `_index.md` files and weight assignments for new structure.
+
 ### Phase 5: Source Page Cleanup (1 PR per section)
 
 Follow the `IA-REORG-PLAN.md` for each source page affected by the new blocks.
@@ -310,31 +328,35 @@ Separate PRs by source section:
 
 ## Weight Assignments
 
-Category weights for sidebar ordering:
+Top-level section weights for sidebar ordering (post-restructure):
 
-| Category | Weight | Rationale |
+| Section | Weight | Rationale |
 |---|---|---|
-| Foundation | 10 | Everyone starts here |
-| Data | 20 | Natural next step after capture |
-| Train | 30 | Uses captured data |
-| Development | 40 | Write custom code |
-| Work Cell Layout | 50 | Spatial setup for manipulation |
-| Vision & Detection | 60 | Perception pipeline |
-| Stationary Vision | 70 | (future) |
-| Mobile Base | 80 | (future) |
-| Arm + Manipulation | 90 | (future) |
-| Productize | 100 | (future) |
+| Get Started | 30 | Everyone starts here |
+| Hardware | 35 | Configure physical components |
+| Data | 40 | Capture, sync, query, visualize |
+| Train | 50 | Uses captured data |
+| Development | 60 | Write custom code |
+| Work Cell Layout | 70 | Spatial setup for manipulation |
+| Vision & Detection | 80 | Perception pipeline |
+| Stationary Vision | 90 | (future) |
+| Mobile Base | 100 | (future) |
+| Arm + Manipulation | 110 | (future) |
+| Productize | 120 | (future) |
 
-Within each category, blocks are weighted in the order listed in `docs-dev/build/INDEX.md`,
+Within each section, blocks are weighted in the order listed in `docs-dev/build/INDEX.md`,
 starting at 10 and incrementing by 10.
 
 ---
 
 ## Open Items
 
-- [ ] Write `stop-data-capture.md` content before Phase 1
-- [ ] Determine whether moved stubs need `aliases` for SEO (the stubs have no
+- [x] Write `stop-data-capture.md` content before Phase 1
+- [x] Determine whether moved stubs need `aliases` for SEO (the stubs have no
   inbound links yet since they say "Content to be written", but check before deleting)
-- [ ] Verify Hugo build after each phase before merging
+- [x] Verify Hugo build after each phase before merging
+- [x] Port all 23 blocks (Phases 1-4)
+- [x] Restructure: promote categories to top-level, split Foundation
+- [ ] Phase 5: Source page cleanup (1 PR per section) -- not yet started
 - [ ] Remaining 27 blocks (Stationary Vision, Mobile Base, Arm + Manipulation,
-  Productize) — draft in docs-dev, then port using the same process
+  Productize) -- draft in docs-dev, then port using the same process

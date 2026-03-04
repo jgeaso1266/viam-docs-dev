@@ -8,19 +8,29 @@ Blocks are modular tutorials that can be composed into larger workflows. Each bl
 - Have clear prerequisites and outcomes
 - Map to specific problems from the lifecycle analysis
 
+All block categories are top-level sections in viam-docs.
+
 See [Content Guidelines](./content-guidelines.md) for detailed authoring guidance.
 
 ---
 
-## Foundation Blocks
+## Get Started Blocks
 
-*Universal prerequisites. Everyone starts here.*
+*Universal prerequisite. Everyone starts here.*
 
 | Block | Components | What You Learn | Problems Addressed |
 |-------|------------|----------------|-------------------|
-| Connect to Cloud | Compute board | Platform basics, remote access, WebRTC | 1.1, 1.6, 2.9 |
+| Initialize a Viam Machine | Compute board | Platform basics, remote access, WebRTC | 1.1, 1.6, 2.9 |
+
+---
+
+## Hardware Blocks
+
+*Configure physical components.*
+
+| Block | Components | What You Learn | Problems Addressed |
+|-------|------------|----------------|-------------------|
 | Add a Camera | Camera + compute | Component configuration, viewing feeds | 1.1, 1.2, 1.9 |
-| Capture and Sync Data | Camera + compute + cloud | Data pipeline, storage, sync | 1.12, 2.13, 2.14 |
 
 ---
 
@@ -30,6 +40,7 @@ See [Content Guidelines](./content-guidelines.md) for detailed authoring guidanc
 
 | Block | Components | What You Learn | Problems Addressed |
 |-------|------------|----------------|-------------------|
+| Capture and Sync Data | Camera + compute + cloud | Data pipeline, storage, sync | 1.12, 2.13, 2.14 |
 | Query Data | Cloud + data | SQL/MQL queries, navigating nested JSON, filtering and aggregation | 1.12, 2.13 |
 | Filter at the Edge | Camera + compute | Time-based sampling, sensor thresholds, filtered camera modules, conditional sync | 2.13, 2.14 |
 | Visualize Data | Cloud + third-party tools | Connect Grafana, Tableau, or custom dashboards to Viam data | 2.13, 3.10 |
@@ -154,12 +165,14 @@ See [Content Guidelines](./content-guidelines.md) for detailed authoring guidanc
 ### Stationary Vision Work Cell
 
 ```
-Foundation
-├── Connect to Cloud
-├── Add a Camera
-└── Capture and Sync Data
+Get Started
+└── Initialize a Viam Machine
+        ↓
+Hardware
+└── Add a Camera
         ↓
 Data
+├── Capture and Sync Data
 ├── Query Data
 └── Filter at the Edge
         ↓
@@ -188,12 +201,14 @@ Productize
 ### Mobile Base Work Cell
 
 ```
-Foundation
-├── Connect to Cloud
-├── Add a Camera
-└── Capture and Sync Data
+Get Started
+└── Initialize a Viam Machine
+        ↓
+Hardware
+└── Add a Camera
         ↓
 Data
+├── Capture and Sync Data
 ├── Query Data
 └── Filter at the Edge
         ↓
@@ -227,12 +242,14 @@ Productize
 ### Arm + Vision Work Cell
 
 ```
-Foundation
-├── Connect to Cloud
-├── Add a Camera
-└── Capture and Sync Data
+Get Started
+└── Initialize a Viam Machine
+        ↓
+Hardware
+└── Add a Camera
         ↓
 Data
+├── Capture and Sync Data
 ├── Query Data
 └── Filter at the Edge
         ↓
@@ -277,22 +294,9 @@ Each block should follow this structure:
 ```markdown
 # [Block Name]
 
-**Time:** ~X minutes
-**Prerequisites:** [list of blocks that should be completed first]
-**Works with:** Simulation ✓ | Real Hardware ✓
-
-## What You'll Learn
-
-- Bullet point outcomes
-
 ## What Problem This Solves
 
-Brief description of the real-world problem this addresses.
-
-## Components Needed
-
-- Component 1
-- Component 2
+2-3 sentences describing the real-world problem this addresses.
 
 ## Steps
 
@@ -300,11 +304,17 @@ Brief description of the real-world problem this addresses.
 2. Step two
 3. ...
 
+Use Python/Go code in tabbed blocks for all code samples.
+
 ## Try It
 
-Interactive element or verification step.
+Verification step that confirms the block works as expected.
 
-## What's Next
+## Troubleshooting
+
+Collapsible sections for common issues.
+
+## Next Steps
 
 - Link to next block
 - Link to related blocks
