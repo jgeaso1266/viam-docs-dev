@@ -1,132 +1,86 @@
 # Capability #1: Get Hardware Running in Minutes
-## 60-Second Video Script
+## 90-Second Video Script
 
 **Learning Outcome:** "I can add hardware without writing drivers or dealing with dependencies"
 
-**Demo Setup:** Chess robot (xArm 7, gripper, Intel RealSense D435 camera + Orbbec Astra camera for swap)
+**Demo Setup:** xArm 6 on workbench (ethernet connected), EMEET SmartCam (external), Intel RealSense D435 (arm-mounted), Raspberry Pi with viam-server pre-installed, Viam app open in browser
 
 ---
 
 ## Script
 
-### [00:00-00:08] Hook (8 seconds)
+### [00:00-00:10] Hook (10 seconds)
 
 *Visual:*
-- Presenter on camera, chess robot visible in background
-- Hardware on desk (camera, arm, gripper - unplugged)
+- Presenter at workbench. xArm 6 visible but powered off. External camera nearby.
 
 *Presenter:*
-"Getting robot hardware running usually means hunting for drivers, installing SDKs, dealing with dependencies. Let me show you a different way."
+"Setting up a new robot arm usually means hunting down vendor SDKs, installing driver dependencies, and spending half a day on configuration before anything moves. With Viam, it takes about two minutes."
 
 ---
 
-### [00:08-00:23] Demo: Initial Configuration (15 seconds)
+### [00:10-00:25] Demo: Create the Machine (15 seconds)
 
 *Visual:*
-- Quick cuts, tight editing:
-  - Plug in Intel RealSense camera → add config → camera feed appears
-  - Plug in arm → add config → arm moves in UI
-  - Attach gripper → add config → gripper works in UI
-
-*Presenter (voiceover over the montage):*
-"Three pieces of hardware. Three config blocks. Camera, arm, gripper."
-
----
-
-### [00:23-00:30] Demo: Robot Working (7 seconds)
-
-*Visual:*
-- Chess robot in action with RealSense camera:
-  - Camera viewing board
-  - Arm moves to piece, gripper grabs
-  - Arm moves piece to new position
-
-*No narration - let the robot working speak for itself*
-
----
-
-### [00:30-00:42] Demo: Camera Swap (12 seconds)
-
-*Visual:*
-- Unplug Intel RealSense camera
-- Plug in Orbbec Astra camera
-- Update config (change model from "intel-realsense" to "orbbec-astra")
-- Camera feed appears immediately with new camera
+- Screen capture — Viam app
+- Click **+ Add machine**, type "demo-machine", click **Add machine**
+- Copy setup command, cut to terminal on Raspberry Pi, paste and run
+- Show viam-server starting (2-3 seconds of log output, then cut)
 
 *Presenter (voiceover):*
-"Swap the camera. Update the config. Same code, different hardware."
+"I'll start in the Viam app. I create a new machine — just give it a name. Viam gives me a setup command. I run it on my machine's terminal and viam-server starts."
 
 ---
 
-### [00:42-00:48] Demo: Robot Still Working (6 seconds)
+### [00:25-00:45] Demo: Add the Arm (20 seconds)
 
 *Visual:*
-- Chess robot in action with Orbbec camera:
-  - Same chess-playing behavior
-  - Different camera, same result
+- Screen capture — CONFIGURE tab
+- Click **+**, select **Component**, search "xArm6", select `viam:ufactory:xArm6`
+- Name it "my-arm", set `host` to arm's IP address
+- Click **Save** — show module downloading in logs (can be sped up in post)
 
-*No narration - the point is clear*
+*CUT TO:* Wide shot of arm — status LEDs come on as it initializes. Arm makes a small settling movement. Hold for a beat.
+
+*Presenter (voiceover):*
+"In the CONFIGURE tab, I search for xArm6 and add it. The only thing I need to set is the arm's IP address. I save, and viam-server pulls the driver from the Registry."
 
 ---
 
-### [00:48-00:60] Payoff (12 seconds)
+### [00:45-01:10] Demo: Add Remaining Components (25 seconds)
 
 *Visual:*
-- Back to presenter on camera
-- Robot with Orbbec camera still visible in background
+- Fast montage, no narration — establish the pattern repeats:
+  - Add EMEET SmartCam → Save → component appears in CONFIGURE tab
+  - Add RealSense (arm-mounted) → Save → component appears in CONFIGURE tab
+  - Add gripper → Save → component appears in CONFIGURE tab
+- All four components now visible in CONFIGURE tab
+
+*No narration — the pattern is self-evident*
+
+---
+
+### [01:10-01:22] Demo: Test Components (12 seconds)
+
+*Visual:*
+- Fast cuts through each component in CONTROL tab:
+  - Arm: jog a joint — arm moves
+  - External camera (EMEET): live feed appears showing workbench scene
+  - Arm camera (RealSense): live feed appears showing arm's-eye perspective
+  - Gripper: open/close — gripper responds
+
+*Presenter (voiceover):*
+"In the CONTROL tab, you can test each component to verify it works."
+
+---
+
+### [01:22-01:30] Payoff (8 seconds)
+
+*Visual:*
+- Back to presenter, arm visible in background in its jogged position
 
 *Presenter:*
-"No driver installation. No code changes. Just configuration. Your code works with any hardware that speaks the same API."
-
-*Final beat - presenter gestures to robot:*
-"That's hardware abstraction."
+"Four components. Zero driver code. And because every arm, every camera, and every gripper in Viam speaks the same API, if I swap any of them for a different model or brand, my code doesn't change. Just update the config."
 
 ---
 
-## Production Notes
-
-**Total time:** 60 seconds
-
-**Pacing:**
-- Presenter should be enthusiastic but not over-the-top
-- Initial config demo (08-23s) should be fast-paced montage - we don't need to see every keystroke
-- First robot working (23-30s) proves the initial setup works
-- Camera swap (30-42s) should be quick and smooth - the ease is the point
-- Second robot working (42-48s) proves hardware abstraction - same behavior, different camera
-- Closing drives home the abstraction benefit
-
-**The narrative arc:**
-Setup seems complex → Actually it's just config → Proof it works → Swap hardware with just config change → Still works → This is hardware abstraction
-
-**Key message:**
-Hardware abstraction through configuration. Change hardware without changing code. No driver hunting, no code rewrites, just configuration updates.
-
----
-
-## B-Roll Needed
-
-- Clean shots of xArm 7 in action
-- Intel RealSense D435 camera closeup
-- Orbbec Astra camera closeup
-- Camera swap moment (unplugging RealSense, plugging in Orbbec)
-- Gripper grabbing chess piece
-- Wide shot of full Chess setup
-- Tight shots of USB cables being plugged in/out
-- Side-by-side shots showing both cameras work identically
-
-## Screen Recordings Needed
-
-- Viam app UI (component list, camera feed, control panel)
-- Initial config editing - adding Intel RealSense camera (clean, well-formatted JSON)
-- Components appearing in UI after config save
-- Camera swap config change - changing model from "intel-realsense" to "orbbec-astra"
-- Camera feed updating immediately after config change
-- Testing components from browser UI (with both cameras)
-
-## Graphics/Overlays
-
-- Config blocks should be clearly visible and readable
-- Highlight the model change in config: "intel-realsense" → "orbbec-astra"
-- Smooth transitions between shots
-- Minimal, clean aesthetic
-- Optional: Small label showing which camera is active during each demo
