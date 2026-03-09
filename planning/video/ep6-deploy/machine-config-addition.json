@@ -1,0 +1,18 @@
+{
+  "_comment": "This service config is added to the machine in Ep 6 after uploading the module to the Registry",
+  "services": [
+    {
+      "name": "wrench-finder",
+      "api": "rdk:service:generic",
+      "model": "YOUR-ORG-ID:wrench-finder:detect-and-move",
+      "attributes": {
+        "arm_name": "my-arm",
+        "camera_name": "my-camera",
+        "detector_name": "my-detector",
+        "confidence_threshold": 0.7,
+        "move_scale": 10.0
+      },
+      "depends_on": ["my-arm", "my-detector"]
+    }
+  ]
+}

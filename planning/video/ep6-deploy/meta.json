@@ -1,0 +1,17 @@
+{
+  "module_id": "YOUR-ORG-ID:wrench-finder",
+  "visibility": "private",
+  "url": "",
+  "description": "Detects wrenches and moves the arm toward them.",
+  "models": [
+    {
+      "api": "rdk:service:generic",
+      "model": "YOUR-ORG-ID:wrench-finder:detect-and-move"
+    }
+  ],
+  "entrypoint": "run.sh",
+  "build": {
+    "build": "tar -czf module.tar.gz run.sh requirements.txt src/",
+    "arch": ["linux/arm64", "linux/amd64"]
+  }
+}

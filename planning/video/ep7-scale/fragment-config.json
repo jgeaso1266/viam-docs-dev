@@ -1,0 +1,72 @@
+{
+  "_comment": "Fragment created from the working machine config. Applied to multiple machines.",
+  "components": [
+    {
+      "name": "my-camera",
+      "api": "rdk:component:camera",
+      "model": "viam:camera:realsense",
+      "attributes": {
+        "sensors": ["color", "depth"],
+        "width_px": 640,
+        "height_px": 480,
+        "fps": 30
+      },
+      "service_configs": [
+        {
+          "type": "data_manager",
+          "attributes": {
+            "capture_methods": [
+              {
+                "method": "GetImages",
+                "capture_frequency_hz": 0.5,
+                "additional_params": {}
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "services": [
+    {
+      "name": "data-manager",
+      "api": "rdk:service:data_manager",
+      "model": "rdk:builtin:builtin",
+      "attributes": {
+        "sync_interval_mins": 0.1,
+        "sync_disabled": false,
+        "capture_disabled": false
+      }
+    },
+    {
+      "name": "wrench-detector-model",
+      "api": "rdk:service:mlmodel",
+      "model": "tflite_cpu",
+      "attributes": {
+        "model_path": "${packages.wrench-detector}/model.tflite",
+        "label_path": "${packages.wrench-detector}/labels.txt"
+      }
+    },
+    {
+      "name": "my-detector",
+      "api": "rdk:service:vision",
+      "model": "rdk:vision:mlmodel",
+      "attributes": {
+        "mlmodel_name": "wrench-detector-model"
+      }
+    },
+    {
+      "name": "wrench-finder",
+      "api": "rdk:service:generic",
+      "model": "YOUR-ORG-ID:wrench-finder:detect-and-move",
+      "attributes": {
+        "arm_name": "my-arm",
+        "camera_name": "my-camera",
+        "detector_name": "my-detector",
+        "confidence_threshold": 0.7,
+        "move_scale": 10.0
+      },
+      "depends_on": ["my-arm", "my-detector"]
+    }
+  ]
+}

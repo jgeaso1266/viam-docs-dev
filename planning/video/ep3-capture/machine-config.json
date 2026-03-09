@@ -1,0 +1,52 @@
+{
+  "components": [
+    {
+      "name": "my-arm",
+      "api": "rdk:component:arm",
+      "model": "viam:ufactory:xArm6",
+      "attributes": {
+        "host": "10.0.0.50",
+        "speed_degs_per_sec": 30,
+        "acceleration_degs_per_sec2": 60
+      }
+    },
+    {
+      "name": "my-camera",
+      "api": "rdk:component:camera",
+      "model": "viam:camera:realsense",
+      "attributes": {
+        "sensors": ["color", "depth"],
+        "width_px": 640,
+        "height_px": 480,
+        "fps": 30
+      },
+      "service_configs": [
+        {
+          "type": "data_manager",
+          "attributes": {
+            "capture_methods": [
+              {
+                "method": "GetImages",
+                "capture_frequency_hz": 1,
+                "additional_params": {}
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "services": [
+    {
+      "name": "data-manager",
+      "api": "rdk:service:data_manager",
+      "model": "rdk:builtin:builtin",
+      "attributes": {
+        "sync_interval_mins": 0.1,
+        "capture_dir": "",
+        "sync_disabled": false,
+        "capture_disabled": false
+      }
+    }
+  ]
+}
