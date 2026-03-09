@@ -1,126 +1,80 @@
 # Capability #2: Operate from Anywhere
-## 60-Second Video Script
+## 75-Second Video Script
 
 **Learning Outcome:** "I can access and control my robot remotely without networking configuration"
 
-**Demo Setup:** Chess or Vino robot in office/lab, developer on laptop in different location (different network)
+**Demo Setup:** Machine from Ep 1 running (xArm 6 + cameras configured and online), presenter at a different location (different room, staged as home office or coffee shop), laptop with browser and terminal open, `demo_remote_connect.py` ready
 
 ---
 
 ## Script
 
-### [00:00-00:08] Hook (8 seconds)
+### [00:00-00:10] Hook (10 seconds)
 
 *Visual:*
-- Split screen or quick cut between two locations
-- Robot in office/lab (one network)
-- Developer with laptop at home/coffee shop (different network)
+- Presenter at laptop, clearly not next to the robot. Setting feels remote — different room, different lighting.
 
 *Presenter:*
-"Remote access to hardware usually means VPNs, port forwarding, SSH tunneling. Let me show you what happens when you skip all that."
+"Your robot is running in the lab. You're at your desk. Normally, remote access means VPN configs, SSH tunnels, and firewall rules. With Viam, you just connect."
 
 ---
 
-### [00:08-00:22] Demo: Effortless Connection (14 seconds)
+### [00:10-00:30] Demo: Web App Control (20 seconds)
 
 *Visual:*
-- Laptop screen: Open browser
-- Navigate to Viam app (or just show it opening)
-- Robot appears in dashboard - online, ready
-- No setup screens, no configuration dialogs
-- Fast and clean
+- Screen capture — Viam app, CONTROL tab
+- Live camera feed visible — the workbench from Ep 1, streaming in real time
 
 *Presenter (voiceover):*
-"Open the browser. Robot's there. No setup, no configuration. Just connected."
+"I open the Viam app and navigate to my machine. Here's the CONTROL tab. I can see the live camera feed — that's the workbench, streaming right now from the machine in the other room."
 
-*Optional visual overlay: Network diagram showing NAT/firewall between laptop and robot*
-
----
-
-### [00:22-00:35] Demo: Live Feedback (13 seconds)
-
-*Visual:*
-- Click into robot
-- Live camera feed starts streaming immediately
-- Maybe show sensor readings updating in real-time
-- Could show logs streaming (optional)
-- Emphasize it's real-time, not cached
+- Screen — presenter jogs a joint using the arm control panel
 
 *Presenter (voiceover):*
-"Live camera feed. Real-time data. Everything the robot sees, you see."
+"I can move the arm from right here."
+
+*CUT TO:* Wide shot of machine in other room — arm moves.
+
+*CUT BACK:* Screen — camera feed shows arm in its new position.
 
 ---
 
-### [00:35-00:48] Demo: Bidirectional Control (13 seconds)
+### [00:30-00:50] Demo: Code Control (20 seconds)
 
 *Visual:*
-- Send a control command (move arm, drive base, trigger action)
-- Robot responds immediately
-- Show both laptop screen (command sent) and robot moving
-- Maybe show terminal/code running command remotely (alternative)
+- Screen — terminal on laptop, `demo_remote_connect.py` briefly visible (connection lines and arm move command)
+- Run the script
 
 *Presenter (voiceover):*
-"Send a command. Robot responds. Debug and control like it's localhost."
+"And it's not just the web UI. I can run code from my laptop too. Five lines to connect, read the camera, and move the arm. Same API whether I'm sitting next to it or across the country."
+
+*Visual:*
+- Terminal output appears:
+  ```
+  Got image: 640x480
+  Current joints: [0.0, -45.0, -30.0, 0.0, 60.0, 0.0]
+  Arm moved.
+  ```
+
+*CUT TO:* Wide shot — arm moves again.
+
+### [00:50-00:55] Demo: Logs (5 seconds)
+
+*Visual:*
+- Screen — LOGS tab in Viam app, logs streaming, quick filter by "my-arm"
+
+*Presenter (voiceover):*
+"I can also stream logs in real time, filtered by component."
 
 ---
 
-### [00:48-00:60] Payoff (12 seconds)
+### [00:55-01:15] Payoff (20 seconds)
 
 *Visual:*
-- Back to presenter on camera
-- Optional: Show network diagram emphasizing different networks/firewall
+- Back to presenter at laptop, brief and confident
 
 *Presenter:*
-"No VPN. No port forwarding. No firewall rules. Remote access that just works, even across networks."
-
-*Final beat - presenter gestures:*
-"That's Viam."
+"No VPN. No port forwarding. Viam handles the connection. Same app, same SDK, same APIs — from anywhere."
 
 ---
 
-## Production Notes
-
-**Total time:** 60 seconds
-
-**Pacing:**
-- Hook establishes the typical pain (network config complexity)
-- Connection demo should feel instant and effortless - that's the point
-- Live feedback proves it's real-time, not simulated
-- Control demo proves bidirectional communication - you can actually command the robot
-- Payoff reinforces the "no configuration" message
-
-**The narrative arc:**
-Remote access is usually complicated → Open app, robot's there → See live data → Control it remotely → This is remote access without the hassle
-
-**Key message:**
-Remote robotics access is frictionless. Connect to robots like you connect to websites - no networking configuration needed.
-
-**Critical moment:**
-The instant connection (robot appears in app) OR the robot responding to remote command. Both prove the promise: effortless remote access and control.
-
----
-
-## B-Roll Needed
-
-- Robot in lab/office setting
-- Developer with laptop in different location (home, coffee shop, or different room)
-- Establishing shots showing physical separation
-- Robot responding to commands (arm moving, base driving, action triggering)
-- Optional: Network equipment (router, cables) to emphasize network separation
-
-## Screen Recordings Needed
-
-- Viam app login/dashboard (clean, fast)
-- Robot appearing in dashboard (online status)
-- Clicking into robot details
-- Live camera feed starting/streaming
-- Control interface (TEST panel or custom controls)
-- Optional: Terminal showing code execution against remote robot
-- Optional: Log streaming interface
-
-## Graphics/Overlays
-
-- Network diagram showing laptop and robot on different networks with NAT/firewall
-- Location labels ("Home" / "Office" or "Network A" / "Network B")
-- Clean transitions between laptop screen and robot shots
-- Minimal, professional aesthetic
