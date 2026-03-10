@@ -1,147 +1,148 @@
 # Capability #6: Manage Software Deployments
-## 60-Second Video Script
+## ~90-Second Video Script
 
 **Learning Outcome:** "Code deployment has version control and lifecycle management built-in"
 
-**Demo Setup:** Chess robot running chess module, Viam app showing registry and robot configuration, ability to push module updates and change config parameters
+**Demo Setup:** Beanjamin barista robot, Viam app open in browser, two versions of the beanjamin module ready (v1.0 — silent during grind, v1.1 — speaks during grind)
 
 ---
 
 ## Script
 
-### [00:00-00:08] Hook (8 seconds)
+### [00:00–00:16] Hook (16 seconds)
 
 *Visual:*
-- Presenter on camera with chess robot in background
-- Optional: Screen showing Viam registry with versioned modules
+- Presenter on camera, Beanjamin robot visible in background
 
 *Presenter:*
-"Deploy to your robot like it's a server in the cloud. Let me show you."
+"Updating your robot's software means SSH-ing in, pulling the latest code, and restarting — which can silently break other parts of your stack. And there's no standard way to push updates to a fleet. Here's what it looks like with Viam."
 
 ---
 
-### [00:08-00:20] Demo: Module v1.0 Running (12 seconds)
+### [00:16–00:53] Demo: Module v1.0 Running (37 seconds)
 
 *Visual:*
-- Show Viam Registry with chess module v1.0
-- Show robot configuration using chess module v1.0
-- Chess robot playing (executing a move)
-- Show it's running and working
+- Wide shot of Beanjamin robot setup
 
 *Presenter (voiceover):*
-"Chess module v1.0 deployed from registry. Robot pulls it, runs it. Lifecycle managed automatically."
-
----
-
-### [00:20-00:35] Demo: Version Update (15 seconds)
+"This is Beanjamin — a robot barista."
 
 *Visual:*
-- Terminal showing: Push v1.1 to registry (or show registry UI with v1.1 appearing)
-- Robot status showing update pulling/installing
-- Robot now running v1.1
-- Show improved behavior (maybe different chess strategy, faster move, or visible improvement)
+- Screen — Viam Registry showing beanjamin module v1.0
 
 *Presenter (voiceover):*
-"Push v1.1 to registry. Robot pulls the update automatically. New version, improved behavior. OTA updates like you're used to."
-
----
-
-### [00:35-00:50] Demo: Live Reconfiguration (15 seconds)
+"In Viam, code is packaged as a module and published to the registry. A module isn't just a script — viam-server manages its entire lifecycle: starts on boot, restarts on failure, updates automatically."
 
 *Visual:*
-- Open robot configuration in Viam app
-- Show config parameter (e.g., "engine-millis": 10)
-- Change it (e.g., to "engine-millis": 1000)
-- Save configuration
-- Robot immediately adjusts behavior (longer thinking time for chess move)
-- Emphasize: No restart, instant change
+- Screen — add module to robot configuration in CONFIGURE tab → Save
+- Logs show module loading and starting
 
 *Presenter (voiceover):*
-"Change a config parameter. Saves in seconds. Robot adjusts immediately. No restart, no redeployment."
+"I add the beanjamin module to the robot's configuration, and the robot pulls it down automatically."
+
+*Visual:*
+- Screen — terminal showing:
+  ```python
+  coffee = Generic.from_robot(robot, "coffee")
+  await coffee.do_command({"prepare_order": {"drink": "espresso", "customer_name": "Alice"}})
+  ```
+- Run it
+- CUT TO: robot greets customer by name, runs brew sequence (grind, tamp, lock porta filter), announces order ready
+
+*Presenter (voiceover):*
+"Now when I call `prepare_order` via `do_command`, it greets the customer by name, runs the brew sequence — grinding, tamping, locking the porta filter — then announces when the espresso is ready. That's v1.0."
 
 ---
 
-### [00:50-00:60] Payoff (10 seconds)
+### [00:53–01:09] Demo: Version Update (v1.1) (16 seconds)
 
 *Visual:*
-- Back to presenter on camera
-- Chess robot still playing in background
+- Screen — code editor showing `grindCoffee` in `espresso.go`, two `say` calls added at start and end of the method
+- Terminal — `viam module upload --version 1.1.0`
+- Screen — Viam Registry showing v1.1 available
+- Screen — robot configuration updates to v1.1 automatically
+- Logs show module reloading
+- CUT TO: robot runs `prepare_order` again — speaks during grinding: "Grinding away..." → brews → "The grind is over."
+
+*Presenter (voiceover):*
+"I add two lines to the grind step — a spoken message at the start and end of the grind. I push v1.1 to the registry. The robot pulls the update automatically, no SSH, no restart. Same `do_command`, new behavior."
+
+---
+
+### [01:09–01:25] Payoff (16 seconds)
+
+*Visual:*
+- Back to presenter on camera, Beanjamin robot in background
 
 *Presenter:*
-"Version control for robot modules. OTA updates. Live reconfiguration. Production-grade deployment from day one."
-
-*Final beat:*
-"That's Viam."
+"One command to publish. The robot updated itself. In Viam, robot software deploys the same way any other software does — versioned, distributed through a registry, applied without touching the machine. Every version is tracked, so you can pin or roll back."
 
 ---
 
 ## Production Notes
 
-**Total time:** 60 seconds
-
 **Pacing:**
-- Hook establishes familiarity with version control (npm/pip)
-- Module v1.0 shows deployment and lifecycle management
-- Version update shows OTA updates and version control
-- Live reconfiguration is the unique capability - emphasize the speed
-- Payoff ties together all three capabilities
+- Hook is specific and backed by real failure modes — deliver with authority, not speed
+- v1.0 deployment section should feel methodical — registry, config, run. Each step is deliberate.
+- v1.1 update should feel effortless by contrast — the point is that the robot updates itself
+- Payoff is short and direct. No taglines.
 
 **The narrative arc:**
-Familiar version control → Module deployed and running → Push update, robot pulls it → Better behavior → Change config, instant adjustment → Production-ready deployment built-in
+Deploying robot software is a manual, fragile process (hook) → In Viam, code is a module — viam-server manages its lifecycle (v1.0) → Push a new version, robot pulls it automatically (v1.1) → Versioned, trackable, rollback-able (payoff)
 
-**Key message:**
-Robot code deployment works like software deployment you already know: version control, OTA updates, and live reconfiguration without restarts.
+**Key messages:**
+1. A Viam module is not a script — viam-server owns its lifecycle (boot, failure recovery, updates)
+2. Updates are pushed to the registry, not SSH'd to the robot
+3. Every version is tracked — you can pin or roll back
 
-**Critical moments:**
-1. Robot auto-updating to v1.1 (proves version control/OTA)
-2. Config change → behavior adjusts in 2 seconds (proves live reconfiguration)
+**Critical moment:**
+The robot pulling v1.1 automatically after `viam module upload`. No SSH, no restart command, no manual step — the behavior change is visible and audible.
+
+**Tone:**
+- Hook comes from genuine experience — DDS discovery failures and ad-hoc deployment scripts are real problems.
+- Demo should feel calm and confident — the contrast with the hook is the point.
+
+---
+
+## Research Backing for Hook Claims
+
+### Deployment pain points (validated 2021 - 2026):
+- Restarting one ROS2 node silently breaks DDS discovery across the entire stack — other nodes stop communicating with no error message (GitHub ros2/rmw_fastrtps #509, February 2021)
+- `apt upgrade` on a robot causes segfault at runtime in `ros2_control` — no warning before launch, failure only surfaces at runtime (GitHub ros-controls/ros2_control #1819, October 2024)
+- No standard deployment approach exists — teams use 6+ incompatible toolchains (SSH/git, Ansible, RAUC, Mender, Docker, Balena) with no reference implementation (ROS Discourse — "The landscape of software deployment in robotics", March 2023)
+- NSF 2024 workshop on Software Engineering for Robotics explicitly identified "upgrades management" as an unsolved problem for robot fleets (arXiv:2401.12317, January 2024)
+- Manual SSH/git-pull deploy workflow does not scale past ~10 robots; described as "error prone" by practitioners (ROS Discourse #33884, October 2023)
 
 ---
 
 ## B-Roll Needed
 
-- Chess robot playing (showing it's working)
-- Chess robot making different moves (v1.0 vs v1.1 behavior)
-- Close-ups of robot executing moves at different speeds/strategies
-- Robot continuing to work during updates (if safe to show)
+- Wide shot of Beanjamin robot setup on bench
+- Beanjamin running full `prepare_order` — greeting, brew sequence, order callout (v1.0)
+- Beanjamin running `prepare_order` with grinding speech added (v1.1) — audible difference
+- Close-up of arm during grind step (v1.0 silent vs v1.1 speaking)
 
 ## Screen Recordings Needed
 
-- Viam Registry showing chess module with version number (v1.0)
-- Robot configuration showing module in use
-- Terminal/CLI pushing v1.1 to registry (or registry UI showing new version)
-- Robot status showing update in progress
-- Robot configuration showing v1.1 now in use
-- Configuration editor showing parameter (engine-millis or similar)
-- Changing parameter value
-- Save button/action
-- Timestamp showing quick update (< 2 seconds)
+- Viam Registry showing beanjamin module v1.0
+- CONFIGURE tab — adding beanjamin module to robot configuration
+- Logs showing module loading and starting after config save
+- Terminal showing `do_command` call with `prepare_order`
+- Code editor showing `grindCoffee` in `espresso.go` with two `say` calls added
+- Terminal — `viam module upload --version 1.1.0`
+- Viam Registry showing v1.1 available
+- Robot configuration showing version updating automatically
+- Logs showing module reloading to v1.1
 
 ## Graphics/Overlays
 
-- Version labels (v1.0, v1.1) clearly visible
-- "No restart required" text during live reconfiguration
-- Optional: Timeline showing update speed
-- Optional: Comparison between v1.0 and v1.1 behavior
-- Clean, professional aesthetic
+- Version labels (v1.0, v1.1) clearly visible during registry and config shots
+- Minimal aesthetic — let the robot's audible behavior change speak for itself
 
-## Technical Considerations
+## Technical Requirements
 
-**Module Version Update:**
-- Use chess module with actual version numbers
-- If showing CLI: `viam module upload --version 1.1.0`
-- Show robot status/logs indicating update pulling
-- Behavior difference should be visible (timing, strategy, or other observable change)
-
-**Live Reconfiguration:**
-- Use actual chess module config parameter (engine-millis, skill, or similar)
-- Show before value and after value
-- Timing should prove it's instant (< 2-3 seconds)
-- Robot should visibly change behavior without restart
-- Emphasize no restart/redeployment needed
-
-**Making Both Clear:**
-- Version update and live reconfiguration are different capabilities
-- Version update = new code
-- Live reconfiguration = same code, different parameters
-- Both should be clearly labeled/distinguished in video
+- beanjamin module v1.0 published to Viam Registry before filming
+- beanjamin module v1.1 (with `say` calls in `grindCoffee`) built and ready to upload during demo
+- `viam module upload --version 1.1.0` command tested and confirmed working before filming
+- Robot must have speaker/audio output configured for TTS
+- Confirm `prepare_order` do_command works end-to-end on the actual machine before filming day
