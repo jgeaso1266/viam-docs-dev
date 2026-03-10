@@ -1,86 +1,152 @@
 # Capability #1: Get Hardware Running in Minutes
 ## 90-Second Video Script
 
-**Learning Outcome:** "I can add hardware without writing drivers or dealing with dependencies"
+**Learning Outcome:** "Hardware is configured, not coded — and because it's behind a consistent API, my code never has to change when my hardware does."
 
-**Demo Setup:** xArm 6 on workbench (ethernet connected), EMEET SmartCam (external), Intel RealSense D435 (arm-mounted), Raspberry Pi with viam-server pre-installed, Viam app open in browser
+**Demo Setup:** xArm 6 with gripper attached, Intel RealSense D435 camera, Orbbec Astra camera (for swap), bench setup (no application — bare hardware)
 
 ---
 
 ## Script
 
-### [00:00-00:10] Hook (10 seconds)
+### [00:00-00:18] Hook (18 seconds)
 
 *Visual:*
-- Presenter at workbench. xArm 6 visible but powered off. External camera nearby.
+- Presenter on camera, arm with gripper attached, camera, all on bench — unplugged
 
 *Presenter:*
-"Setting up a new robot arm usually means hunting down vendor SDKs, installing driver dependencies, and spending half a day on configuration before anything moves. With Viam, it takes about two minutes."
+"Getting a depth camera running on Linux means kernel patches, vendor-specific SDKs, and platform builds that may or may not support your OS.
+
+Getting an arm moving means configuring a dedicated Ethernet connection, enabling motors through a web interface, and writing initialization code you'll paste into every script. If anything goes wrong — a collision, an overload — the arm locks up, and sometimes the only fix is walking over and power cycling it.
+
+Here's what it looks like with Viam."
 
 ---
 
-### [00:10-00:25] Demo: Create the Machine (15 seconds)
+### [00:18-00:38] Demo: Configuration (20 seconds)
 
 *Visual:*
-- Screen capture — Viam app
-- Click **+ Add machine**, type "demo-machine", click **Add machine**
-- Copy setup command, cut to terminal on Raspberry Pi, paste and run
-- Show viam-server starting (2-3 seconds of log output, then cut)
+- Quick cuts, tight editing:
+  - Attach gripper to arm
+  - Plug in Intel RealSense camera → show config in Viam app UI → camera feed appears
+  - Plug in arm (with gripper already attached) → show config in UI → arm responds
+  - Show gripper config in UI → gripper opens and closes
+
+*Presenter (voiceover over the montage):*
+"Three components. Three config blocks. No kernel patches. No SDKs. No initialization ritual. Just tell Viam what's connected, and it handles the rest."
+
+---
+
+### [00:38-00:52] Demo: Code (14 seconds)
+
+*Visual:*
+- Show on screen:
+  ```python
+  camera = Camera.from_robot(robot, "my-camera")
+  images = await camera.get_images()
+  ```
+- Run it. Image appears.
 
 *Presenter (voiceover):*
-"I'll start in the Viam app. I create a new machine — just give it a name. Viam gives me a setup command. I run it on my machine's terminal and viam-server starts."
+"Your code talks to a camera. Not a RealSense. Not an Orbbec. A camera. The API is the same regardless of what hardware is behind it."
 
 ---
 
-### [00:25-00:45] Demo: Add the Arm (20 seconds)
+### [00:52-01:10] Demo: The Swap (18 seconds)
 
 *Visual:*
-- Screen capture — CONFIGURE tab
-- Click **+**, select **Component**, search "xArm6", select `viam:ufactory:xArm6`
-- Name it "my-arm", set `host` to arm's IP address
-- Click **Save** — show module downloading in logs (can be sped up in post)
-
-*CUT TO:* Wide shot of arm — status LEDs come on as it initializes. Arm makes a small settling movement. Hold for a beat.
+- Unplug Intel RealSense camera
+- Plug in Orbbec Astra camera
+- Show config change in Viam app UI — one field changes
+- Run the same code. Same result.
 
 *Presenter (voiceover):*
-"In the CONFIGURE tab, I search for xArm6 and add it. The only thing I need to set is the arm's IP address. I save, and viam-server pulls the driver from the Registry."
+"Swap the hardware. Change one field in the config. Run the same code. Same result. Your application never knew the difference."
 
 ---
 
-### [00:45-01:10] Demo: Add Remaining Components (25 seconds)
+### [01:10-01:30] Payoff (20 seconds)
 
 *Visual:*
-- Fast montage, no narration — establish the pattern repeats:
-  - Add EMEET SmartCam → Save → component appears in CONFIGURE tab
-  - Add RealSense (arm-mounted) → Save → component appears in CONFIGURE tab
-  - Add gripper → Save → component appears in CONFIGURE tab
-- All four components now visible in CONFIGURE tab
-
-*No narration — the pattern is self-evident*
-
----
-
-### [01:10-01:22] Demo: Test Components (12 seconds)
-
-*Visual:*
-- Fast cuts through each component in CONTROL tab:
-  - Arm: jog a joint — arm moves
-  - External camera (EMEET): live feed appears showing workbench scene
-  - Arm camera (RealSense): live feed appears showing arm's-eye perspective
-  - Gripper: open/close — gripper responds
-
-*Presenter (voiceover):*
-"In the CONTROL tab, you can test each component to verify it works."
-
----
-
-### [01:22-01:30] Payoff (8 seconds)
-
-*Visual:*
-- Back to presenter, arm visible in background in its jogged position
+- Back to presenter on camera
+- Arm with Orbbec camera still visible in background
 
 *Presenter:*
-"Four components. Zero driver code. And because every arm, every camera, and every gripper in Viam speaks the same API, if I swap any of them for a different model or brand, my code doesn't change. Just update the config."
+"In Viam, hardware is configured, not coded. Every camera speaks the same API. Every arm speaks the same API. You write your application once, and it works with whatever hardware you connect.
+
+That's hardware abstraction in Viam."
 
 ---
 
+## Production Notes
+
+**Total time:** 90 seconds
+
+**Pacing:**
+- Hook is dense and specific — delivered with authority, not speed. These are real problems the presenter has encountered.
+- Config montage (18-38s) should be fast-paced — the ease and speed is the point. Don't linger on keystrokes.
+- Code section (38-52s) should breathe — let the viewer read the two lines and absorb the point.
+- Swap section (52-70s) should feel effortless — unplug, plug, change one field, done.
+- Payoff (70-90s) is delivered directly to camera, with conviction. This is the thesis statement.
+
+**The narrative arc:**
+Hardware setup is real engineering work (hook) → With Viam it's just configuration (config montage) → Your code uses generic APIs, not vendor SDKs (code) → Swap hardware, code doesn't change (swap) → This is hardware abstraction (payoff)
+
+**Key messages:**
+1. Setup is configuration, not engineering work — no kernel patches, no vendor SDKs, no initialization code
+2. Hardware abstraction means your code is hardware-independent — swap vendors, change devices, your application doesn't care
+
+**Tone:**
+- Expert, not salesperson. The hook comes from genuine experience with these problems.
+- The pain points in the hook are specific and validated — kernel patches, vendor SDKs, dedicated Ethernet, motor enable sequences, power cycling after errors. These are real.
+- No "the old way vs. the new way" framing. Just: here's the problem, here's what it looks like with Viam.
+
+---
+
+## Research Backing for Hook Claims
+
+### Camera pain points (validated March 2025 - March 2026):
+- RealSense DKMS kernel patching fails on kernel 6.8+ (GitHub issue #14156, July 2025)
+- RealSense USB 3.0 misdetection across multiple laptops (GitHub issue #13903, April 2025)
+- Orbbec has 4 competing SDKs; same camera model ships with different firmware requiring different SDKs
+- Orbbec Windows pip wheel ships macOS binaries (GitHub issue #194, December 2025)
+- Orbbec "no device found" with no diagnostic (multiple issues, through March 2026)
+
+### Arm pain points (validated March 2025 - March 2026):
+- xArm mode switch silently resets, undocumented (GitHub issue #141, May 2025)
+- xArm SDK bug leaves motion state broken (GitHub issue #149, December 2025)
+- Firmware updates break working code (GitHub xarm_ros2 issue #155, December 2025; SDK issue #153, March 2026)
+- F/T sensor errors unrecoverable via SDK, require power cycle (GitHub issue #151, January 2026)
+
+---
+
+## B-Roll Needed
+
+- xArm 6 on bench (no application, clean setup)
+- Intel RealSense D435 camera closeup
+- Orbbec Astra camera closeup
+- Gripper being attached to arm
+- Camera swap moment (unplugging RealSense, plugging in Orbbec)
+- Gripper opening and closing from UI command
+- Arm moving from UI command
+- Tight shots of USB cables being plugged in
+- Wide shot of bench setup with all components
+
+## Screen Recordings Needed
+
+- Viam app UI showing camera config and live feed appearing
+- Viam app UI showing arm config and arm responding
+- Viam app UI showing gripper config and gripper operating
+- Camera swap: config field changing in UI
+- Python code on screen (2 lines — Camera.from_robot, get_images)
+- Code execution showing image/point cloud result
+- Same code execution after camera swap showing same result
+
+## Graphics/Overlays
+
+- Config fields should be clearly visible and readable in UI
+- Highlight the model change during camera swap
+- Code should be large, readable, clean font
+- Smooth transitions between shots
+- Minimal, clean aesthetic
+- Optional: small label showing which camera is active during each demo
