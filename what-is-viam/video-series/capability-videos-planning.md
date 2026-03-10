@@ -73,16 +73,62 @@ Most projects are "New" status - **hackathon is Feb 24-26, 2026**
 
 ## Demo Strategy by Capability
 
-| Capability | Demo Approach | Requirements | Confidence |
-|------------|---------------|--------------|------------|
-| **1. Hardware Integration** | Use Chess (existing) | Chess robot | ✅ Very High |
-| **2. Remote Operation** | Use Chess or Vino (existing) | Chess or Vino robot | ✅ Very High |
-| **3. Data Capture** | **Purpose-built**: Pi + camera | Pi, camera, ethernet cable | ✅ High |
-| **4. Train/Deploy Models** | **Purpose-built**: Object detection (uses data from #3) | Same as #3 + training service | ✅ High |
-| **5. Remote Development** | Use Chess (existing) | Chess robot | ✅ Very High |
-| **6. Software Deployment** | Use Chess module (existing) | Chess robot | ✅ Very High |
-| **7. Scale Easily** | **Purpose-built**: 2-3 identical sensor stations | 2-3 Pis + cameras | ✅ High |
-| **8. Productize Apps** | **Purpose-built**: TypeScript web app | Build simple app, connect to Chess/Vino | ⚠️ Medium |
+| Capability | Demo Approach | Hardware | Status |
+|------------|---------------|----------|--------|
+| **1. Hardware Integration** | xArm 6 + cameras + gripper on RPi | xArm 6, EMEET SmartCam, RealSense D435, gripper, Raspberry Pi | ✅ Script done |
+| **2. Remote Operation** | Reuse Cap 1 machine | Same as Cap 1 | ✅ Script done |
+| **3. Data Capture** | Vino robot, table camera, empty glass | Vino robot, table camera | ✅ Script done |
+| **4. Train/Deploy Models** | Vino robot, glass fullness detection (uses data from #3) | Same as Cap 3 | ✅ Script done |
+| **5. Remote Development** | Hand-eye calibration script (`hand-eye-test`) | Robot arm, depth camera, gripper | ✅ Script done |
+| **6. Software Deployment** | Beanjamin barista robot, v1.0 → v1.1 | Beanjamin robot | 🔄 Pending engineer input |
+| **7. Scale Easily** | 3 QC sensor stations in different office locations | 3x Raspberry Pi + cameras | ✅ Script done |
+| **8. Productize Apps** | Greenhouse Viam app | TBD | 🔄 Pending details |
+
+---
+
+## Hardware Needed by Capability
+
+### Cap 1 — Get Hardware Running in Minutes
+- xArm 6 (ethernet connected to network)
+- EMEET SmartCam (external, USB)
+- Intel RealSense D435 (arm-mounted)
+- Gripper (compatible with xArm 6)
+- Raspberry Pi (viam-server pre-installed)
+
+### Cap 2 — Operate from Anywhere
+- Same machine as Cap 1 (no additional hardware)
+- Laptop with browser and terminal (presenter's machine)
+
+### Cap 3 — Capture Data from Edge to Cloud
+- Vino robot (two arms)
+- Table camera (pointed at glass during pour)
+- Empty glass
+- Ethernet cable (for resilience demo — unplugged and reconnected)
+- Laptop with Viam app open
+
+### Cap 4 — Train and Deploy Models
+- Same Vino setup as Cap 3 (reuse)
+
+### Cap 5 — Develop Code Remotely
+- Robot arm with depth camera and gripper (hand-eye-test compatible setup)
+- Object on workbench for pick test
+- Laptop with terminal open, `hand-eye-test` binary ready
+
+### Cap 6 — Manage Software Deployments
+- Beanjamin barista robot
+- Two versions of beanjamin module (v1.0 and v1.1 with visibly different behavior)
+- *(Details TBD pending engineer conversation)*
+
+### Cap 7 — Scale Easily
+- 3x Raspberry Pi (viam-server pre-installed)
+- 3x USB cameras
+- Objects on each desk: cups, bottles, keyboards, mice, laptops
+- Stations physically located in different parts of the office
+- Laptop with Viam app open
+
+### Cap 8 — Productize with Viam Apps
+- Greenhouse project hardware *(TBD)*
+- Laptop with demo app open
 
 ### Confidence Levels Explained
 
