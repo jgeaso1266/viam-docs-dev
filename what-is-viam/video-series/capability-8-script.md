@@ -1,222 +1,145 @@
 # Capability #8: Productize with Viam Apps
-## 60-Second Video Script
+## ~75-Second Video Script
 
 **Learning Outcome:** "Customer-facing infrastructure is provided, I just build the product"
 
-**Demo Setup:** Custom-built customer-facing web app with fictional company branding, connected to Chess or Vino robot, demonstrating white-label auth, fleet management, robot control, and billing features
+**Demo Setup:** Greenhouse Dashboard (`viam:greenhouse-dashboard`) — a real customer-facing Viam app with live sensor monitoring, light control, and camera feed connected to a greenhouse robot
 
 ---
 
 ## Script
 
-### [00:00-00:08] Hook (8 seconds)
+### [00:00-00:15] Hook (15 seconds)
 
 *Visual:*
 - Presenter on camera
-- Screen showing infrastructure checklist: Auth systems, Billing, Customer portals, API access
 
 *Presenter:*
-"Building a robotics product means building customer infrastructure: auth, billing, dashboards, APIs. Or you can skip all that. Let me show you."
+"Shipping a robotics product means building the robot — and then building all the infrastructure your customers expect from any software product: authentication, dashboards, connectivity. Getting all of that right takes months before a customer can even log in. Here's what it looks like when Viam handles it instead."
 
 ---
 
-### [00:08-00:18] Demo: Customer Login (10 seconds)
+### [00:15-00:27] Show the App (12 seconds)
 
 *Visual:*
-- Customer-facing app opens
-- Branded login screen with fictional company logo and colors (e.g., "RoboClean" or "FleetBot")
-- **Overlay/badge: "Example Customer App" or "Demo Company"**
-- NOT Viam branding - clearly white-label
-- Customer enters credentials and logs in
-- Smooth transition to dashboard
+- Screen — Greenhouse Dashboard running
+- Sensors updating in real time (temperature, humidity, CO2, soil moisture)
+- Live camera feed visible
+- Presenter toggles the light on and off
 
 *Presenter (voiceover):*
-"Customer logs into your branded app. White-label authentication. Your brand, not Viam's."
+"This is the Greenhouse Dashboard — a customer-facing app built on Viam. Live sensor readings, a camera feed, and control over the greenhouse lighting. This is what the customer sees."
 
 ---
 
-### [00:18-00:30] Demo: Fleet Dashboard (12 seconds)
+### [00:27-00:47] Codebase Reveal (20 seconds)
 
 *Visual:*
-- Customer dashboard showing robot fleet
-- 2-3 robots visible with status (online, battery, location)
-- Professional UI with company branding throughout
-- Customer clicks on one robot to view details
+- Code editor open on `main.ts` — full file visible (~410 lines)
+- Scroll to lines 36–50: `THRESHOLDS` object and `healthClass` function
+- Scroll to lines 262–273: light toggle click handler
+- Scroll to lines 295–316: `pollSensors` reading env sensor, updating charts
 
 *Presenter (voiceover):*
-"Customer sees their robot fleet. Status, location, diagnostics. Fleet management UI provided. You didn't build this infrastructure."
+"This is the entire application — about 410 lines of TypeScript. Here are the health thresholds for temperature, humidity, CO2, and soil moisture. Here's the light toggle. Here's the sensor polling — reading live data and pushing it to the charts. No auth code, no connection management, no distribution logic. Just the product."
 
 ---
 
-### [00:30-00:44] Demo: Robot Control (14 seconds)
+### [00:47-01:05] What Viam Provided (18 seconds)
 
 *Visual:*
-- Robot detail view opens
-- Live camera feed from robot (Chess or Vino)
-- Control interface visible
-- Customer sends command or interacts with robot
-- Robot responds (arm moves, action executes)
-- Clean, professional interface
+- Screen — Viam app showing machine picker UI
+- Customer selects a greenhouse from the picker
+- Screen — browser dev tools or Viam app settings showing credential injection via cookie
+- Screen — Viam Registry showing `viam:greenhouse-dashboard` published
 
 *Presenter (voiceover):*
-"Live camera feed. Control interface. API access to the robot. All provided. You built the robot features, Viam provides the connection."
+"The machine picker — the UI that lets a customer select which greenhouse to connect to — is provided by Viam. Authentication is handled by Viam's proxy; the app reads credentials from a cookie, it never manages auth directly. And the app is published to the Viam registry and installed like any other module."
 
 ---
 
-### [00:44-00:52] Demo: Billing & Account (8 seconds)
+### [01:05-01:15] Payoff (10 seconds)
 
 *Visual:*
-- Navigate to account/billing section
-- Show subscription tier, usage metrics, payment information
-- Professional billing interface
-
-*Presenter (voiceover):*
-"Billing, invoicing, payment processing. Built-in. You define pricing, Viam handles the rest."
-
----
-
-### [00:52-00:60] Payoff (8 seconds)
-
-*Visual:*
-- Quick montage of all sections: Login → Dashboard → Control → Billing
-- Overlay text showing: "✓ Auth", "✓ Billing", "✓ Fleet Management", "✓ API Access"
-- Back to presenter
+- Back to presenter on camera
 
 *Presenter:*
-"Customer-facing infrastructure provided. You build product features, not infrastructure."
-
-*Final beat:*
-"That's Viam."
+"You define what your customers need to see and build exactly that. Authentication, connectivity, distribution — all provided. The infrastructure between your robot and your customer is handled. You build the product."
 
 ---
 
 ## Production Notes
 
-**Total time:** 60 seconds
-
 **Pacing:**
-- Hook establishes the infrastructure challenge
-- Each section is fast but clear - showing what's provided
-- Login → Dashboard → Control → Billing flow feels like real customer experience
-- Payoff emphasizes "provided vs built" distinction
+- Hook is on camera — deliver with conviction. The infrastructure tax is real and immediately recognizable to any engineer who has shipped a product.
+- Show the App should feel like a customer using it — unhurried, natural. Let the live data speak.
+- Codebase Reveal is deliberate — scroll slowly enough that viewers can read the section headers. The absence of auth/connection code is the point, not the presence of product code.
+- What Viam Provided moves quickly through three beats — machine picker, auth, registry. Each should feel like a reveal, not a list.
+- Payoff is short and direct. No taglines.
 
 **The narrative arc:**
-Building infrastructure is complex → Customer logs in (auth provided) → Views fleet (management provided) → Controls robot (API access provided) → Manages billing (payments provided) → You focus on product, not infrastructure
+Shipping a robotics product requires building customer infrastructure too (hook) → Here's the finished product (show the app) → Here's everything the developer wrote — just product logic (codebase reveal) → Here's what Viam handled (what Viam provided) → You build what's differentiated (payoff)
 
-**Key message:**
-Viam provides customer-facing infrastructure (auth, billing, fleet management, API access) so you can focus on building product features, not rebuilding infrastructure.
+**Key messages:**
+1. The developer only wrote product logic — health thresholds, sensor polling, light control
+2. Auth, machine picker, and distribution are provided by Viam — zero lines written for them
+3. A Viam app is published and installed exactly like a module — same workflow, same registry
 
 **Critical moment:**
-The full customer experience showing all the infrastructure features working together - login, fleet management, robot control, billing - all provided, not built by you.
+The codebase reveal — scrolling through ~410 lines with no auth code, no connection management code, no distribution logic. The contrast between what the app does and how little infrastructure code it contains is the proof point.
+
+**Tone:**
+- Hook comes from genuine engineering experience — every engineer has rebuilt auth at least once.
+- Demo should feel like a product, not a prototype. The greenhouse dashboard is real.
 
 ---
 
-## Demo App Requirements
+---
 
-**Must Build:**
-A customer-facing web application with the following features:
+## Research Backing for Hook Claims
 
-### 1. Branding
-- Fictional company name and logo (e.g., "RoboClean", "FleetBot", "AutoServe")
-- Consistent color scheme and branding throughout
-- Professional UI/UX design (not prototype-looking)
-- NO Viam branding visible in customer-facing app
+### Productization pain points (validated 2019–2025):
+- Every robotics company rebuilds the same customer-facing infrastructure — auth, dashboards, connectivity — none of which is what customers pay for. "Each robotics startup independently recreates these capabilities in-house, reinventing the wheel over and over again. Very few of these capabilities provide differentiation." (Christian Fritz, Transitive Robotics founder, Medium)
+- Building just the fleet management layer takes over a year and six engineers (Robotics 24/7; Logistics Business, citing Meili Robots industry report, 2023)
+- Tennibot CEO: auth infrastructure "could only be done through a complex integration of platforms that weren't designed to work with machines — it progressively took time away from working on the machines themselves" (Viam customer story, 2024)
+- IoT auth is two-tier — platform users AND customer app users — requiring multi-tenant identity management across both layers, plus device-level security for cameras and actuators in customer facilities (FusionAuth/Viam case study)
+- Industry consensus: "Every robotics company builds substantially the same infrastructure" (Hacker News, August 2022)
 
-### 2. Authentication
-- Login screen with company branding
-- Uses Viam authentication backend (white-label)
-- Clean, professional login flow
-- Username/password or similar
-
-### 3. Fleet Dashboard
-- Shows list/grid of robots with:
-  - Robot names/IDs
-  - Online/offline status
-  - Location or zone (can be labels)
-  - Optional: Battery, last active time
-- 1 real robot (Chess or Vino)
-- 1-2 additional mocked robots for fleet visualization
-- Click on robot to view details
-
-### 4. Robot Control Interface
-- Live camera feed from robot
-- Control interface (buttons, sliders, or similar)
-- Ability to send commands to robot
-- Robot responds visibly (arm moves, action executes)
-- Real-time connection to actual robot
-
-### 5. Billing/Account Section
-- Displays subscription/pricing tier
-- Usage metrics (can be static/mocked)
-- Payment information display (can be mocked)
-- Professional billing UI
-- Does NOT need real payment processing - just UI
-
-### 6. Technical Implementation
-- Built with TypeScript + React or similar web framework
-- Uses Viam SDK to connect to robot
-- Responsive design (works on laptop screen for demo)
-- Smooth navigation between sections
-- Professional polish - this represents a customer product
+### How Viam addresses these:
+- Auth is handled by Viam's proxy — credentials are injected via cookie, the app never touches authentication logic
+- Machine picker UI is provided by Viam — customers select their machine without the developer building fleet selection UI
+- Distribution uses the same registry and module system as robot code — no separate deployment pipeline to build
+- The developer writes only product logic — the Greenhouse Dashboard is ~410 lines of TypeScript with zero auth, connection, or distribution code
 
 ---
 
 ## B-Roll Needed
 
-- Clean shots of robot (Chess or Vino) that customer will control
-- Close-ups of robot responding to commands from app
-- Multiple angles of the web app on screen
-- Professional-looking workspace with laptop running app
+- Greenhouse hardware setup — sensors, smart plug, camera in place
+- Close-up of plant with soil sensors visible
+- Close-up of light toggling on and off
 
 ## Screen Recordings Needed
 
-- Full customer login flow (start to finish)
-- Fleet dashboard with robots visible
-- Clicking on robot to view details
-- Live camera feed from robot
-- Sending control command and robot responding
-- Navigation to billing/account section
-- Billing interface display
-- Smooth transitions between all sections
-- Professional UI throughout - this is a product demo
+- Greenhouse Dashboard running — sensors updating in real time
+- Live camera feed from greenhouse
+- Light toggle — turning on and off, status updating
+- Code editor showing `main.ts` full file (~410 lines)
+- Scroll through: lines 36–50 (`THRESHOLDS`), lines 262–273 (light toggle), lines 295–316 (`pollSensors`)
+- Viam app showing machine picker UI — customer selecting a greenhouse
+- Browser dev tools or Viam app settings showing credential cookie injection
+- Viam Registry showing `viam:greenhouse-dashboard` published
 
 ## Graphics/Overlays
 
-- **"Example Customer App" or "Demo Company" badge/overlay** - Make it clear this is fictional
-- Fictional company logo and branding visible throughout
-- Text overlays highlighting infrastructure: "✓ White-label Auth", "✓ Fleet Management", "✓ API Access", "✓ Billing"
-- Clean, professional aesthetic
-- Optional: Split screen showing app + robot simultaneously
-- Emphasize: "Provided by Viam" vs "You built" distinction
+- Callout annotations on code sections during codebase reveal (e.g. "health thresholds", "light toggle", "sensor polling")
+- Highlight absence of auth/connection code — e.g. subtle overlay: "no auth code", "no connection management"
+- Clean aesthetic — let the contrast between app complexity and codebase simplicity speak for itself
 
-## Technical Considerations
+## Technical Requirements
 
-**App Development:**
-- Timeline: Needs to be built before filming
-- Scope: Full-featured enough to demonstrate all infrastructure
-- Polish: Must look like a real product, not a prototype
-- Real vs Mock: Robot connection and control must be real; other robots in fleet and billing can be mocked
-
-**Infrastructure to Demonstrate:**
-1. **White-label Auth** - Login screen with custom branding, no Viam branding
-2. **Fleet Management** - Dashboard showing multiple robots with status
-3. **API Access** - Live connection to robot, camera feed, control commands
-4. **Billing** - Account/billing interface (can be mocked/static)
-
-**Customer Experience Focus:**
-- Frame everything from customer perspective
-- Professional, polished UI - this is what end customers see
-- Emphasize what you DIDN'T have to build (auth backend, billing system, fleet management infrastructure)
-- Show it works like any professional SaaS product
-
-**Robot Choice:**
-- Chess or Vino (whichever is more reliable/photogenic)
-- Must respond to commands from the app
-- Live camera feed must work smoothly
-- Consider: Chess might be more impressive (arm movement more visible than pouring)
-
-**Realistic Complexity:**
-- This is the most complex demo to build
-- Requires web development expertise
-- Plan adequate time for development and testing
-- Focus on polish - this represents what customers would build
+- Greenhouse robot with all components configured and running before filming: `temp-moisture-sensor`, `soil-sensor-2/3/4`, `light-smart-plug`, `tent-camera`
+- `viam:greenhouse-dashboard` published to Viam Registry before filming
+- App installed on greenhouse machine and confirmed working end-to-end before filming day
+- Machine picker confirmed working in Viam app UI
+- Live sensor data and camera feed confirmed stable before filming day
