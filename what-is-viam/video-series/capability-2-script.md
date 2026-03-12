@@ -19,7 +19,7 @@
 
 This is so common that every robotics team ends up building networking infrastructure. It's a problem you have to solve before you can solve your actual problem. And even after you solve remote access, getting live video from the robot is a separate pipeline.
 
-Here's what it looks like with Viam."
+Viam makes this disappear."
 
 ---
 
