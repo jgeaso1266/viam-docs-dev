@@ -15,7 +15,7 @@
 - Presenter on camera in Viam NYC office
 
 *Presenter:*
-"Your robot is deployed. Something's not working. You need to see the camera feed, check sensor readings, send a test command. But the robot is behind a firewall on a network you don't control. So before you can debug, you're setting up a VPN or configuring port forwarding — if your network even allows inbound connections.
+"Your robot is up and running. You want to check the camera feed, monitor sensor readings, send a command. But the robot is behind a firewall on a network you don't control. So before you can do anything, you're setting up a VPN or configuring port forwarding — if your network even allows inbound connections.
 
 This is so common that every robotics team ends up building networking infrastructure. It's a problem you have to solve before you can solve your actual problem. And even after you solve remote access, getting live video from the robot is a separate pipeline.
 
@@ -103,7 +103,7 @@ Remote access requires networking infrastructure you have to build (hook) → Th
 3. Your code talks to the robot the same way whether it's on your bench or 30 miles away
 
 **Tone:**
-- The hook is empathetic — "your robot is deployed, something's not working" puts the viewer in a moment they've lived (roboticists) or can imagine (software engineers)
+- The hook is practical — "your robot is up and running, you want to check on it" is a universal need, not just a debugging scenario
 - The "networking infrastructure tax" framing connects to software engineers — they recognize the pattern from cloud infrastructure
 - The demo is understated — no dramatic reveal, just casual control of hardware 30 miles away. The casualness IS the point.
 
