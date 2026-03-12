@@ -15,7 +15,7 @@
 - Presenter on camera, arm with gripper attached, camera, all on bench — unplugged
 
 *Presenter:*
-"Getting a depth camera running on Linux means kernel patches, vendor-specific SDKs, and platform builds that may or may not support your OS.
+"Getting a depth camera running on a robot means kernel patches, vendor-specific SDKs, and platform builds that may or may not support your OS.
 
 Getting an arm moving means configuring a dedicated Ethernet connection, enabling motors through a web interface, and writing initialization code you'll paste into every script. If anything goes wrong such as a collision or an overload, the arm locks up, and sometimes the only fix is walking over and power cycling it.
 
@@ -33,7 +33,7 @@ Here's what setting up an arm and wrist-mounted cam looks like with Viam."
   - Show gripper config in UI → gripper opens and closes
 
 *Presenter (voiceover over the montage):*
-"Three components. Three config blocks. No kernel patches. No SDKs. No initialization ritual. Just tell Viam what's connected, and it handles the rest."
+"Three components. Three config blocks. No kernel patches. No SDKs. No initialization ritual. Just tell Viam what's connected to your robot, and it handles the rest."
 
 ---
 
@@ -50,7 +50,7 @@ Here's what setting up an arm and wrist-mounted cam looks like with Viam."
 - Show the same image and point cloud in the Viam app UI CONTROL tab.
 
 *Presenter (voiceover):*
-"Your code talks to a camera. Not a RealSense. Not an Orbbec. A camera. Get an image. Get a point cloud. The API is the same regardless of what hardware is behind it. And you can see the same outputs in the Viam app."
+"Getting your hardware set up in Viam is quick and usually painless, but the real power is that Viam SDKs provide well-defined APIs for every type of hardware. Your code talks to a camera. Not a RealSense. Not an Orbbec. A camera. Get images. Get point clouds. The API is the same regardless of what hardware is behind it. And you can see the same outputs in the Viam app."
 
 ---
 
@@ -63,7 +63,7 @@ Here's what setting up an arm and wrist-mounted cam looks like with Viam."
 - Run the same code. Image pops up — visibly different (different camera characteristics) but same code produced it.
 
 *Presenter (voiceover):*
-"Swap the hardware. Change one field in the config. Run the same code. Different camera, same API. Your application never knew the difference."
+"Swap the hardware. Change one field in the config. Run the same code. Different camera, same API. Your application doesn't know the difference."
 
 ---
 
@@ -75,8 +75,6 @@ Here's what setting up an arm and wrist-mounted cam looks like with Viam."
 
 *Presenter:*
 "In Viam, hardware is configured, not coded. Every camera speaks the same API. Every arm speaks the same API. You write your application once, and it works with whatever hardware you connect.
-
-That's hardware abstraction in Viam."
 
 ---
 

@@ -59,7 +59,7 @@ Here's what it looks like with Viam."
 ### [00:52-01:08] Demo: Remote Code (16 seconds)
 
 *Visual:*
-- Switch to terminal, show the code:
+- Switch to terminal, show `examples/cap1_camera_demo.py` — same script from capability 1, now pointed at the home office arm (swap `.env` to home office credentials):
   ```python
   camera = Camera.from_robot(robot, "cam")
   images, _ = await camera.get_images()

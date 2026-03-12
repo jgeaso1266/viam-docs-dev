@@ -3,7 +3,7 @@
 
 **Learning Outcome:** "I can develop against robot hardware like it's a cloud API — my laptop is my IDE, the robot is my test environment."
 
-**Demo Setup:** Robot arm with depth camera and gripper, object on workbench for pick test, laptop with terminal open in a different room from the robot.
+**Demo Setup:** xArm 6 with gripper and Intel RealSense D435 depth camera (bench arm, `bench1-main.oeq47g5p1m.viam.cloud`). Object on workbench for pick test. Presenter at laptop in a different room from the robot.
 
 ---
 
@@ -37,51 +37,55 @@ With Viam, your laptop is your IDE and the robot is your test environment. Write
 - Terminal visible on laptop
 
 *Presenter:*
-"I'm building a hand-eye calibration test — the script captures a point cloud from the camera, moves the arm to the detected object, and closes the gripper. The robot is in another room. I'm running the code from my laptop."
+"I'm building a pick-and-place routine — the tool captures a point cloud, finds objects on the table, moves the arm to one, and picks it up. The robot is in another room. I'm running the code from my laptop."
 
 *Presenter guidance:*
-- "Hand-eye calibration" — calibrating the relationship between where the camera sees an object and where the arm needs to move to reach it. This is a fundamental robotics task that requires many iterations to get right — exactly the kind of work where a fast development loop matters.
-- "Point cloud" — a 3D representation of the scene captured by a depth camera. Each point has x, y, z coordinates. The script uses this to locate the object in 3D space.
-- "The robot is in another room" — understated proof that this is remote. No SSH, no file copying. The Viam SDK connects over the network automatically.
+- "Pick-and-place routine" — a fundamental robotics task: detect an object, move the arm to it, grasp it, lift it. Getting this right requires many iterations — tuning approach height, grasp depth, detection parameters. Exactly the kind of work where a fast development loop matters.
+- "Captures a point cloud, finds objects" — the tool uses the depth camera to build a 3D representation of the scene, then runs plane segmentation (to find the table surface) and clustering (to identify individual objects). Each detected object gets a position in 3D space.
+- "The robot is in another room" — understated proof that this is remote. No SSH, no file copying. The tool connects to the robot over WebRTC via Viam CLI token.
 
 ---
 
 ### [00:28-00:43] Demo: Run the Script (15 seconds)
 
 *Visual:*
-- Screen — terminal on laptop, briefly show key lines:
-  ```python
-  camera.get_point_cloud()
-  arm.move_to_position(pose)
-  gripper.grab()
+- Screen — terminal on laptop, show the command (see `~/viam/pick-and-place`):
   ```
-- Run the script
+  ./bin/pick-and-place pick \
+    --host bench1-main.oeq47g5p1m.viam.cloud
+  ```
+- Run it
 - CUT TO: Robot arm moves to object on workbench, gripper closes, arm lifts object
-- CUT BACK: Terminal output showing results
+- CUT BACK: Terminal output showing detected objects, approach offset, world-frame offset in mm
 
 *Presenter (voiceover):*
-"Three SDK calls — point cloud, move, grab. Run it from my laptop. The arm moves, the gripper closes, the object lifts. No deploy step, no build step. Just run."
+"One command — detect objects via point cloud segmentation, move to approach, grasp, lift, verify. Run it from my laptop. The arm moves, the gripper closes, the object lifts. No deploy step, no build step. Just run."
 
 *Presenter guidance:*
-- "Three SDK calls" — this is the key contrast with the hook. The development loop in Viam is: write Python, run Python. The SDK handles the network connection to the robot. These are the same APIs from capability 1 — camera, arm, gripper — now being called remotely as part of application logic.
-- "No deploy step, no build step" — in the traditional workflow, you'd cross-compile, scp the binary to the robot, SSH in, restart the service. Here you just run a Python script on your laptop. The SDK connects to the robot's viam-server over WebRTC (same connection infrastructure from capability 2).
-- The visual should linger on the robot responding — the arm moving in response to code run from a laptop in another room is the proof.
+- "One command" — `pick-and-place pick` is a Go CLI tool (in `~/viam/pick-and-place`) that connects to the robot via Viam CLI token (`viam login` first). It captures a point cloud, runs plane segmentation and clustering to find objects, then executes a full pick sequence: open gripper → approach → re-detect → grasp → grab → lift → verify. The output reports calibration accuracy as approach offset and world-frame offset in mm.
+- "No deploy step, no build step" — the CLI runs on the presenter's laptop. It connects to viam-server on the bench arm over WebRTC (same connection infrastructure from capability 2). The code stays on the laptop — only API calls go to the robot. No cross-compilation, no scp, no service restart.
+- The visual should linger on the robot responding — the arm moving in response to a command run from a laptop in another room is the proof.
 
 ---
 
 ### [00:43-00:58] Demo: Iterate (15 seconds)
 
 *Visual:*
-- Screen — terminal, change a parameter: `--approach-offset 50`
-- Run again
-- CUT TO: Robot executes the pick again, slightly different approach angle
+- Screen — terminal, add a flag: `--approach-offset 50` (default is 100mm)
+- Run again:
+  ```
+  ./bin/pick-and-place pick \
+    --host bench1-main.oeq47g5p1m.viam.cloud \
+    --approach-offset 50
+  ```
+- CUT TO: Robot executes the pick again, approaches closer to the object before grasping
 - CUT BACK: Terminal output showing updated offset measurements
 
 *Presenter (voiceover):*
 "I adjust a parameter and run it again. The robot responds immediately. This is the development loop — write, run, observe, adjust. Same as any other code, except the runtime is a robot."
 
 *Presenter guidance:*
-- "Adjust a parameter and run it again" — this is the iteration speed that matters. In the traditional workflow, changing one parameter means: edit, rebuild (2+ minutes in ROS 2), copy to robot, restart, observe. Here it's: edit, run. Seconds, not minutes.
+- "Adjust a parameter and run it again" — `--approach-offset 50` changes how far above the object the arm pauses before descending to grasp (default 100mm, now 50mm). This is the iteration speed that matters. In the traditional workflow, changing one parameter means: edit, rebuild (2+ minutes in ROS 2), copy to robot, restart, observe. Here it's: change a flag, run again. Seconds, not minutes.
 - "Same as any other code, except the runtime is a robot" — this is the core message for software engineers. The development workflow they already know (IDE, run, observe, iterate) works unchanged. The robot is just another service their code talks to.
 
 ---
@@ -114,7 +118,7 @@ With Viam, your laptop is your IDE and the robot is your test environment. Write
 - Payoff is short and bookends the hook. No taglines.
 
 **The narrative arc:**
-The robotics development loop is broken (hook) → I'm building a hand-eye calibration test, robot is in another room (setup) → Three SDK calls, run from laptop, robot responds (run) → Change a parameter, run again, iterate in seconds (iterate) → No cross-compilation, no deploy step, just write and run (payoff)
+The robotics development loop is broken (hook) → I'm building a pick-and-place routine, robot is in another room (setup) → One command, run from laptop, robot detects and picks (run) → Change approach offset, run again, iterate in seconds (iterate) → No cross-compilation, no deploy step, just write and run (payoff)
 
 **Key messages:**
 1. Traditional robotics development requires multiple steps between writing code and seeing results — cross-compile, copy, restart, observe
@@ -163,7 +167,7 @@ When the code is ready for production, capability 6 shows how to package it as a
 
 ## B-Roll Needed
 
-- Robot arm with depth camera and gripper in one room
+- xArm 6 with gripper and RealSense D435 on bench (bench arm)
 - Presenter at laptop in a different room
 - Robot arm moving to object, gripper closing, lifting
 - Robot executing pick with slightly different approach (second run)
@@ -171,10 +175,10 @@ When the code is ready for production, capability 6 shows how to package it as a
 
 ## Screen Recordings Needed
 
-- Terminal: Python code showing three SDK calls (get_point_cloud, move_to_position, grab)
-- Terminal: running the script, output appearing
-- Terminal: changing approach-offset parameter
-- Terminal: running again, updated output
+- Terminal: `pick-and-place pick` command with `--host` flag
+- Terminal: running the command, JSON output showing detected objects and offsets
+- Terminal: same command with `--approach-offset 50` added
+- Terminal: running again, updated offset measurements in output
 - Clean, readable code — large font
 
 ## Graphics/Overlays
