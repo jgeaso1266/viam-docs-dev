@@ -19,7 +19,7 @@
 
 And the failures are silent. Standard recording tools drop image data when they hit a throughput ceiling — no error, no warning. You find out the data is missing when you go to train a model.
 
-Here's what it looks like with Viam."
+Here's how Viam handles it."
 
 ---
 

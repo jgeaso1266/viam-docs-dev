@@ -17,7 +17,7 @@
 *Presenter:*
 "Training a model is one project. Getting it running on your robot is a completely different one. You need to provision GPUs, set up a training pipeline, then figure out how to package the model, get it onto the device, wire it to the camera, and do it all again every time you retrain.
 
-Here's what it looks like with Viam."
+Viam collapses this into configuration."
 
 *Presenter guidance:*
 - "Training a model is one project" — most teams can get a model trained using cloud GPUs, Roboflow, Ultralytics, etc. That part is increasingly commoditized.

@@ -15,7 +15,7 @@
 - Presenter on camera, Beanjamin robot visible in background
 
 *Presenter:*
-"Updating your robot's software means SSH-ing in, pulling the latest code, and restarting — which can silently break other parts of your stack. And there's no standard way to push updates to a fleet. Here's what it looks like with Viam."
+"Updating your robot's software means SSH-ing in, pulling the latest code, and restarting — which can silently break other parts of your stack. And there's no standard way to push updates to a fleet. Viam replaces all of this."
 
 ---
 
