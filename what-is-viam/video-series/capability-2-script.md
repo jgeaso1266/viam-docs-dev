@@ -59,17 +59,15 @@ Here's what it looks like with Viam."
 ### [00:52-01:08] Demo: Remote Code (16 seconds)
 
 *Visual:*
-- Switch to terminal, show the command:
+- Switch to terminal, show the code:
+  ```python
+  camera = Camera.from_robot(robot, "cam")
+  images, _ = await camera.get_images()
   ```
-  ./bin/pick-and-place move-to \
-    --host home-office-arm.vf4wtx9s0t.viam.cloud \
-    --camera cam --arm arm \
-    --x 735 --y -58 --z 137
-  ```
-- Run it. Arm moves to the target position in the overhead feed. Live.
+- Run it. Image from the arm's camera pops up on the presenter's laptop screen — captured from 30 miles away.
 
 *Presenter (voiceover):*
-"Now run code from my laptop. This moves the arm to a specific position using coordinates from the point cloud. Same connection. No VPN, no port forwarding. Viam handles the entire network layer — my code just talks to the robot."
+"Now run code from my laptop. Three lines — connect to the robot, grab an image from the camera. That image was captured thirty miles away. Same connection. No VPN, no port forwarding. Viam handles the entire network layer — my code just talks to the robot."
 
 ---
 
@@ -80,7 +78,7 @@ Here's what it looks like with Viam."
 - Overhead feed still visible on laptop screen behind them
 
 *Presenter:*
-"No networking infrastructure to build. No VPN to maintain. UI control, camera feeds, point clouds, code execution — all one connection."
+"No networking infrastructure to build. No VPN to maintain. UI control, camera feeds, point clouds, remote code — all one connection."
 
 ---
 
@@ -93,11 +91,11 @@ Here's what it looks like with Viam."
 - Setup establishment should feel casual and factual — "thirty miles, two networks, a firewall I didn't configure" is understated confidence.
 - UI control demo should feel instant — move to saved pose, arm responds in the feed. Don't linger.
 - Camera + 3D view should feel like natural exploration — switching views, point clouds appearing. The viewer should feel the richness of the remote connection.
-- Code demo should breathe — the arm moving to specific coordinates after running code from Manhattan is the proof. Let the viewer watch it happen.
+- Code demo should breathe — an image captured from thirty miles away, popping up on the presenter's laptop, is the proof. Let the viewer see it appear.
 - Payoff is short and direct. No taglines.
 
 **The narrative arc:**
-Remote access requires networking infrastructure you have to build (hook) → This robot is 30 miles away, feed already live (setup) → Move the arm from UI (control) → Arm camera, point clouds, live 3D view (camera + 3D) → Run code remotely, arm moves to coordinates (code) → No infrastructure to build or maintain (payoff)
+Remote access requires networking infrastructure you have to build (hook) → This robot is 30 miles away, feed already live (setup) → Move the arm from UI (control) → Arm camera, point clouds, live 3D view (camera + 3D) → Run code remotely, grab an image from 30 miles away (code) → No infrastructure to build or maintain (payoff)
 
 **Key messages:**
 1. Every robotics team ends up building networking infrastructure before they can do their actual work
@@ -110,7 +108,7 @@ Remote access requires networking infrastructure you have to build (hook) → Th
 - The demo is understated — no dramatic reveal, just casual control of hardware 30 miles away. The casualness IS the point.
 
 **Critical moment:**
-The arm moving to specific coordinates after running `pick-and-place move-to` from Manhattan. Live, unedited, 30 miles away. This is the proof that makes everything else credible.
+The image popping up on the presenter's laptop after running three lines of Python from Manhattan — captured by a camera 30 miles away. Live, unedited. This is the proof that makes everything else credible.
 
 ---
 
@@ -144,7 +142,7 @@ The arm moving to specific coordinates after running `pick-and-place move-to` fr
 - xArm 6 in NJ home office (overhead camera angle showing full workspace)
 - Establishing shot of NYC office (optional — to emphasize location)
 - Arm moving in response to UI commands (captured by overhead cam)
-- Arm moving in response to code execution (captured by overhead cam)
+- Image from remote camera appearing on presenter's laptop after running code
 - Close-up of laptop screen showing Viam app and camera feed
 
 ## Screen Recordings Needed
@@ -153,8 +151,8 @@ The arm moving to specific coordinates after running `pick-and-place move-to` fr
 - Viam app CONTROL tab — moving arm to saved pose
 - Arm-mounted camera feed (live from wrist)
 - 3D view with point clouds appearing in scene
-- Terminal showing pick-and-place move-to command and execution
-- Arm responding to code execution in overhead camera feed
+- Terminal showing Python code (Camera.from_robot, get_images) and execution
+- Image from remote camera appearing on presenter's laptop
 - Clean, readable command — large font
 
 ## Graphics/Overlays
@@ -162,7 +160,7 @@ The arm moving to specific coordinates after running `pick-and-place move-to` fr
 - Location labels: "Viam HQ — Manhattan" / "Home Office — New Jersey" (brief, at setup)
 - Optional: "~30 miles" text or simple map showing distance
 - Camera feed should be raw/unpolished — the authenticity is the point
-- Code should be large and readable
+- Python code should be large and readable
 - Minimal aesthetic — let the live demo speak for itself
 
 ## Technical Requirements

@@ -66,21 +66,21 @@ Here's what it looks like with Viam."
 
 *Visual:*
 - Training complete notification
-- Model visible in Registry
-- Add ML model service to robot config in CONFIGURE tab
-- Add vision service referencing the ML model
+- Model `pour-glass-locate-on-top-model` visible in Registry
+- CONFIGURE tab: add ML model service `glass-finder-first-model` using `tflite_cpu` module, pointing at the model package
+- Add vision service `glass-finder-first-service` referencing the ML model service
 - Save config
-- Camera feed with bounding boxes appearing around the glass in real-time
+- `left-cam` feed with bounding boxes appearing around the glass in real-time
 
 *Presenter (voiceover):*
-"Training's done. The model is in the registry. I add it to the robot's configuration — an ML model service to load it, a vision service to connect it to the camera. Save. The robot pulls the model and starts detecting. Bounding boxes around the glass, running on the device, no cloud round-trips."
+"Training's done. The model is in the registry — `pour-glass-locate-on-top-model`. I add two services to the robot's config: an ML model service called `glass-finder-first-model` that loads it with the TFLite runtime, and a vision service called `glass-finder-first-service` that connects it to the left camera. Save. The robot pulls the model and starts detecting. Bounding boxes around the glass, running on the device, no cloud round-trips."
 
 *Presenter guidance:*
-- "The model is in the registry" — when training completes, Viam automatically packages the model files as a versioned .tar.gz and publishes it to your organization's section of the Viam Registry. This is the same Registry that hosts code modules. The model gets a name and version string, and it's immediately available for deployment.
-- "An ML model service to load it" — this is a service you add in the CONFIGURE tab. You pick an inference runtime module (e.g., tflite_cpu for TFLite models) and point it at the model package. The config looks like: model service name, model path (${packages.my-model}/model.tflite), and optionally a label file and thread count. The ${packages.name} syntax automatically resolves to wherever the package manager downloaded the model on disk.
-- "A vision service to connect it to the camera" — the vision service is the bridge between the ML model and your camera. You configure it with one required field: mlmodel_name, which points to the ML model service you just created. The vision service automatically detects whether your model is a detector or classifier by testing it with a small dummy image at startup. It handles all the image preprocessing — resizing to the model's expected input dimensions, normalizing pixel values, converting tensor layouts — so your application code just calls GetDetections() or GetClassifications().
-- "Save. The robot pulls the model" — saving the config triggers a config sync to the robot. The package manager sees a new ML model package in the config, downloads it from the Registry, extracts it, and creates a symlink. Then the ML model service starts, loads the model, and the vision service connects to it. This all happens automatically within seconds of saving.
-- "Running on the device, no cloud round-trips" — inference happens entirely on the robot's CPU (or GPU if using Triton on a Jetson). Each camera frame is processed locally. This matters for latency (real-time detections) and for robots that may lose connectivity. The model works whether the robot is online or offline.
+- "The model is in the registry — `pour-glass-locate-on-top-model`" — when training completes, Viam automatically packages the model files as a versioned .tar.gz and publishes it to your organization's section of the Viam Registry. This is the same Registry that hosts code modules. The model gets a name and version string, and it's immediately available for deployment. In the Vino1 config, this model is declared as a package with `"type": "ml_model"` and `"version": "latest"`.
+- "An ML model service called `glass-finder-first-model`" — this is a service you add in the CONFIGURE tab. It uses the `viam:mlmodel-tflite:tflite_cpu` module as its inference runtime. The config points to the model package with path syntax like `${packages.ml_model.pour-glass-locate-on-top-model}/pour-glass-locate-on-top-model.tflite` — the `${packages...}` syntax automatically resolves to wherever the package manager downloaded and extracted the model on disk. There's also a labels file at the same path (`labels.txt`) that maps output tensor indices to class names like "glass."
+- "A vision service called `glass-finder-first-service`" — the vision service is the bridge between the ML model and the camera. Its config has one key field: `mlmodel_name: "glass-finder-first-model"`, which points to the ML model service. It also specifies `camera_name: "left-cam"` and a `default_minimum_confidence: 0.5` to filter low-confidence detections. The vision service automatically detects whether your model is a detector or classifier by testing it with a small dummy image at startup. It handles all the image preprocessing — resizing, normalizing, tensor layout conversion — so your application code just calls `GetDetections()`.
+- "Save. The robot pulls the model" — saving the config triggers a config sync to the robot. The package manager sees the `pour-glass-locate-on-top-model` package in the config, downloads the .tar.gz from the Registry, extracts it, and creates a symlink. Then the `glass-finder-first-model` ML model service starts, loads the .tflite file, and the `glass-finder-first-service` vision service connects to it. This all happens automatically within seconds of saving.
+- "Running on the device, no cloud round-trips" — inference happens entirely on the robot's CPU using the `tflite_cpu` module. Each frame from `left-cam` is processed locally. This matters for latency (real-time detections) and for robots that may lose connectivity. The model works whether the robot is online or offline.
 
 ---
 
