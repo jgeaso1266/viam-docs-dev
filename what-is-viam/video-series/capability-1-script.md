@@ -43,32 +43,31 @@ Here's what setting up an arm and wrist-mounted cam looks like with Viam."
 - Show on screen (see `examples/cap1_camera_demo.py`):
   ```python
   camera = Camera.from_robot(robot, "my-camera")
-  image = await camera.get_image()
+  images, _ = await camera.get_images()
   pcd_bytes, _ = await camera.get_point_cloud()
   ```
-- Run it. Show the 2D image and the 3D point cloud visualization (Open3D window) side by side.
-- Show the same image and point cloud in the Viam app UI CONTROL tab — camera feed and 3D point cloud viewer.
+- Run it. Image pops up on screen. Point cloud visualizer opens.
+- Show the same image and point cloud in the Viam app UI CONTROL tab.
 
 *Presenter (voiceover):*
 "Your code talks to a camera. Not a RealSense. Not an Orbbec. A camera. Get an image. Get a point cloud. The API is the same regardless of what hardware is behind it. And you can see the same outputs in the Viam app."
 
 ---
 
-### [00:58-01:16] Demo: The Swap (18 seconds)
+### [00:58-01:10] Demo: The Swap (12 seconds)
 
 *Visual:*
 - Unplug Intel RealSense camera
 - Plug in Orbbec Astra camera
 - Show config change in Viam app UI — one field changes
-- Run the same code. Show the image and point cloud — visibly different (different camera characteristics) but same code produced both.
-- Briefly show the updated feed and point cloud in the Viam app UI as well.
+- Run the same code. Image pops up — visibly different (different camera characteristics) but same code produced it.
 
 *Presenter (voiceover):*
 "Swap the hardware. Change one field in the config. Run the same code. Different camera, same API. Your application never knew the difference."
 
 ---
 
-### [01:16-01:36] Payoff (20 seconds)
+### [01:10-01:30] Payoff (20 seconds)
 
 *Visual:*
 - Back to presenter on camera
@@ -83,14 +82,14 @@ That's hardware abstraction in Viam."
 
 ## Production Notes
 
-**Total time:** ~96 seconds
+**Total time:** ~90 seconds
 
 **Pacing:**
 - Hook is dense and specific — delivered with authority, not speed. These are real problems the presenter has encountered.
 - Config montage (18-38s) should be fast-paced — the ease and speed is the point. Don't linger on keystrokes.
 - Code section (38-58s) should breathe — let the viewer read the three lines, see the image and point cloud, and absorb the point. Show outputs both from the script and in the Viam app UI.
-- Swap section (58-76s) should feel effortless — unplug, plug, change one field, run same code, visibly different outputs.
-- Payoff (76-96s) is delivered directly to camera, with conviction. This is the thesis statement.
+- Swap section (58-70s) should feel effortless — unplug, plug, change one field, run same code, visibly different image output. Point cloud not shown for Orbbec — presenter will finesse this in the demo.
+- Payoff (70-90s) is delivered directly to camera, with conviction. This is the thesis statement.
 
 **The narrative arc:**
 Hardware setup is real engineering work (hook) → With Viam it's just configuration (config montage) → Your code uses generic APIs, not vendor SDKs (code) → Swap hardware, code doesn't change (swap) → This is hardware abstraction (payoff)

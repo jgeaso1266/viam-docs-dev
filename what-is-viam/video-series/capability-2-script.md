@@ -26,66 +26,78 @@ Here's what it looks like with Viam."
 ### [00:20-00:30] Establish the Setup (10 seconds)
 
 *Visual:*
-- Presenter gestures to laptop screen
+- Presenter gestures to laptop screen showing the overhead camera feed from NJ — arm visible in the feed
+- The feed is already live, establishing that the connection exists before we explain it
 
 *Presenter:*
 "This arm is in my home office in New Jersey. I'm in Manhattan. Thirty miles, two networks, a firewall I didn't configure."
 
 ---
 
-### [00:30-00:45] Demo: Connection + Camera Feed (15 seconds)
+### [00:30-00:42] Demo: UI Control (12 seconds)
 
 *Visual:*
-- Open Viam app in browser
-- Robot appears in dashboard — online
-- Click into robot
-- Overhead camera feed from NJ home office streams immediately — arm visible
+- Viam app CONTROL tab — move the arm to a saved pose
+- Overhead camera feed shows the arm moving in NJ
 
 *Presenter (voiceover):*
-"Open the app. Robot's there. Live camera feed from my home office. No VPN, no port forwarding, no separate video server. One connection."
+"Move the arm to a saved pose from the UI. That's happening thirty miles away."
 
 ---
 
-### [00:45-00:58] Demo: Control + Code (13 seconds)
+### [00:42-00:52] Demo: Camera + 3D View (10 seconds)
 
 *Visual:*
-- Send command from UI — arm moves in the overhead feed
-- Switch to terminal/IDE, show:
-  ```python
-  arm = Arm.from_robot(robot, "my-arm")
-  await arm.move_to_position(pose)
+- Switch to the arm-mounted camera feed — live view from the arm's perspective
+- Switch to the 3D view — point clouds appearing in the scene
+
+*Presenter (voiceover):*
+"Switch to the arm camera. Live feed from the wrist, thirty miles away. And the 3D view — point clouds, live in the scene."
+
+---
+
+### [00:52-01:08] Demo: Remote Code (16 seconds)
+
+*Visual:*
+- Switch to terminal, show the command:
   ```
-- Run it. Arm moves to new position in the feed. Live.
+  ./bin/pick-and-place move-to \
+    --host home-office-arm.vf4wtx9s0t.viam.cloud \
+    --camera cam --arm arm \
+    --x 735 --y -58 --z 137
+  ```
+- Run it. Arm moves to the target position in the overhead feed. Live.
 
 *Presenter (voiceover):*
-"Move the arm from the UI. Or run code from my laptop. Same APIs, same connection. The robot is thirty miles away. Viam handles the entire network layer — your code just talks to the robot."
+"Now run code from my laptop. This moves the arm to a specific position using coordinates from the point cloud. Same connection. No VPN, no port forwarding. Viam handles the entire network layer — my code just talks to the robot."
 
 ---
 
-### [00:58-01:15] Payoff (17 seconds)
+### [01:08-01:20] Payoff (12 seconds)
 
 *Visual:*
 - Back to presenter on camera
 - Overhead feed still visible on laptop screen behind them
 
 *Presenter:*
-"No networking infrastructure to build. No VPN to maintain. Commands, camera feeds, logs — all one connection."
+"No networking infrastructure to build. No VPN to maintain. UI control, camera feeds, point clouds, code execution — all one connection."
 
 ---
 
 ## Production Notes
 
-**Total time:** 75 seconds
+**Total time:** ~80 seconds
 
 **Pacing:**
 - Hook is dense — three specific pain points delivered with authority. This is a real problem the presenter has encountered.
 - Setup establishment should feel casual and factual — "thirty miles, two networks, a firewall I didn't configure" is understated confidence.
-- Connection demo should feel instant and effortless — that's the point. Don't linger.
-- Control + code demo should breathe — the arm moving in the overhead feed 30 miles away is the proof. Let the viewer watch it happen.
+- UI control demo should feel instant — move to saved pose, arm responds in the feed. Don't linger.
+- Camera + 3D view should feel like natural exploration — switching views, point clouds appearing. The viewer should feel the richness of the remote connection.
+- Code demo should breathe — the arm moving to specific coordinates after running code from Manhattan is the proof. Let the viewer watch it happen.
 - Payoff is short and direct. No taglines.
 
 **The narrative arc:**
-Remote access requires networking infrastructure you have to build (hook) → This robot is 30 miles away (setup) → Open the app, it's there, camera feed is live (connection) → Control it from UI or code, same connection (control) → No infrastructure to build or maintain (payoff)
+Remote access requires networking infrastructure you have to build (hook) → This robot is 30 miles away, feed already live (setup) → Move the arm from UI (control) → Arm camera, point clouds, live 3D view (camera + 3D) → Run code remotely, arm moves to coordinates (code) → No infrastructure to build or maintain (payoff)
 
 **Key messages:**
 1. Every robotics team ends up building networking infrastructure before they can do their actual work
@@ -98,7 +110,7 @@ Remote access requires networking infrastructure you have to build (hook) → Th
 - The demo is understated — no dramatic reveal, just casual control of hardware 30 miles away. The casualness IS the point.
 
 **Critical moment:**
-The arm moving in the overhead camera feed after running code from Manhattan. Live, unedited, 30 miles away. This is the proof that makes everything else credible.
+The arm moving to specific coordinates after running `pick-and-place move-to` from Manhattan. Live, unedited, 30 miles away. This is the proof that makes everything else credible.
 
 ---
 
@@ -137,13 +149,13 @@ The arm moving in the overhead camera feed after running code from Manhattan. Li
 
 ## Screen Recordings Needed
 
-- Viam app dashboard showing robot online
-- Clicking into robot, camera feed appearing
-- Overhead camera feed streaming live from NJ
-- UI control panel — sending arm command
-- Terminal/IDE showing Python code (2 lines — Arm.from_robot, move_to_position)
-- Code execution and arm responding in camera feed
-- Clean, readable code — large font
+- Overhead camera feed streaming live from NJ (visible during setup)
+- Viam app CONTROL tab — moving arm to saved pose
+- Arm-mounted camera feed (live from wrist)
+- 3D view with point clouds appearing in scene
+- Terminal showing pick-and-place move-to command and execution
+- Arm responding to code execution in overhead camera feed
+- Clean, readable command — large font
 
 ## Graphics/Overlays
 

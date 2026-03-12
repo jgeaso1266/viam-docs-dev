@@ -42,7 +42,7 @@ Here's what it looks like with Viam."
 - Thumbnails populating
 
 *Presenter (voiceover):*
-"Images from the glass cam, flowing to the cloud. No collection code, no sync logic, no upload management. Just configuration running in the background."
+"Images from the glass cam, flowing to the cloud. No collection code, no sync logic, no upload management."
 
 ---
 

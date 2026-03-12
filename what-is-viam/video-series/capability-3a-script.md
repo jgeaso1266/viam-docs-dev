@@ -44,7 +44,7 @@ Two cameras, two config blocks — capture frequency, capture method. That's it.
 - Data flowing automatically, thumbnails populating
 
 *Presenter (voiceover):*
-"Images from both cameras, flowing to the cloud. No collection code, no sync logic, no upload management. Just configuration running in the background."
+"Images from both cameras, flowing to the cloud. No collection code, no sync logic, no upload management."
 
 ---
 
